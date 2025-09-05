@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { CheckCircle, ArrowRight, ArrowLeft, User, DollarSign, CreditCard, Tag, Globe, Bell, Palette, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { db } from '../../database/db';
 
 const Setup = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const { completeSetup } = useAuthStore();
+  const { completeSetup, user } = useAuthStore();
   const navigate = useNavigate();
 
   const [setupData, setSetupData] = useState({
@@ -57,6 +58,35 @@ const Setup = () => {
     { number: 6, title: 'Terminé', description: 'Configuration complète', icon: CheckCircle }
   ];
 
+   const saveAccountsToDatabase = async () => {
+    if (!user?.id || setupData.accounts.length === 0) return;
+
+    try {
+      console.log('💾 Sauvegarde des comptes en base de données...');
+      
+      for (const accountData of setupData.accounts) {
+        const newAccount = {
+          user_id: user.id,
+          name: accountData.name,
+          bank_name: accountData.bank_name,
+          account_type: accountData.account_type,
+          currency: accountData.currency,
+          current_balance: parseFloat(accountData.current_balance) || 0,
+          color: accountData.color || '#3B82F6',
+          is_active: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+        
+        await db.accounts.add(newAccount);
+        console.log(`✅ Compte "${accountData.name}" sauvegardé`);
+      }
+      
+      console.log(`🎉 ${setupData.accounts.length} compte(s) sauvegardé(s) avec succès`);
+    } catch (error) {
+      console.error('❌ Erreur lors de la sauvegarde des comptes:', error);
+    }
+  };
   // Étape 1: Profil et Préférences
   const ProfileStep = () => (
     <div className="space-y-6">
@@ -784,13 +814,21 @@ const Setup = () => {
         </div>
         
         <button
-          onClick={() => {
+          onClick={async () => {
             setIsLoading(true);
-            setTimeout(() => {
-              completeSetup();
+            try {
+              // ✅ SAUVEGARDER LES COMPTES AVANT DE TERMINER
+              await saveAccountsToDatabase();
+              
+              setTimeout(() => {
+                completeSetup();
+                setIsLoading(false);
+                navigate('/', { replace: true });
+              }, 1500);
+            } catch (error) {
+              console.error('Erreur lors de la finalisation:', error);
               setIsLoading(false);
-              navigate('/', { replace: true });
-            }, 1500);
+            }
           }}
           disabled={isLoading}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 text-white px-6 py-4 rounded-lg font-medium transition-all transform hover:scale-105 flex items-center justify-center space-x-2"
@@ -798,7 +836,7 @@ const Setup = () => {
           {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <span>Finalisation...</span>
+              <span>Finalisation et sauvegarde...</span>
             </>
           ) : (
             <>

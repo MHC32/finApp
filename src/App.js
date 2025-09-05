@@ -1,4 +1,4 @@
-// src/App.js
+// src/App.js - CORRECTION avec route AddAccount
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
@@ -9,6 +9,7 @@ import Register from './pages/auth/Register';
 import Setup from './pages/auth/Setup';
 import Dashboard from './pages/dashboard/Dashboard';
 import AccountsList from './pages/accounts/AccountsList';
+import AddAccount from './pages/accounts/AddAccount'; // ✅ Import ajouté
 import TransactionsList from './pages/transactions/TransactionsList';
 import BudgetsList from './pages/budgets/BudgetsList';
 import SolsList from './pages/sols/SolsList';
@@ -107,6 +108,15 @@ function App() {
             <ProtectedRoute>
               <AppLayout>
                 <AccountsList />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+          
+          {/* ✅ NOUVELLE ROUTE AJOUTÉE */}
+          <Route path="/accounts/add" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <AddAccount />
               </AppLayout>
             </ProtectedRoute>
           } />
