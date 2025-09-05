@@ -293,19 +293,45 @@ const Setup = () => {
     });
 
     const haitianBanks = [
-      'BUH (Banque de l\'Union Haïtienne)',
-      'Sogebank',
-      'Capital Bank',
-      'BNC (Banque Nationale de Crédit)',
-      'Unibank',
-      'BBDA (Banque de Borlette de l\'Artibonite)',
-      'Banque Populaire Haïtienne',
-      'SOFIHDES',
-      'Autre'
-    ];
+  'BUH (Banque de l\'Union Haïtienne)',
+  'Sogebank',
+  'Capital Bank',
+  'BNC (Banque Nationale de Crédit)',
+  'Unibank',
+  'Banque Populaire Haïtienne (BPH)',
+  'SOFIHDES (Société Financière Haïtienne de Développement)',
+  'Banque de la République d\'Haïti (BRH) - Banque Centrale',
+  'Citibank Haïti',
+  'Bank of America Haïti (services limités)',
+  'Banque de l\'Habitat Haïtien (BHH)',
+  'PromoCapital',
+  'Fonkoze (institution de microfinance)',
+  'Sogesol (institution de microfinance)',
+  'CACR (Caisse d\'Épargne et de Crédit)',
+  'Finca Haïti',
+  'ACMÉ (Association pour la Coopération avec la Micro-Entreprise)',
+  'Fondation Haïtienne d\'Aide aux Petits Entrepreneurs (FHAPE)',
+  'CECARE (Caisse d\'Épargne et de Crédit des Artisans)',
+  'Autre institution financière',
+  'Espèce (non bancarisé)',
+  'Autre'
+];
 
-    const addAccount = () => {
-      if (newAccount.name && newAccount.bank_name && newAccount.current_balance) {
+     const addAccount = () => {
+      if (newAccount.name && newAccount.current_balance) {
+        // Vérifier si c'est un compte espèces
+        if (newAccount.account_type === 'cash') {
+          // Pour les espèces, pas besoin de banque
+          if (!newAccount.bank_name) {
+            newAccount.bank_name = 'Portefeuille Personnel';
+          }
+        } else {
+          // Pour les autres types, la banque est requise
+          if (!newAccount.bank_name) {
+            return; // Ne pas ajouter si pas de banque
+          }
+        }
+        
         setSetupData(prev => ({
           ...prev,
           accounts: [...prev.accounts, { ...newAccount, id: Date.now(), color: '#3B82F6' }]
