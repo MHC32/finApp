@@ -3,16 +3,18 @@ import { Button, Input, Card } from '../ui';
 import { useAccounts } from '../../hooks/useAccounts';
 import { Calendar, DollarSign, Tag } from 'lucide-react';
 
-const TransactionForm = ({ onSubmit, initialData = {}, onCancel }) => {
+const TransactionForm = ({ onSubmit, initialData, onCancel }) => {
   const { accounts } = useAccounts();
+  
+  // ✅ Correction: Gérer le cas où initialData est null/undefined
   const [formData, setFormData] = useState({
-    amount: initialData.amount || 0,
-    description: initialData.description || '',
-    category: initialData.category || '',
-    subcategory: initialData.subcategory || '',
-    account_id: initialData.account_id || '',
-    payment_method: initialData.payment_method || 'card',
-    date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    amount: initialData?.amount || 0,
+    description: initialData?.description || '',
+    category: initialData?.category || '',
+    subcategory: initialData?.subcategory || '',
+    account_id: initialData?.account_id || '',
+    payment_method: initialData?.payment_method || 'card',
+    date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
   });
 
   const [errors, setErrors] = useState({});
@@ -87,7 +89,7 @@ const TransactionForm = ({ onSubmit, initialData = {}, onCancel }) => {
   const selectedCategory = categories.find(cat => cat.value === formData.category);
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
@@ -233,7 +235,7 @@ const TransactionForm = ({ onSubmit, initialData = {}, onCancel }) => {
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 };
 

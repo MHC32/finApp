@@ -3,15 +3,16 @@ import React, { useState } from 'react';
 import { Button, Input, Card } from '../ui';
 import { CreditCard, DollarSign, Palette } from 'lucide-react';
 
-const AccountForm = ({ onSubmit, initialData = {}, onCancel }) => {
+const AccountForm = ({ onSubmit, initialData, onCancel }) => {
+  // ✅ Correction: Gérer le cas où initialData est null/undefined
   const [formData, setFormData] = useState({
-    name: initialData.name || '',
-    bank_name: initialData.bank_name || '',
-    account_type: initialData.account_type || 'checking',
-    currency: initialData.currency || 'HTG',
-    current_balance: initialData.current_balance || 0,
-    color: initialData.color || '#3B82F6',
-    is_active: initialData.is_active !== undefined ? initialData.is_active : true
+    name: initialData?.name || '',
+    bank_name: initialData?.bank_name || '',
+    account_type: initialData?.account_type || 'checking',
+    currency: initialData?.currency || 'HTG',
+    current_balance: initialData?.current_balance || 0,
+    color: initialData?.color || '#3B82F6',
+    is_active: initialData?.is_active !== undefined ? initialData.is_active : true
   });
 
   const [errors, setErrors] = useState({});
@@ -76,7 +77,7 @@ const AccountForm = ({ onSubmit, initialData = {}, onCancel }) => {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
@@ -191,7 +192,7 @@ const AccountForm = ({ onSubmit, initialData = {}, onCancel }) => {
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 };
 

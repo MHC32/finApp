@@ -24,7 +24,7 @@ const AccountsList = () => {
       await addAccount(data);
       setShowForm(false);
     } catch (err) {
-      // Error handled in hook
+      console.error('Erreur lors de l\'ajout du compte:', err);
     }
   };
 
@@ -33,7 +33,7 @@ const AccountsList = () => {
       await updateAccount(editingAccount.id, data);
       setEditingAccount(null);
     } catch (err) {
-      // Error handled in hook
+      console.error('Erreur lors de la modification du compte:', err);
     }
   };
 
@@ -42,7 +42,7 @@ const AccountsList = () => {
       await deleteAccount(deletingAccount.id);
       setDeletingAccount(null);
     } catch (err) {
-      // Error handled in hook
+      console.error('Erreur lors de la suppression du compte:', err);
     }
   };
 
@@ -199,7 +199,7 @@ const AccountsList = () => {
 
       {/* Add/Edit Account Modal */}
       <Modal
-        isOpen={showForm || editingAccount}
+        isOpen={showForm || !!editingAccount}
         onClose={() => {
           setShowForm(false);
           setEditingAccount(null);
@@ -208,7 +208,7 @@ const AccountsList = () => {
         size="lg"
       >
         <AccountForm
-          initialData={editingAccount}
+          initialData={editingAccount} // ✅ Correction: peut être null pour nouveau compte
           onSubmit={editingAccount ? handleUpdateAccount : handleAddAccount}
           onCancel={() => {
             setShowForm(false);
