@@ -553,14 +553,14 @@ const Setup = () => {
     return (
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <Tag className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Catégories de transactions</h2>
-          <p className="text-gray-600">Organisez vos dépenses et revenus</p>
+          <Tag className="w-12 h-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Catégories de transactions</h2>
+          <p className="text-gray-600 dark:text-gray-300">Organisez vos dépenses et revenus</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
               <span className="text-red-500 mr-2">📉</span> Dépenses
             </h3>
             <div className="space-y-2">
@@ -568,7 +568,9 @@ const Setup = () => {
                 const originalIndex = setupData.categories.findIndex(cat => cat.name === category.name);
                 return (
                   <div key={category.name} className={`p-3 rounded-lg border-2 transition-colors ${
-                    category.enabled ? 'border-gray-300 bg-white' : 'border-gray-200 bg-gray-50'
+                    category.enabled 
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800' 
+                      : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
                   }`}>
                     <div className="flex items-center justify-between">
                       <label className="flex items-center space-x-3 cursor-pointer flex-1">
@@ -576,10 +578,10 @@ const Setup = () => {
                           type="checkbox"
                           checked={category.enabled}
                           onChange={() => toggleCategory(originalIndex)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                         />
                         <span className="text-lg">{category.emoji}</span>
-                        <span className={`font-medium ${category.enabled ? 'text-gray-900' : 'text-gray-500'}`}>
+                        <span className={`font-medium ${category.enabled ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                           {category.name}
                         </span>
                       </label>
@@ -589,8 +591,8 @@ const Setup = () => {
                             <button
                               key={color}
                               onClick={() => updateCategoryColor(originalIndex, color)}
-                              className={`w-5 h-5 rounded-full border-2 ${
-                                category.color === color ? 'border-gray-900' : 'border-gray-300'
+                              className={`w-5 h-5 rounded-full border-2 transition-all ${
+                                category.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-gray-600 hover:scale-105'
                               }`}
                               style={{ backgroundColor: color }}
                             />
@@ -605,7 +607,7 @@ const Setup = () => {
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
               <span className="text-green-500 mr-2">📈</span> Revenus
             </h3>
             <div className="space-y-2">
@@ -613,7 +615,9 @@ const Setup = () => {
                 const originalIndex = setupData.categories.findIndex(cat => cat.name === category.name);
                 return (
                   <div key={category.name} className={`p-3 rounded-lg border-2 transition-colors ${
-                    category.enabled ? 'border-gray-300 bg-white' : 'border-gray-200 bg-gray-50'
+                    category.enabled 
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800' 
+                      : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
                   }`}>
                     <div className="flex items-center justify-between">
                       <label className="flex items-center space-x-3 cursor-pointer flex-1">
@@ -621,10 +625,10 @@ const Setup = () => {
                           type="checkbox"
                           checked={category.enabled}
                           onChange={() => toggleCategory(originalIndex)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                         />
                         <span className="text-lg">{category.emoji}</span>
-                        <span className={`font-medium ${category.enabled ? 'text-gray-900' : 'text-gray-500'}`}>
+                        <span className={`font-medium ${category.enabled ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
                           {category.name}
                         </span>
                       </label>
@@ -634,8 +638,8 @@ const Setup = () => {
                             <button
                               key={color}
                               onClick={() => updateCategoryColor(originalIndex, color)}
-                              className={`w-5 h-5 rounded-full border-2 ${
-                                category.color === color ? 'border-gray-900' : 'border-gray-300'
+                              className={`w-5 h-5 rounded-full border-2 transition-all ${
+                                category.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-gray-600 hover:scale-105'
                               }`}
                               style={{ backgroundColor: color }}
                             />
@@ -650,11 +654,11 @@ const Setup = () => {
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-blue-800 font-medium">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-blue-800 dark:text-blue-300 font-medium">
             ✅ {setupData.categories.filter(c => c.enabled).length} catégories activées
           </p>
-          <p className="text-blue-700 text-sm">
+          <p className="text-blue-700 dark:text-blue-400 text-sm">
             Vous pourrez ajouter d'autres catégories plus tard dans les paramètres.
           </p>
         </div>
@@ -715,45 +719,45 @@ const Setup = () => {
     return (
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <DollarSign className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Objectifs d'épargne</h2>
-          <p className="text-gray-600">Fixez vos objectifs financiers</p>
+          <DollarSign className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Objectifs d'épargne</h2>
+          <p className="text-gray-600 dark:text-gray-300">Fixez vos objectifs financiers</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {goalTemplates.map(template => {
             const goal = setupData.goals[template.key];
             const colorClasses = {
-              red: 'border-red-200 bg-red-50',
-              blue: 'border-blue-200 bg-blue-50',
-              green: 'border-green-200 bg-green-50',
-              purple: 'border-purple-200 bg-purple-50'
+              red: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20',
+              blue: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20',
+              green: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20',
+              purple: 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20'
             };
 
             return (
               <div key={template.key} className={`p-4 rounded-lg border-2 transition-colors ${
-                goal.enabled ? colorClasses[template.color] : 'border-gray-200 bg-gray-50'
+                goal.enabled ? colorClasses[template.color] : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
               }`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{template.emoji}</span>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                      <p className="text-sm text-gray-600">{template.description}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{template.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{template.description}</p>
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={goal.enabled}
                     onChange={(e) => updateGoal(template.key, 'enabled', e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                   />
                 </div>
 
                 {goal.enabled && (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Objectif ({setupData.profile.currency_preference})
                       </label>
                       <input
@@ -761,12 +765,12 @@ const Setup = () => {
                         value={goal.target}
                         onChange={(e) => updateGoal(template.key, 'target', e.target.value)}
                         placeholder={template.suggestedAmount.toString()}
-                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                       />
                     </div>
                     <button
                       onClick={() => updateGoal(template.key, 'target', template.suggestedAmount)}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                     >
                       💡 Utiliser le montant suggéré: {template.suggestedAmount.toLocaleString()} {setupData.profile.currency_preference}
                     </button>
@@ -777,11 +781,11 @@ const Setup = () => {
           })}
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-800 font-medium">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <p className="text-green-800 dark:text-green-300 font-medium">
             🎯 {Object.values(setupData.goals).filter(g => g.enabled).length} objectif(s) configuré(s)
           </p>
-          <p className="text-green-700 text-sm">
+          <p className="text-green-700 dark:text-green-400 text-sm">
             Objectif total: {Object.values(setupData.goals).reduce((sum, goal) => 
               goal.enabled ? sum + goal.target : sum, 0
             ).toLocaleString()} {setupData.profile.currency_preference}
@@ -794,65 +798,67 @@ const Setup = () => {
   // Étape 6: Terminé
   const CompletedStep = () => (
     <div className="text-center space-y-6">
-      <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
-        <CheckCircle className="w-12 h-12 text-green-600" />
+      <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
+        <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">🎉 Configuration terminée !</h2>
-        <p className="text-gray-600 text-lg">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">🎉 Configuration terminée !</h2>
+        <p className="text-gray-600 dark:text-gray-300 text-lg">
           Votre application FinApp Haiti est prête à l'emploi
         </p>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 text-left">
-        <h3 className="font-semibold text-gray-900 mb-4">📋 Récapitulatif de votre configuration</h3>
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-left">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">📋 Récapitulatif de votre configuration</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">💰 Devise principale:</span>
-              <span className="font-medium">{setupData.profile.currency_preference}</span>
+              <span className="text-gray-600 dark:text-gray-400">💰 Devise principale:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{setupData.profile.currency_preference}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">🏦 Comptes bancaires:</span>
-              <span className="font-medium">{setupData.accounts.length} compte(s)</span>
+              <span className="text-gray-600 dark:text-gray-400">🏦 Comptes bancaires:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{setupData.accounts.length} compte(s)</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">🏷️ Catégories actives:</span>
-              <span className="font-medium">{setupData.categories.filter(c => c.enabled).length} catégorie(s)</span>
+              <span className="text-gray-600 dark:text-gray-400">🏷️ Catégories actives:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{setupData.categories.filter(c => c.enabled).length} catégorie(s)</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">🎯 Objectifs d'épargne:</span>
-              <span className="font-medium">{Object.values(setupData.goals).filter(g => g.enabled).length} objectif(s)</span>
+              <span className="text-gray-600 dark:text-gray-400">🎯 Objectifs d'épargne:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{Object.values(setupData.goals).filter(g => g.enabled).length} objectif(s)</span>
             </div>
           </div>
           
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">🌍 Langue:</span>
-              <span className="font-medium">{setupData.profile.language === 'fr' ? 'Français' : setupData.profile.language === 'ht' ? 'Kreyòl' : 'English'}</span>
+              <span className="text-gray-600 dark:text-gray-400">🌍 Langue:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{setupData.profile.language === 'fr' ? 'Français' : setupData.profile.language === 'ht' ? 'Kreyòl' : 'English'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">🔐 Sécurité 2FA:</span>
-              <span className="font-medium">{setupData.security.two_factor ? 'Activée' : 'Désactivée'}</span>
+              <span className="text-gray-600 dark:text-gray-400">🔐 Sécurité 2FA:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{setupData.security.two_factor ? 'Activée' : 'Désactivée'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">🔔 Notifications:</span>
-              <span className="font-medium">{setupData.profile.notifications_enabled ? 'Activées' : 'Désactivées'}</span>
+              <span className="text-gray-600 dark:text-gray-400">🔔 Notifications:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{setupData.profile.notifications_enabled ? 'Activées' : 'Désactivées'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">🎨 Thème:</span>
-              <span className="font-medium">{setupData.profile.theme === 'light' ? 'Clair' : 'Sombre'}</span>
+              <span className="text-gray-600 dark:text-gray-400">🎨 Thème:</span>
+              <span className="font-medium text-gray-900 dark:text-white flex items-center">
+                {setupData.profile.theme === 'light' ? '☀️ Clair' : '🌙 Sombre'}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2">🚀 Prochaines étapes suggérées</h4>
-          <ul className="text-blue-800 text-sm space-y-1">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">🚀 Prochaines étapes suggérées</h4>
+          <ul className="text-blue-800 dark:text-blue-400 text-sm space-y-1">
             <li>• Enregistrez votre première transaction</li>
             <li>• Configurez vos premiers budgets mensuels</li>
             <li>• Explorez les fonctionnalités des sols haïtiens</li>
@@ -878,7 +884,7 @@ const Setup = () => {
             }
           }}
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 text-white px-6 py-4 rounded-lg font-medium transition-all transform hover:scale-105 flex items-center justify-center space-x-2"
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white px-6 py-4 rounded-lg font-medium transition-all transform hover:scale-105 disabled:scale-100 flex items-center justify-center space-x-2"
         >
           {isLoading ? (
             <>
@@ -921,20 +927,20 @@ const Setup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-800 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-800 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 transition-colors duration-300">
       <div className="max-w-4xl mx-auto">
         {/* Progress Steps */}
-        <div className="bg-white rounded-lg shadow-lg mb-8 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-8 p-6 transition-colors duration-300">
           <div className="flex items-center justify-between overflow-x-auto">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center min-w-0">
                 <div className="flex flex-col items-center">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-full font-semibold ${
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-full font-semibold transition-all duration-300 ${
                     step.number === currentStep 
-                      ? 'bg-blue-600 text-white' 
+                      ? 'bg-blue-600 text-white shadow-lg' 
                       : step.number < currentStep
                       ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }`}>
                     {step.number < currentStep ? (
                       <CheckCircle className="w-6 h-6" />
@@ -943,13 +949,13 @@ const Setup = () => {
                     )}
                   </div>
                   <div className="mt-2 text-center min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{step.title}</div>
-                    <div className="text-xs text-gray-500 hidden md:block truncate">{step.description}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{step.title}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 hidden md:block truncate">{step.description}</div>
                   </div>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`hidden md:block w-16 h-0.5 mx-4 ${
-                    step.number < currentStep ? 'bg-green-600' : 'bg-gray-200'
+                  <div className={`hidden md:block w-16 h-0.5 mx-4 transition-colors duration-300 ${
+                    step.number < currentStep ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'
                   }`} />
                 )}
               </div>
@@ -958,7 +964,7 @@ const Setup = () => {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 transition-colors duration-300">
           {renderStep()}
         </div>
 
@@ -968,7 +974,7 @@ const Setup = () => {
             <button
               onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
               disabled={currentStep === 1}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors duration-300"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Précédent</span>
@@ -979,7 +985,7 @@ const Setup = () => {
               {(currentStep === 2 || currentStep === 5) && (
                 <button
                   onClick={() => setCurrentStep(Math.min(6, currentStep + 1))}
-                  className="px-4 py-2 text-gray-500 hover:text-gray-700 font-medium"
+                  className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors duration-300"
                 >
                   Ignorer cette étape
                 </button>
@@ -988,7 +994,7 @@ const Setup = () => {
               <button
                 onClick={() => setCurrentStep(Math.min(6, currentStep + 1))}
                 disabled={!canProceed()}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-all duration-300 flex items-center space-x-2"
               >
                 <span>Suivant</span>
                 <ArrowRight className="w-4 h-4" />
@@ -998,12 +1004,12 @@ const Setup = () => {
         )}
 
         {/* Progress indicator */}
-        <div className="mt-6 bg-white rounded-lg p-4 shadow-lg">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg transition-colors duration-300">
+          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
             <span>Progression</span>
             <span>{Math.round((currentStep / 6) * 100)}% terminé</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / 6) * 100}%` }}
