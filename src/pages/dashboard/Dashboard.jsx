@@ -168,38 +168,63 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Stats */}
-      <Card title="Actions Rapides">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/transactions/add">
-            <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-              <Plus className="w-6 h-6" />
-              <span className="text-sm">Transaction</span>
-            </Button>
-          </Link>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <CreditCard className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-gray-600">Solde Total</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(getTotalBalance())}
+              </p>
+            </div>
+          </div>
+        </Card>
 
-          <Link to="/accounts/add">
-            <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-              <CreditCard className="w-6 h-6" />
-              <span className="text-sm">Compte</span>
-            </Button>
-          </Link>
+        <Card>
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-gray-600">Revenus</p>
+              <p className="text-2xl font-bold text-green-600">
+                +{formatCurrency(currentStats.income)}
+              </p>
+            </div>
+          </div>
+        </Card>
 
-          <Link to="/budgets">
-            <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-              <PieChart className="w-6 h-6" />
-              <span className="text-sm">Budget</span>
-            </Button>
-          </Link>
+        <Card>
+          <div className="flex items-center">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <TrendingDown className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-gray-600">Dépenses</p>
+              <p className="text-2xl font-bold text-red-600">
+                -{formatCurrency(currentStats.expenses)}
+              </p>
+            </div>
+          </div>
+        </Card>
 
-          <Link to="/sols">
-            <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
-              <Users className="w-6 h-6" />
-              <span className="text-sm">Sol</span>
-            </Button>
-          </Link>
-        </div>
-      </Card>
-
+        <Card>
+          <div className="flex items-center">
+            <div className={`p-2 rounded-lg ${currentStats.net >= 0 ? 'bg-blue-100' : 'bg-orange-100'}`}>
+              <DollarSign className={`w-6 h-6 ${currentStats.net >= 0 ? 'text-blue-600' : 'text-orange-600'}`} />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-gray-600">Balance</p>
+              <p className={`text-2xl font-bold ${currentStats.net >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                {currentStats.net >= 0 ? '+' : ''}{formatCurrency(currentStats.net)}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Mes Comptes */}
@@ -306,7 +331,8 @@ const Dashboard = () => {
                     Voir toutes les transactions
                   </Button>
                 </Link>
-              </>)}
+              </>
+            )}
           </div>
         </Card>
       </div>
@@ -354,14 +380,14 @@ const Dashboard = () => {
       {/* Quick Actions */}
       <Card title="Actions Rapides">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/transactions">
+          <Link to="/transactions/add">
             <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
               <Plus className="w-6 h-6" />
               <span className="text-sm">Transaction</span>
             </Button>
           </Link>
 
-          <Link to="/accounts">
+          <Link to="/accounts/add">
             <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
               <CreditCard className="w-6 h-6" />
               <span className="text-sm">Compte</span>
