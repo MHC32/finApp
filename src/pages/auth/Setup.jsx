@@ -1,7 +1,8 @@
-// src/pages/auth/Setup.jsx
+// src/pages/auth/Setup.jsx - VERSION AVEC SUPPORT COMPLET DU THÈME SOMBRE
 import React, { useState } from 'react';
 import { CheckCircle, ArrowRight, ArrowLeft, User, DollarSign, CreditCard, Tag, Globe, Bell, Palette, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../database/db';
 
@@ -9,6 +10,7 @@ const Setup = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const { completeSetup, user } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
   const navigate = useNavigate();
 
   const [setupData, setSetupData] = useState({
@@ -16,7 +18,7 @@ const Setup = () => {
       currency_preference: 'HTG',
       language: 'fr',
       timezone: 'America/Port-au-Prince',
-      theme: 'light',
+      theme: theme, // ✅ Utiliser le thème actuel du store
       notifications_enabled: true,
       weekly_summary: true,
       budget_alerts: true,
@@ -58,7 +60,7 @@ const Setup = () => {
     { number: 6, title: 'Terminé', description: 'Configuration complète', icon: CheckCircle }
   ];
 
-   const saveAccountsToDatabase = async () => {
+  const saveAccountsToDatabase = async () => {
     if (!user?.id || setupData.accounts.length === 0) return;
 
     try {
@@ -87,25 +89,35 @@ const Setup = () => {
       console.error('❌ Erreur lors de la sauvegarde des comptes:', error);
     }
   };
+
+  // ✅ Fonction pour changer le thème et mettre à jour le store
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme); // Mettre à jour le store global
+    setSetupData(prev => ({
+      ...prev,
+      profile: { ...prev.profile, theme: newTheme }
+    }));
+  };
+
   // Étape 1: Profil et Préférences
   const ProfileStep = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <User className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration de votre profil</h2>
-        <p className="text-gray-600">Personnalisez votre expérience FinApp Haiti</p>
+        <User className="w-12 h-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Configuration de votre profil</h2>
+        <p className="text-gray-600 dark:text-gray-300">Personnalisez votre expérience FinApp Haiti</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Devise principale</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Devise principale</label>
           <select 
             value={setupData.profile.currency_preference}
             onChange={(e) => setSetupData(prev => ({
               ...prev,
               profile: { ...prev.profile, currency_preference: e.target.value }
             }))}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           >
             <option value="HTG">🇭🇹 Gourde Haïtienne (HTG)</option>
             <option value="USD">🇺🇸 Dollar Américain (USD)</option>
@@ -114,14 +126,14 @@ const Setup = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Langue</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Langue</label>
           <select 
             value={setupData.profile.language}
             onChange={(e) => setSetupData(prev => ({
               ...prev,
               profile: { ...prev.profile, language: e.target.value }
             }))}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           >
             <option value="fr">🇫🇷 Français</option>
             <option value="ht">🇭🇹 Kreyòl Ayisyen</option>
@@ -130,40 +142,41 @@ const Setup = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Thème</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Thème d'apparence</label>
           <div className="grid grid-cols-2 gap-3">
-            {['light', 'dark'].map(theme => (
+            {[
+              { value: 'light', icon: '☀️', label: 'Clair' },
+              { value: 'dark', icon: '🌙', label: 'Sombre' }
+            ].map(themeOption => (
               <button
-                key={theme}
-                onClick={() => setSetupData(prev => ({
-                  ...prev,
-                  profile: { ...prev.profile, theme }
-                }))}
-                className={`p-3 rounded-lg border-2 transition-colors relative ${
-                  setupData.profile.theme === theme
-                    ? 'border-blue-500 bg-blue-50 text-blue-900'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                key={themeOption.value}
+                onClick={() => handleThemeChange(themeOption.value)}
+                className={`p-4 rounded-lg border-2 transition-all duration-200 relative ${
+                  setupData.profile.theme === themeOption.value
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-300 shadow-md'
+                    : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
                 }`}
-                disabled={theme === 'dark'}
               >
-                {theme === 'light' ? '☀️' : '🌙'} {theme === 'light' ? 'Clair' : 'Sombre'}
-                {theme === 'dark' && (
-                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-yellow-900 text-xs px-1 rounded">
-                    Bientôt
-                  </span>
+                <div className="text-2xl mb-2">{themeOption.icon}</div>
+                <div className="font-medium">{themeOption.label}</div>
+                <div className="text-xs opacity-75 mt-1">
+                  {themeOption.value === 'light' ? 'Interface claire' : 'Interface sombre'}
+                </div>
+                {setupData.profile.theme === themeOption.value && (
+                  <div className="absolute top-2 right-2">
+                    <CheckCircle className="w-5 h-5 text-blue-500" />
+                  </div>
                 )}
               </button>
             ))}
           </div>
-          {setupData.profile.theme === 'dark' && (
-            <p className="text-xs text-gray-500 mt-2">
-              💡 Le thème sombre sera disponible dans une prochaine version
-            </p>
-          )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            💡 Le thème s'applique immédiatement à toute l'application
+          </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">Notifications</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Notifications</label>
           <div className="space-y-3">
             {[
               { key: 'notifications_enabled', label: 'Notifications générales', icon: '🔔' },
@@ -171,7 +184,7 @@ const Setup = () => {
               { key: 'budget_alerts', label: 'Alertes budget', icon: '⚠️' },
               { key: 'goal_reminders', label: 'Rappels objectifs', icon: '🎯' }
             ].map(({ key, label, icon }) => (
-              <label key={key} className="flex items-center space-x-3">
+              <label key={key} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <input
                   type="checkbox"
                   checked={setupData.profile[key]}
@@ -179,9 +192,9 @@ const Setup = () => {
                     ...prev,
                     profile: { ...prev.profile, [key]: e.target.checked }
                   }))}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                 />
-                <span className="text-sm text-gray-700">{icon} {label}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{icon} {label}</span>
               </label>
             ))}
           </div>
@@ -194,18 +207,18 @@ const Setup = () => {
   const SecurityStep = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <Shield className="w-12 h-12 text-green-600 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Sécurité de votre compte</h2>
-        <p className="text-gray-600">Protégez vos données financières</p>
+        <Shield className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Sécurité de votre compte</h2>
+        <p className="text-gray-600 dark:text-gray-300">Protégez vos données financières</p>
       </div>
 
       <div className="space-y-6">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <Shield className="w-5 h-5 text-green-600 mt-0.5" />
+            <Shield className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
             <div>
-              <p className="text-green-800 font-medium">Sécurité recommandée</p>
-              <p className="text-green-700 text-sm">
+              <p className="text-green-800 dark:text-green-300 font-medium">Sécurité recommandée</p>
+              <p className="text-green-700 dark:text-green-400 text-sm">
                 FinApp Haiti utilise un chiffrement de bout en bout pour protéger vos données.
               </p>
             </div>
@@ -214,12 +227,12 @@ const Setup = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Authentification</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Authentification</h3>
             
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
               <div>
-                <span className="text-sm font-medium text-gray-900">🔐 Authentification à deux facteurs</span>
-                <p className="text-xs text-gray-600">Sécurité supplémentaire avec SMS</p>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">🔐 Authentification à deux facteurs</span>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Sécurité supplémentaire avec SMS</p>
               </div>
               <input
                 type="checkbox"
@@ -228,14 +241,14 @@ const Setup = () => {
                   ...prev,
                   security: { ...prev.security, two_factor: e.target.checked }
                 }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
               <div>
-                <span className="text-sm font-medium text-gray-900">👆 Connexion biométrique</span>
-                <p className="text-xs text-gray-600">Empreinte digitale ou Face ID</p>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">👆 Connexion biométrique</span>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Empreinte digitale ou Face ID</p>
               </div>
               <input
                 type="checkbox"
@@ -244,16 +257,16 @@ const Setup = () => {
                   ...prev,
                   security: { ...prev.security, biometric_login: e.target.checked }
                 }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
               />
             </label>
           </div>
 
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Session et Données</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Session et Données</h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 ⏱️ Expiration de session (minutes)
               </label>
               <select
@@ -262,7 +275,7 @@ const Setup = () => {
                   ...prev,
                   security: { ...prev.security, session_timeout: parseInt(e.target.value) }
                 }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
                 <option value={15}>15 minutes</option>
                 <option value={30}>30 minutes</option>
@@ -272,10 +285,10 @@ const Setup = () => {
               </select>
             </div>
 
-            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
               <div>
-                <span className="text-sm font-medium text-gray-900">☁️ Sauvegarde automatique</span>
-                <p className="text-xs text-gray-600">Backup chiffré de vos données</p>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">☁️ Sauvegarde automatique</span>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Backup chiffré de vos données</p>
               </div>
               <input
                 type="checkbox"
@@ -284,7 +297,7 @@ const Setup = () => {
                   ...prev,
                   security: { ...prev.security, data_backup: e.target.checked }
                 }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
               />
             </label>
           </div>
@@ -304,42 +317,39 @@ const Setup = () => {
     });
 
     const haitianBanks = [
-  'BUH (Banque de l\'Union Haïtienne)',
-  'Sogebank',
-  'Capital Bank',
-  'BNC (Banque Nationale de Crédit)',
-  'Unibank',
-  'Banque Populaire Haïtienne (BPH)',
-  'SOFIHDES (Société Financière Haïtienne de Développement)',
-  'Banque de la République d\'Haïti (BRH) - Banque Centrale',
-  'Citibank Haïti',
-  'Bank of America Haïti (services limités)',
-  'Banque de l\'Habitat Haïtien (BHH)',
-  'PromoCapital',
-  'Fonkoze (institution de microfinance)',
-  'Sogesol (institution de microfinance)',
-  'CACR (Caisse d\'Épargne et de Crédit)',
-  'Finca Haïti',
-  'ACMÉ (Association pour la Coopération avec la Micro-Entreprise)',
-  'Fondation Haïtienne d\'Aide aux Petits Entrepreneurs (FHAPE)',
-  'CECARE (Caisse d\'Épargne et de Crédit des Artisans)',
-  'Autre institution financière',
-  'Espèce (non bancarisé)',
-  'Autre'
-];
+      'BUH (Banque de l\'Union Haïtienne)',
+      'Sogebank',
+      'Capital Bank',
+      'BNC (Banque Nationale de Crédit)',
+      'Unibank',
+      'Banque Populaire Haïtienne (BPH)',
+      'SOFIHDES (Société Financière Haïtienne de Développement)',
+      'Banque de la République d\'Haïti (BRH) - Banque Centrale',
+      'Citibank Haïti',
+      'Bank of America Haïti (services limités)',
+      'Banque de l\'Habitat Haïtien (BHH)',
+      'PromoCapital',
+      'Fonkoze (institution de microfinance)',
+      'Sogesol (institution de microfinance)',
+      'CACR (Caisse d\'Épargne et de Crédit)',
+      'Finca Haïti',
+      'ACMÉ (Association pour la Coopération avec la Micro-Entreprise)',
+      'Fondation Haïtienne d\'Aide aux Petits Entrepreneurs (FHAPE)',
+      'CECARE (Caisse d\'Épargne et de Crédit des Artisans)',
+      'Autre institution financière',
+      'Espèce (non bancarisé)',
+      'Autre'
+    ];
 
-     const addAccount = () => {
+    const addAccount = () => {
       if (newAccount.name && newAccount.current_balance) {
-        // Vérifier si c'est un compte espèces
         if (newAccount.account_type === 'cash') {
-          // Pour les espèces, pas besoin de banque
           if (!newAccount.bank_name) {
             newAccount.bank_name = 'Portefeuille Personnel';
           }
         } else {
-          // Pour les autres types, la banque est requise
           if (!newAccount.bank_name) {
-            return; // Ne pas ajouter si pas de banque
+            return;
           }
         }
         
@@ -367,9 +377,9 @@ const Setup = () => {
     return (
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <CreditCard className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Vos comptes bancaires</h2>
-          <p className="text-gray-600">Connectez vos comptes pour un suivi complet</p>
+          <CreditCard className="w-12 h-12 text-purple-600 dark:text-purple-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Vos comptes bancaires</h2>
+          <p className="text-gray-600 dark:text-gray-300">Connectez vos comptes pour un suivi complet</p>
         </div>
 
         {/* Quick Setup Options */}
@@ -382,11 +392,11 @@ const Setup = () => {
               currency: 'HTG',
               current_balance: '0'
             })}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
           >
-            <CreditCard className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Configuration rapide</p>
-            <p className="text-xs text-gray-500">Sogebank - Compte courant</p>
+            <CreditCard className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Configuration rapide</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Sogebank - Compte courant</p>
           </button>
           
           <button
@@ -397,11 +407,11 @@ const Setup = () => {
               currency: 'USD',
               current_balance: '0'
             })}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
           >
-            <DollarSign className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Compte épargne</p>
-            <p className="text-xs text-gray-500">BUH - Épargne USD</p>
+            <DollarSign className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Compte épargne</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">BUH - Épargne USD</p>
           </button>
 
           <button
@@ -412,17 +422,17 @@ const Setup = () => {
               currency: 'HTG',
               current_balance: '0'
             })}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
           >
             <span className="text-2xl block mb-2">💰</span>
-            <p className="text-sm font-medium text-gray-700">Argent liquide</p>
-            <p className="text-xs text-gray-500">Portefeuille - Cash</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Argent liquide</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Portefeuille - Cash</p>
           </button>
         </div>
 
         {/* Formulaire manuel */}
-        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900">Ou ajoutez manuellement</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 space-y-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white">Ou ajoutez manuellement</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
@@ -430,13 +440,13 @@ const Setup = () => {
               value={newAccount.name}
               onChange={(e) => setNewAccount(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Nom du compte"
-              className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
             />
 
             <select
               value={newAccount.bank_name}
               onChange={(e) => setNewAccount(prev => ({ ...prev, bank_name: e.target.value }))}
-              className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="">Sélectionner une banque</option>
               {haitianBanks.map(bank => (
@@ -447,7 +457,7 @@ const Setup = () => {
             <select
               value={newAccount.account_type}
               onChange={(e) => setNewAccount(prev => ({ ...prev, account_type: e.target.value }))}
-              className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="checking">🏦 Compte Courant</option>
               <option value="savings">💰 Compte Épargne</option>
@@ -462,12 +472,12 @@ const Setup = () => {
                 onChange={(e) => setNewAccount(prev => ({ ...prev, current_balance: e.target.value }))}
                 placeholder="Solde actuel"
                 step="0.01"
-                className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               />
               <select
                 value={newAccount.currency}
                 onChange={(e) => setNewAccount(prev => ({ ...prev, currency: e.target.value }))}
-                className="w-20 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-20 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
                 <option value="HTG">HTG</option>
                 <option value="USD">USD</option>
@@ -478,7 +488,7 @@ const Setup = () => {
           <button
             onClick={addAccount}
             disabled={!newAccount.name || !newAccount.bank_name || !newAccount.current_balance}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg font-medium transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors"
           >
             ➕ Ajouter ce compte
           </button>
@@ -487,25 +497,25 @@ const Setup = () => {
         {/* Liste des comptes ajoutés */}
         {setupData.accounts.length > 0 && (
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900">Comptes configurés ({setupData.accounts.length})</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Comptes configurés ({setupData.accounts.length})</h3>
             {setupData.accounts.map(account => (
-              <div key={account.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+              <div key={account.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                   <div>
-                    <div className="font-medium text-gray-900">{account.name}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="font-medium text-gray-900 dark:text-white">{account.name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       {account.bank_name} • {account.account_type} • {account.currency}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className="font-semibold text-lg">
+                  <span className="font-semibold text-lg text-gray-900 dark:text-white">
                     {parseFloat(account.current_balance).toLocaleString()} {account.currency}
                   </span>
                   <button
                     onClick={() => removeAccount(account.id)}
-                    className="text-red-600 hover:text-red-800 p-1"
+                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1"
                   >
                     🗑️
                   </button>
