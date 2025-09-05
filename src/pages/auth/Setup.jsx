@@ -1,6 +1,6 @@
-// src/pages/auth/Setup.jsx - VERSION AVEC SUPPORT COMPLET DU THÈME SOMBRE
+// src/pages/auth/Setup.jsx - VERSION COMPLÈTE AVEC TOUS LES BUG FIXES
 import React, { useState } from 'react';
-import { CheckCircle, ArrowRight, ArrowLeft, User, DollarSign, CreditCard, Tag, Globe, Bell, Palette, Shield } from 'lucide-react';
+import { CheckCircle, ArrowRight, ArrowLeft, User, DollarSign, CreditCard, Tag, Globe, Bell, Palette, Shield, Calendar, Clock, Target } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ const Setup = () => {
       currency_preference: 'HTG',
       language: 'fr',
       timezone: 'America/Port-au-Prince',
-      theme: theme, // ✅ Utiliser le thème actuel du store
+      theme: theme,
       notifications_enabled: true,
       weekly_summary: true,
       budget_alerts: true,
@@ -27,9 +27,10 @@ const Setup = () => {
     security: {
       two_factor: false,
       biometric_login: false,
-      session_timeout: 30,
+      session_timeout: 30, // ✅ BUG FIX 1: Par défaut 30 minutes
       data_backup: true
     },
+    income_sources: [],
     accounts: [],
     categories: [
       { name: 'Alimentation', emoji: '🍽️', type: 'expense', color: '#EF4444', enabled: true },
@@ -55,17 +56,31 @@ const Setup = () => {
     { number: 1, title: 'Profil', description: 'Préférences personnelles', icon: User },
     { number: 2, title: 'Sécurité', description: 'Paramètres de sécurité', icon: Shield },
     { number: 3, title: 'Comptes', description: 'Comptes bancaires', icon: CreditCard },
-    { number: 4, title: 'Catégories', description: 'Organisation des dépenses', icon: Tag },
-    { number: 5, title: 'Objectifs', description: 'Objectifs d\'épargne', icon: DollarSign },
-    { number: 6, title: 'Terminé', description: 'Configuration complète', icon: CheckCircle }
+    { number: 4, title: 'Revenus', description: 'Salaires et revenus', icon: Calendar }, // ← Icône changée
+    { number: 5, title: 'Catégories', description: 'Organisation des dépenses', icon: Tag },
+    { number: 6, title: 'Objectifs', description: 'Objectifs d\'épargne', icon: Target },
+    { number: 7, title: 'Terminé', description: 'Configuration complète', icon: CheckCircle }
   ];
+
+  // ✅ BUG FIX 1: Fonction pour sauvegarder les préférences de session
+  const saveSessionPreferences = () => {
+    const preferences = {
+      sessionTimeout: setupData.security.session_timeout,
+      twoFactor: setupData.security.two_factor,
+      biometricLogin: setupData.security.biometric_login,
+      dataBackup: setupData.security.data_backup
+    };
+
+    localStorage.setItem('finapp-security-preferences', JSON.stringify(preferences));
+    console.log('💾 Préférences de sécurité sauvegardées:', preferences);
+  };
 
   const saveAccountsToDatabase = async () => {
     if (!user?.id || setupData.accounts.length === 0) return;
 
     try {
       console.log('💾 Sauvegarde des comptes en base de données...');
-      
+
       for (const accountData of setupData.accounts) {
         const newAccount = {
           user_id: user.id,
@@ -79,20 +94,19 @@ const Setup = () => {
           created_at: new Date(),
           updated_at: new Date()
         };
-        
+
         await db.accounts.add(newAccount);
         console.log(`✅ Compte "${accountData.name}" sauvegardé`);
       }
-      
+
       console.log(`🎉 ${setupData.accounts.length} compte(s) sauvegardé(s) avec succès`);
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde des comptes:', error);
     }
   };
 
-  // ✅ Fonction pour changer le thème et mettre à jour le store
   const handleThemeChange = (newTheme) => {
-    setTheme(newTheme); // Mettre à jour le store global
+    setTheme(newTheme);
     setSetupData(prev => ({
       ...prev,
       profile: { ...prev.profile, theme: newTheme }
@@ -111,7 +125,7 @@ const Setup = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Devise principale</label>
-          <select 
+          <select
             value={setupData.profile.currency_preference}
             onChange={(e) => setSetupData(prev => ({
               ...prev,
@@ -127,7 +141,7 @@ const Setup = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Langue</label>
-          <select 
+          <select
             value={setupData.profile.language}
             onChange={(e) => setSetupData(prev => ({
               ...prev,
@@ -151,11 +165,10 @@ const Setup = () => {
               <button
                 key={themeOption.value}
                 onClick={() => handleThemeChange(themeOption.value)}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 relative ${
-                  setupData.profile.theme === themeOption.value
+                className={`p-4 rounded-lg border-2 transition-all duration-200 relative ${setupData.profile.theme === themeOption.value
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-300 shadow-md'
                     : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
-                }`}
+                  }`}
               >
                 <div className="text-2xl mb-2">{themeOption.icon}</div>
                 <div className="font-medium">{themeOption.label}</div>
@@ -203,7 +216,7 @@ const Setup = () => {
     </div>
   );
 
-  // Étape 2: Sécurité
+  // ✅ BUG FIX 2: Étape Sécurité avec messages d'indisponibilité
   const SecurityStep = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -228,11 +241,17 @@ const Setup = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900 dark:text-white">Authentification</h3>
-            
-            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">🔐 Authentification à deux facteurs</span>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Sécurité supplémentaire avec SMS</p>
+
+            {/* ✅ BUG FIX 2: Authentification à deux facteurs avec message */}
+            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">🔐 Authentification à deux facteurs</span>
+                  <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 px-2 py-1 rounded-full">
+                    Bientôt
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Sécurité supplémentaire avec SMS (en développement)</p>
               </div>
               <input
                 type="checkbox"
@@ -241,14 +260,21 @@ const Setup = () => {
                   ...prev,
                   security: { ...prev.security, two_factor: e.target.checked }
                 }))}
-                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
+                disabled={true}
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600 opacity-50 cursor-not-allowed"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-              <div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">👆 Connexion biométrique</span>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Empreinte digitale ou Face ID</p>
+            {/* ✅ BUG FIX 2: Connexion biométrique avec message */}
+            <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">👆 Connexion biométrique</span>
+                  <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 px-2 py-1 rounded-full">
+                    Bientôt
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Empreinte digitale ou Face ID (en développement)</p>
               </div>
               <input
                 type="checkbox"
@@ -257,38 +283,52 @@ const Setup = () => {
                   ...prev,
                   security: { ...prev.security, biometric_login: e.target.checked }
                 }))}
-                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
+                disabled={true}
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600 opacity-50 cursor-not-allowed"
               />
             </label>
           </div>
 
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900 dark:text-white">Session et Données</h3>
-            
+
+            {/* ✅ BUG FIX 1: Gestion de la session avec respect du choix utilisateur */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 ⏱️ Expiration de session (minutes)
               </label>
               <select
                 value={setupData.security.session_timeout}
-                onChange={(e) => setSetupData(prev => ({
-                  ...prev,
-                  security: { ...prev.security, session_timeout: parseInt(e.target.value) }
-                }))}
+                onChange={(e) => {
+                  const newTimeout = parseInt(e.target.value);
+                  setSetupData(prev => ({
+                    ...prev,
+                    security: { ...prev.security, session_timeout: newTimeout }
+                  }));
+                  console.log('⏱️ Session timeout défini à:', newTimeout === -1 ? 'Jamais' : `${newTimeout} minutes`);
+                }}
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
+                <option value={5}>5 minutes</option>
                 <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
+                <option value={30}>30 minutes (recommandé)</option>
                 <option value={60}>1 heure</option>
                 <option value={120}>2 heures</option>
-                <option value={-1}>Jamais</option>
+                <option value={480}>8 heures</option>
+                <option value={-1}>Jamais (déconseillé)</option>
               </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {setupData.security.session_timeout === -1
+                  ? "⚠️ Votre session ne expirera jamais (moins sécurisé)"
+                  : `🔒 Votre session expirera après ${setupData.security.session_timeout} minutes d'inactivité`
+                }
+              </p>
             </div>
 
             <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
               <div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">☁️ Sauvegarde automatique</span>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Backup chiffré de vos données</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Backup chiffré de vos données localement</p>
               </div>
               <input
                 type="checkbox"
@@ -306,7 +346,7 @@ const Setup = () => {
     </div>
   );
 
-  // Étape 3: Comptes Bancaires
+  // ✅ BUG FIX 3 & 5: Étape Comptes avec gestion portefeuille et cartes de crédit
   const AccountsStep = () => {
     const [newAccount, setNewAccount] = useState({
       name: '',
@@ -316,6 +356,7 @@ const Setup = () => {
       current_balance: ''
     });
 
+    // ✅ BUG FIX 5: Banques haïtiennes incluant cartes de crédit
     const haitianBanks = [
       'BUH (Banque de l\'Union Haïtienne)',
       'Sogebank',
@@ -336,35 +377,50 @@ const Setup = () => {
       'ACMÉ (Association pour la Coopération avec la Micro-Entreprise)',
       'Fondation Haïtienne d\'Aide aux Petits Entrepreneurs (FHAPE)',
       'CECARE (Caisse d\'Épargne et de Crédit des Artisans)',
+      // ✅ BUG FIX 5: Ajout des cartes de crédit
+      'Visa Haiti',
+      'MasterCard Haiti',
+      'American Express Haiti',
+      'Diners Club Haiti',
       'Autre institution financière',
-      'Espèce (non bancarisé)',
       'Autre'
     ];
 
+    // ✅ BUG FIX 3: Validation qui respecte le type de compte
     const addAccount = () => {
-      if (newAccount.name && newAccount.current_balance) {
-        if (newAccount.account_type === 'cash') {
-          if (!newAccount.bank_name) {
-            newAccount.bank_name = 'Portefeuille Personnel';
-          }
-        } else {
-          if (!newAccount.bank_name) {
-            return;
-          }
-        }
-        
-        setSetupData(prev => ({
-          ...prev,
-          accounts: [...prev.accounts, { ...newAccount, id: Date.now(), color: '#3B82F6' }]
-        }));
-        setNewAccount({
-          name: '',
-          bank_name: '',
-          account_type: 'checking',
-          currency: setupData.profile.currency_preference === 'BOTH' ? 'HTG' : setupData.profile.currency_preference,
-          current_balance: ''
-        });
+      // Validation de base
+      if (!newAccount.name || !newAccount.current_balance) {
+        alert('Veuillez remplir le nom du compte et le solde');
+        return;
       }
+
+      // ✅ BUG FIX 3: Logique spéciale pour les espèces/portefeuille
+      if (newAccount.account_type === 'cash') {
+        // Pour les espèces, pas besoin de banque
+        if (!newAccount.bank_name) {
+          newAccount.bank_name = 'Portefeuille Personnel';
+        }
+      } else {
+        // Pour tous les autres types (checking, savings, credit), la banque est requise
+        if (!newAccount.bank_name) {
+          alert('Veuillez sélectionner une banque pour ce type de compte');
+          return;
+        }
+      }
+
+      setSetupData(prev => ({
+        ...prev,
+        accounts: [...prev.accounts, { ...newAccount, id: Date.now(), color: '#3B82F6' }]
+      }));
+
+      // Reset du formulaire
+      setNewAccount({
+        name: '',
+        bank_name: '',
+        account_type: 'checking',
+        currency: setupData.profile.currency_preference === 'BOTH' ? 'HTG' : setupData.profile.currency_preference,
+        current_balance: ''
+      });
     };
 
     const removeAccount = (id) => {
@@ -398,7 +454,7 @@ const Setup = () => {
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Configuration rapide</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Sogebank - Compte courant</p>
           </button>
-          
+
           <button
             onClick={() => setNewAccount({
               name: 'Épargne',
@@ -414,10 +470,11 @@ const Setup = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400">BUH - Épargne USD</p>
           </button>
 
+          {/* ✅ BUG FIX 3: Configuration rapide pour portefeuille */}
           <button
             onClick={() => setNewAccount({
               name: 'Espèces',
-              bank_name: 'Portefeuille',
+              bank_name: 'Portefeuille Personnel', // ✅ Pré-rempli automatiquement
               account_type: 'cash',
               currency: 'HTG',
               current_balance: '0'
@@ -426,14 +483,14 @@ const Setup = () => {
           >
             <span className="text-2xl block mb-2">💰</span>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Argent liquide</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Portefeuille - Cash</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Portefeuille - Espèces</p>
           </button>
         </div>
 
         {/* Formulaire manuel */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 space-y-4">
           <h3 className="font-semibold text-gray-900 dark:text-white">Ou ajoutez manuellement</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
@@ -443,26 +500,47 @@ const Setup = () => {
               className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
             />
 
-            <select
-              value={newAccount.bank_name}
-              onChange={(e) => setNewAccount(prev => ({ ...prev, bank_name: e.target.value }))}
-              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">Sélectionner une banque</option>
-              {haitianBanks.map(bank => (
-                <option key={bank} value={bank}>{bank}</option>
-              ))}
-            </select>
+            {/* ✅ BUG FIX 3: Champ banque conditionnel */}
+            <div className="space-y-1">
+              <select
+                value={newAccount.bank_name}
+                onChange={(e) => setNewAccount(prev => ({ ...prev, bank_name: e.target.value }))}
+                disabled={newAccount.account_type === 'cash'} // ✅ Désactivé pour espèces
+                className={`p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${newAccount.account_type === 'cash' ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                  }`}
+              >
+                <option value="">
+                  {newAccount.account_type === 'cash' ? 'Portefeuille (automatique)' : 'Sélectionner une banque'}
+                </option>
+                {newAccount.account_type !== 'cash' && haitianBanks.map(bank => (
+                  <option key={bank} value={bank}>{bank}</option>
+                ))}
+              </select>
+              {newAccount.account_type === 'cash' && (
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  💡 Pour les espèces, aucune banque n'est requise
+                </p>
+              )}
+            </div>
 
+            {/* ✅ BUG FIX 5: Types de comptes incluant cartes de crédit */}
             <select
               value={newAccount.account_type}
-              onChange={(e) => setNewAccount(prev => ({ ...prev, account_type: e.target.value }))}
+              onChange={(e) => {
+                const newType = e.target.value;
+                setNewAccount(prev => ({
+                  ...prev,
+                  account_type: newType,
+                  // ✅ BUG FIX 3: Auto-remplissage pour portefeuille
+                  bank_name: newType === 'cash' ? 'Portefeuille Personnel' : ''
+                }));
+              }}
               className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="checking">🏦 Compte Courant</option>
               <option value="savings">💰 Compte Épargne</option>
-              <option value="credit">💳 Carte de Crédit</option>
-              <option value="cash">🪙 Espèces</option>
+              <option value="credit">💳 Carte de Crédit</option> {/* ✅ BUG FIX 5 */}
+              <option value="cash">🪙 Espèces / Portefeuille</option>
             </select>
 
             <div className="flex space-x-2">
@@ -470,7 +548,7 @@ const Setup = () => {
                 type="number"
                 value={newAccount.current_balance}
                 onChange={(e) => setNewAccount(prev => ({ ...prev, current_balance: e.target.value }))}
-                placeholder="Solde actuel"
+                placeholder={newAccount.account_type === 'credit' ? 'Limite de crédit' : 'Solde actuel'}
                 step="0.01"
                 className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               />
@@ -485,9 +563,19 @@ const Setup = () => {
             </div>
           </div>
 
+          {/* ✅ Message d'aide pour les cartes de crédit */}
+          {newAccount.account_type === 'credit' && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <p className="text-blue-800 dark:text-blue-300 text-sm">
+                💳 <strong>Carte de crédit :</strong> Entrez votre limite de crédit disponible.
+                Les dépenses seront déduites de cette limite.
+              </p>
+            </div>
+          )}
+
           <button
             onClick={addAccount}
-            disabled={!newAccount.name || !newAccount.bank_name || !newAccount.current_balance}
+            disabled={!newAccount.name || !newAccount.current_balance || (newAccount.account_type !== 'cash' && !newAccount.bank_name)}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors"
           >
             ➕ Ajouter ce compte
@@ -505,13 +593,21 @@ const Setup = () => {
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">{account.name}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {account.bank_name} • {account.account_type} • {account.currency}
+                      {account.bank_name} • {
+                        account.account_type === 'checking' ? 'Compte Courant' :
+                          account.account_type === 'savings' ? 'Épargne' :
+                            account.account_type === 'credit' ? 'Carte de Crédit' :
+                              'Espèces'
+                      } • {account.currency}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className="font-semibold text-lg text-gray-900 dark:text-white">
                     {parseFloat(account.current_balance).toLocaleString()} {account.currency}
+                    {account.account_type === 'credit' && (
+                      <span className="text-xs text-gray-500 ml-1">(limite)</span>
+                    )}
                   </span>
                   <button
                     onClick={() => removeAccount(account.id)}
@@ -533,7 +629,7 @@ const Setup = () => {
     const toggleCategory = (index) => {
       setSetupData(prev => ({
         ...prev,
-        categories: prev.categories.map((cat, i) => 
+        categories: prev.categories.map((cat, i) =>
           i === index ? { ...cat, enabled: !cat.enabled } : cat
         )
       }));
@@ -542,7 +638,7 @@ const Setup = () => {
     const updateCategoryColor = (index, color) => {
       setSetupData(prev => ({
         ...prev,
-        categories: prev.categories.map((cat, i) => 
+        categories: prev.categories.map((cat, i) =>
           i === index ? { ...cat, color } : cat
         )
       }));
@@ -567,11 +663,10 @@ const Setup = () => {
               {setupData.categories.filter(cat => cat.type === 'expense').map((category, index) => {
                 const originalIndex = setupData.categories.findIndex(cat => cat.name === category.name);
                 return (
-                  <div key={category.name} className={`p-3 rounded-lg border-2 transition-colors ${
-                    category.enabled 
-                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800' 
+                  <div key={category.name} className={`p-3 rounded-lg border-2 transition-colors ${category.enabled
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
                       : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
-                  }`}>
+                    }`}>
                     <div className="flex items-center justify-between">
                       <label className="flex items-center space-x-3 cursor-pointer flex-1">
                         <input
@@ -591,9 +686,8 @@ const Setup = () => {
                             <button
                               key={color}
                               onClick={() => updateCategoryColor(originalIndex, color)}
-                              className={`w-5 h-5 rounded-full border-2 transition-all ${
-                                category.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-gray-600 hover:scale-105'
-                              }`}
+                              className={`w-5 h-5 rounded-full border-2 transition-all ${category.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-gray-600 hover:scale-105'
+                                }`}
                               style={{ backgroundColor: color }}
                             />
                           ))}
@@ -614,11 +708,10 @@ const Setup = () => {
               {setupData.categories.filter(cat => cat.type === 'income').map((category, index) => {
                 const originalIndex = setupData.categories.findIndex(cat => cat.name === category.name);
                 return (
-                  <div key={category.name} className={`p-3 rounded-lg border-2 transition-colors ${
-                    category.enabled 
-                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800' 
+                  <div key={category.name} className={`p-3 rounded-lg border-2 transition-colors ${category.enabled
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
                       : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
-                  }`}>
+                    }`}>
                     <div className="flex items-center justify-between">
                       <label className="flex items-center space-x-3 cursor-pointer flex-1">
                         <input
@@ -638,9 +731,8 @@ const Setup = () => {
                             <button
                               key={color}
                               onClick={() => updateCategoryColor(originalIndex, color)}
-                              className={`w-5 h-5 rounded-full border-2 transition-all ${
-                                category.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-gray-600 hover:scale-105'
-                              }`}
+                              className={`w-5 h-5 rounded-full border-2 transition-all ${category.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-gray-600 hover:scale-105'
+                                }`}
                               style={{ backgroundColor: color }}
                             />
                           ))}
@@ -735,9 +827,8 @@ const Setup = () => {
             };
 
             return (
-              <div key={template.key} className={`p-4 rounded-lg border-2 transition-colors ${
-                goal.enabled ? colorClasses[template.color] : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-              }`}>
+              <div key={template.key} className={`p-4 rounded-lg border-2 transition-colors ${goal.enabled ? colorClasses[template.color] : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+                }`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{template.emoji}</span>
@@ -786,8 +877,8 @@ const Setup = () => {
             🎯 {Object.values(setupData.goals).filter(g => g.enabled).length} objectif(s) configuré(s)
           </p>
           <p className="text-green-700 dark:text-green-400 text-sm">
-            Objectif total: {Object.values(setupData.goals).reduce((sum, goal) => 
-              goal.enabled ? sum + goal.target : sum, 0
+            Objectif total: {Object.values(setupData.goals).reduce((sum, goal) =>
+              goal.enabled ? sum + (parseFloat(goal.target) || 0) : sum, 0
             ).toLocaleString()} {setupData.profile.currency_preference}
           </p>
         </div>
@@ -795,13 +886,414 @@ const Setup = () => {
     );
   };
 
-  // Étape 6: Terminé
+
+
+  // Étape 6: Revenus Automatiques - À ajouter dans Setup.jsx
+
+  const IncomeSourcesStep = () => {
+    const [newIncomeSource, setNewIncomeSource] = useState({
+      name: '',
+      employer: '',
+      amount: '',
+      currency: setupData.profile.currency_preference === 'BOTH' ? 'HTG' : setupData.profile.currency_preference,
+      frequency: 'monthly',
+      payment_day: 30,
+      payment_time: '08:00',
+      destination_account_id: '',
+      category: 'salary'
+    });
+
+    const frequencies = [
+      { value: 'monthly', label: '📅 Mensuel', description: 'Une fois par mois' },
+      { value: 'bi_monthly', label: '📅 Bi-mensuel', description: 'Deux fois par mois (15 et 30)' },
+      { value: 'weekly', label: '📅 Hebdomadaire', description: 'Chaque semaine' },
+      { value: 'bi_weekly', label: '📅 Bi-hebdomadaire', description: 'Toutes les deux semaines' }
+    ];
+
+    const incomeCategories = [
+      { value: 'salary', label: '💼 Salaire fixe', emoji: '💼' },
+      { value: 'freelance', label: '🚀 Freelance', emoji: '🚀' },
+      { value: 'business', label: '🏢 Revenus d\'entreprise', emoji: '🏢' },
+      { value: 'rental', label: '🏠 Revenus locatifs', emoji: '🏠' },
+      { value: 'investment', label: '📈 Investissements', emoji: '📈' },
+      { value: 'pension', label: '👴 Pension/Retraite', emoji: '👴' },
+      { value: 'other', label: '💰 Autre revenu', emoji: '💰' }
+    ];
+
+    const addIncomeSource = () => {
+      if (newIncomeSource.name && newIncomeSource.amount && newIncomeSource.destination_account_id) {
+        setSetupData(prev => ({
+          ...prev,
+          income_sources: [...prev.income_sources, { ...newIncomeSource, id: Date.now() }]
+        }));
+
+        setNewIncomeSource({
+          name: '',
+          employer: '',
+          amount: '',
+          currency: setupData.profile.currency_preference === 'BOTH' ? 'HTG' : setupData.profile.currency_preference,
+          frequency: 'monthly',
+          payment_day: 30,
+          payment_time: '08:00',
+          destination_account_id: '',
+          category: 'salary'
+        });
+      }
+    };
+
+    const removeIncomeSource = (id) => {
+      setSetupData(prev => ({
+        ...prev,
+        income_sources: prev.income_sources.filter(source => source.id !== id)
+      }));
+    };
+
+    const getPaymentDayOptions = () => {
+      const frequency = newIncomeSource.frequency;
+
+      if (frequency === 'monthly') {
+        // Jours du mois (1-31)
+        return Array.from({ length: 31 }, (_, i) => ({
+          value: i + 1,
+          label: `Le ${i + 1} du mois`
+        }));
+      } else if (frequency === 'bi_monthly') {
+        // Bi-mensuel : fixé à 15 et 30
+        return [
+          { value: 15, label: '15 et 30 du mois' }
+        ];
+      } else if (frequency === 'weekly' || frequency === 'bi_weekly') {
+        // Jours de la semaine
+        return [
+          { value: 1, label: 'Lundi' },
+          { value: 2, label: 'Mardi' },
+          { value: 3, label: 'Mercredi' },
+          { value: 4, label: 'Jeudi' },
+          { value: 5, label: 'Vendredi' },
+          { value: 6, label: 'Samedi' },
+          { value: 0, label: 'Dimanche' }
+        ];
+      }
+      return [];
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <Calendar className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Revenus automatiques</h2>
+          <p className="text-gray-600 dark:text-gray-300">Configurez vos salaires et revenus récurrents</p>
+        </div>
+
+        {/* Templates rapides */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <button
+            onClick={() => setNewIncomeSource({
+              ...newIncomeSource,
+              name: 'Salaire Principal',
+              category: 'salary',
+              frequency: 'monthly',
+              payment_day: 30,
+              payment_time: '08:00'
+            })}
+            className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">💼</span>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Salaire mensuel</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Paiement le 30 de chaque mois</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setNewIncomeSource({
+              ...newIncomeSource,
+              name: 'Freelance Weekend',
+              category: 'freelance',
+              frequency: 'weekly',
+              payment_day: 1,
+              payment_time: '10:00'
+            })}
+            className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+          >
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">🚀</span>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Freelance</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Paiement chaque lundi</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Formulaire d'ajout */}
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 space-y-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">✨ Ajouter un revenu automatique</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Nom et Employeur */}
+            <input
+              type="text"
+              value={newIncomeSource.name}
+              onChange={(e) => setNewIncomeSource(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Nom du revenu (ex: Salaire Principal)"
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+            />
+
+            <input
+              type="text"
+              value={newIncomeSource.employer}
+              onChange={(e) => setNewIncomeSource(prev => ({ ...prev, employer: e.target.value }))}
+              placeholder="Employeur ou source (optionnel)"
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+            />
+
+            {/* Montant et Devise */}
+            <div className="flex space-x-2">
+              <input
+                type="number"
+                value={newIncomeSource.amount}
+                onChange={(e) => setNewIncomeSource(prev => ({ ...prev, amount: e.target.value }))}
+                placeholder="Montant"
+                step="0.01"
+                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+              />
+              <select
+                value={newIncomeSource.currency}
+                onChange={(e) => setNewIncomeSource(prev => ({ ...prev, currency: e.target.value }))}
+                className="w-20 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="HTG">HTG</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+
+            {/* Catégorie */}
+            <select
+              value={newIncomeSource.category}
+              onChange={(e) => setNewIncomeSource(prev => ({ ...prev, category: e.target.value }))}
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+            >
+              {incomeCategories.map(category => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Fréquence */}
+            <select
+              value={newIncomeSource.frequency}
+              onChange={(e) => setNewIncomeSource(prev => ({
+                ...prev,
+                frequency: e.target.value,
+                payment_day: e.target.value === 'bi_monthly' ? 15 : 30
+              }))}
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+            >
+              {frequencies.map(freq => (
+                <option key={freq.value} value={freq.value}>
+                  {freq.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Jour de paiement */}
+            <select
+              value={newIncomeSource.payment_day}
+              onChange={(e) => setNewIncomeSource(prev => ({ ...prev, payment_day: parseInt(e.target.value) }))}
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              disabled={newIncomeSource.frequency === 'bi_monthly'}
+            >
+              {getPaymentDayOptions().map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Heure de paiement */}
+            <input
+              type="time"
+              value={newIncomeSource.payment_time}
+              onChange={(e) => setNewIncomeSource(prev => ({ ...prev, payment_time: e.target.value }))}
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+            />
+
+            {/* Compte de destination */}
+            <select
+              value={newIncomeSource.destination_account_id}
+              onChange={(e) => setNewIncomeSource(prev => ({ ...prev, destination_account_id: e.target.value }))}
+              className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Sélectionner le compte de destination</option>
+              {setupData.accounts.map(account => (
+                <option key={account.id} value={account.id}>
+                  💳 {account.name} - {account.bank_name} ({account.currency})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Aperçu de la fréquence */}
+          {newIncomeSource.frequency && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <p className="text-blue-800 dark:text-blue-300 text-sm">
+                <Clock className="w-4 h-4 inline mr-1" />
+                <strong>Fréquence:</strong> {frequencies.find(f => f.value === newIncomeSource.frequency)?.description}
+                {newIncomeSource.payment_day && (
+                  <span>
+                    {newIncomeSource.frequency === 'monthly' && ` - Le ${newIncomeSource.payment_day} de chaque mois`}
+                    {newIncomeSource.frequency === 'bi_monthly' && ` - Les 15 et 30 de chaque mois`}
+                    {(newIncomeSource.frequency === 'weekly' || newIncomeSource.frequency === 'bi_weekly') &&
+                      ` - ${getPaymentDayOptions().find(d => d.value === newIncomeSource.payment_day)?.label}`}
+                  </span>
+                )}
+                {newIncomeSource.payment_time && ` à ${newIncomeSource.payment_time}`}
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={addIncomeSource}
+            disabled={!newIncomeSource.name || !newIncomeSource.amount || !newIncomeSource.destination_account_id}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-colors"
+          >
+            ➕ Ajouter cette source de revenus
+          </button>
+        </div>
+
+        {/* Liste des revenus configurés */}
+        {setupData.income_sources.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              💰 Sources de revenus configurées ({setupData.income_sources.length})
+            </h3>
+            {setupData.income_sources.map(source => {
+              const account = setupData.accounts.find(acc => acc.id === parseInt(source.destination_account_id));
+              const category = incomeCategories.find(cat => cat.value === source.category);
+              const frequency = frequencies.find(freq => freq.value === source.frequency);
+
+              return (
+                <div key={source.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{category?.emoji || '💰'}</span>
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {source.name}
+                        {source.employer && <span className="text-gray-600 dark:text-gray-400"> - {source.employer}</span>}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 space-x-2">
+                        <span>📅 {frequency?.label}</span>
+                        <span>• 💳 {account?.name}</span>
+                        <span>• 🕐 {source.payment_time}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-right">
+                      <div className="font-semibold text-lg text-green-600 dark:text-green-400">
+                        +{parseFloat(source.amount).toLocaleString()} {source.currency}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {source.frequency === 'monthly' && 'par mois'}
+                        {source.frequency === 'bi_monthly' && 'par paiement'}
+                        {source.frequency === 'weekly' && 'par semaine'}
+                        {source.frequency === 'bi_weekly' && 'par paiement'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeIncomeSource(source.id)}
+                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Récapitulatif mensuel */}
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <h4 className="font-semibold text-green-900 dark:text-green-300 mb-2">📊 Estimation mensuelle totale</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {['HTG', 'USD'].map(currency => {
+                  const monthlyTotal = setupData.income_sources
+                    .filter(source => source.currency === currency)
+                    .reduce((total, source) => {
+                      let monthlyAmount = parseFloat(source.amount);
+
+                      // Convertir selon la fréquence en mensuel
+                      switch (source.frequency) {
+                        case 'weekly':
+                          monthlyAmount = monthlyAmount * 4.33;
+                          break;
+                        case 'bi_weekly':
+                          monthlyAmount = monthlyAmount * 2.17;
+                          break;
+                        case 'bi_monthly':
+                          monthlyAmount = monthlyAmount * 2;
+                          break;
+                        // monthly reste tel quel
+                      }
+
+                      return total + monthlyAmount;
+                    }, 0);
+
+                  if (monthlyTotal > 0) {
+                    return (
+                      <div key={currency} className="text-center">
+                        <p className="text-green-800 dark:text-green-300 font-semibold text-lg">
+                          ~{monthlyTotal.toLocaleString()} {currency} / mois
+                        </p>
+                        <p className="text-green-700 dark:text-green-400 text-sm">
+                          {setupData.income_sources.filter(s => s.currency === currency).length} source(s) en {currency}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Informations importantes */}
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <h4 className="font-semibold text-yellow-900 dark:text-yellow-300 mb-2">ℹ️ Fonctionnement des revenus automatiques</h4>
+          <ul className="text-yellow-800 dark:text-yellow-400 text-sm space-y-1">
+            <li>• Vous recevrez une <strong>notification 1h avant</strong> chaque paiement automatique</li>
+            <li>• Les paiements qui tombens le weekend sont <strong>reportés au lundi</strong></li>
+            <li>• Vous pouvez <strong>activer/désactiver</strong> chaque source à tout moment</li>
+            <li>• L'historique de tous les paiements est <strong>conservé</strong> pour vos analyses</li>
+            <li>• Les montants sont ajoutés automatiquement au compte de destination choisi</li>
+          </ul>
+        </div>
+
+        {/* Suggestion si pas de comptes */}
+        {setupData.accounts.length === 0 && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <p className="text-red-800 dark:text-red-300 font-medium">⚠️ Aucun compte configuré</p>
+            <p className="text-red-700 dark:text-red-400 text-sm">
+              Vous devez d'abord configurer au moins un compte bancaire à l'étape 3 pour pouvoir ajouter des revenus automatiques.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
+  // Étape 7: Terminé
   const CompletedStep = () => (
     <div className="text-center space-y-6">
       <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
         <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
       </div>
-      
+
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">🎉 Configuration terminée !</h2>
         <p className="text-gray-600 dark:text-gray-300 text-lg">
@@ -811,7 +1303,7 @@ const Setup = () => {
 
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-left">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">📋 Récapitulatif de votre configuration</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
@@ -831,15 +1323,17 @@ const Setup = () => {
               <span className="font-medium text-gray-900 dark:text-white">{Object.values(setupData.goals).filter(g => g.enabled).length} objectif(s)</span>
             </div>
           </div>
-          
+
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">🌍 Langue:</span>
               <span className="font-medium text-gray-900 dark:text-white">{setupData.profile.language === 'fr' ? 'Français' : setupData.profile.language === 'ht' ? 'Kreyòl' : 'English'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">🔐 Sécurité 2FA:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{setupData.security.two_factor ? 'Activée' : 'Désactivée'}</span>
+              <span className="text-gray-600 dark:text-gray-400">⏱️ Session:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                {setupData.security.session_timeout === -1 ? 'Jamais' : `${setupData.security.session_timeout}min`}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">🔔 Notifications:</span>
@@ -865,14 +1359,17 @@ const Setup = () => {
             <li>• Invitez vos proches à rejoindre vos sols</li>
           </ul>
         </div>
-        
+
         <button
           onClick={async () => {
             setIsLoading(true);
             try {
-              // ✅ SAUVEGARDER LES COMPTES AVANT DE TERMINER
+              // ✅ BUG FIX 1: Sauvegarder les préférences de session
+              saveSessionPreferences();
+
+              // Sauvegarder les comptes
               await saveAccountsToDatabase();
-              
+
               setTimeout(() => {
                 completeSetup();
                 setIsLoading(false);
@@ -903,26 +1400,28 @@ const Setup = () => {
   );
 
   const renderStep = () => {
-    switch(currentStep) {
+    switch (currentStep) {
       case 1: return <ProfileStep />;
       case 2: return <SecurityStep />;
       case 3: return <AccountsStep />;
-      case 4: return <CategoriesStep />;
-      case 5: return <GoalsStep />;
-      case 6: return <CompletedStep />;
+      case 4: return <IncomeSourcesStep />;  // ← Nouvelle étape Revenus
+      case 5: return <CategoriesStep />;     // ← Décalé d'une étape
+      case 6: return <GoalsStep />;          // ← Décalé d'une étape
+      case 7: return <CompletedStep />;      // ← Décalé d'une étape
       default: return <ProfileStep />;
     }
   };
 
   const canProceed = () => {
-    switch(currentStep) {
+    switch (currentStep) {
       case 1: return setupData.profile.currency_preference && setupData.profile.language;
       case 2: return true; // Sécurité est optionnelle
-      case 3: return setupData.accounts.length > 0;
-      case 4: return setupData.categories.filter(c => c.enabled).length > 0;
-      case 5: return true; // Objectifs sont optionnels
-      case 6: return true;
-      default: return false;
+      case 3: return setupData.accounts.length > 0; // Au moins un compte requis
+      case 4: return true; // Revenus sont optionnels (mais recommandés)
+      case 5: return setupData.categories.filter(c => c.enabled).length > 0; // Au moins une catégorie
+      case 6: return true; // Objectifs sont optionnels
+      case 7: return true; // Étape finale
+      default: return true;
     }
   };
 
@@ -935,13 +1434,12 @@ const Setup = () => {
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center min-w-0">
                 <div className="flex flex-col items-center">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-full font-semibold transition-all duration-300 ${
-                    step.number === currentStep 
-                      ? 'bg-blue-600 text-white shadow-lg' 
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-full font-semibold transition-all duration-300 ${step.number === currentStep
+                      ? 'bg-blue-600 text-white shadow-lg'
                       : step.number < currentStep
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                  }`}>
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    }`}>
                     {step.number < currentStep ? (
                       <CheckCircle className="w-6 h-6" />
                     ) : (
@@ -954,9 +1452,8 @@ const Setup = () => {
                   </div>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`hidden md:block w-16 h-0.5 mx-4 transition-colors duration-300 ${
-                    step.number < currentStep ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'
-                  }`} />
+                  <div className={`hidden md:block w-16 h-0.5 mx-4 transition-colors duration-300 ${step.number < currentStep ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'
+                    }`} />
                 )}
               </div>
             ))}
@@ -969,7 +1466,7 @@ const Setup = () => {
         </div>
 
         {/* Navigation Buttons */}
-        {currentStep < 6 && (
+        {currentStep < 7 && (
           <div className="flex justify-between mt-8">
             <button
               onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
@@ -979,20 +1476,20 @@ const Setup = () => {
               <ArrowLeft className="w-4 h-4" />
               <span>Précédent</span>
             </button>
-            
+
             <div className="flex items-center space-x-4">
               {/* Skip option for optional steps */}
               {(currentStep === 2 || currentStep === 5) && (
                 <button
-                  onClick={() => setCurrentStep(Math.min(6, currentStep + 1))}
+                  onClick={() => setCurrentStep(Math.min(7, currentStep + 1))}
                   className="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors duration-300"
                 >
                   Ignorer cette étape
                 </button>
               )}
-              
+
               <button
-                onClick={() => setCurrentStep(Math.min(6, currentStep + 1))}
+                onClick={() => setCurrentStep(Math.min(7, currentStep + 1))}
                 disabled={!canProceed()}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg font-medium transition-all duration-300 flex items-center space-x-2"
               >
@@ -1007,10 +1504,10 @@ const Setup = () => {
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg transition-colors duration-300">
           <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
             <span>Progression</span>
-            <span>{Math.round((currentStep / 6) * 100)}% terminé</span>
+            <span>{Math.round((currentStep / 7) * 100)}% terminé</span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div 
+            <div
               className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / 6) * 100}%` }}
             />

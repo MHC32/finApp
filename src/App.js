@@ -1,8 +1,13 @@
-// src/App.js - VERSION COMPLÈTE avec initialisation du thème
+// Modifications à ajouter dans src/App.js pour initialiser les services
+
+// ✅ 1. IMPORTS À AJOUTER EN HAUT DU FICHIER
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
+
+// ✅ NOUVEAU: Import du service de revenus automatiques
+import { IncomeService } from './services/incomeService';
 
 // Pages Auth
 import Login from './pages/auth/Login';
@@ -27,11 +32,16 @@ import BudgetsList from './pages/budgets/BudgetsList';
 // Pages Sols
 import SolsList from './pages/sols/SolsList';
 
+// ✅ NOUVEAU: Pages Revenus
+import IncomeSourcesList from './pages/income/IncomeSourcesList';
+
 // Pages Paramètres
 import Settings from './pages/settings/Settings';
 
 // Components
 import Navigation from './components/layout/Navigation';
+// ✅ NOUVEAU: Centre de notifications
+import NotificationCenter from './components/notifications/NotificationCenter';
 
 // Layout avec Navigation
 const AppLayout = ({ children }) => {
@@ -46,6 +56,17 @@ const AppLayout = ({ children }) => {
         <header className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white ml-12">FinApp Haiti</h1>
+            {/* ✅ NOUVEAU: Centre de notifications dans le header mobile */}
+            <NotificationCenter />
+          </div>
+        </header>
+
+        {/* Header Desktop */}
+        <header className="hidden lg:flex bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-6 py-3">
+          <div className="flex items-center justify-between w-full">
+            <div></div>
+            {/* ✅ NOUVEAU: Centre de notifications dans le header desktop */}
+            <NotificationCenter />
           </div>
         </header>
 
@@ -60,7 +81,7 @@ const AppLayout = ({ children }) => {
   );
 };
 
-// Route Protection
+// Route Protection (inchangé)
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, setupCompleted } = useAuthStore();
   
@@ -75,7 +96,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Auth Route (redirect if already authenticated)
+// Auth Route (inchangé)
 const AuthRoute = ({ children }) => {
   const { isAuthenticated, setupCompleted } = useAuthStore();
   
@@ -92,11 +113,27 @@ const AuthRoute = ({ children }) => {
 
 function App() {
   const { initTheme } = useThemeStore();
+  const { isAuthenticated, setupCompleted } = useAuthStore();
 
-  // ✅ Initialiser le thème au démarrage
+  // ✅ NOUVEAU: Initialiser le thème au démarrage
   useEffect(() => {
     initTheme();
   }, [initTheme]);
+
+  // ✅ NOUVEAU: Initialiser les services de revenus automatiques
+  useEffect(() => {
+    // Initialiser seulement si l'utilisateur est connecté et a terminé le setup
+    if (isAuthenticated && setupCompleted) {
+      console.log('🚀 Initialisation des services FinApp Haiti...');
+      
+      // Initialiser le service de revenus automatiques
+      IncomeService.initialize().then(() => {
+        console.log('✅ Service de revenus automatiques initialisé');
+      }).catch(error => {
+        console.error('❌ Erreur lors de l\'initialisation des services:', error);
+      });
+    }
+  }, [isAuthenticated, setupCompleted]);
 
   return (
     <Router>
@@ -179,6 +216,15 @@ function App() {
             <ProtectedRoute>
               <AppLayout>
                 <BudgetsList />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+          
+          {/* ===== NOUVEAU: ROUTES REVENUS ===== */}
+          <Route path="/income" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <IncomeSourcesList />
               </AppLayout>
             </ProtectedRoute>
           } />

@@ -13,6 +13,16 @@ export class FinAppDatabase extends Dexie {
       
       // Transactions personnelles
       transactions: '++id, user_id, account_id, date, amount, description, category, subcategory, payment_method, created_at, updated_at',
+
+       // ✅ NOUVEAU: Sources de revenus automatiques
+      income_sources: '++id, user_id, name, employer, amount, currency, frequency, payment_day, payment_time, destination_account_id, category, is_active, next_payment_date, created_at, updated_at',
+      
+      // ✅ NOUVEAU: Historique des paiements automatiques
+      automatic_payments: '++id, income_source_id, transaction_id, expected_date, actual_date, amount, status, created_at',
+      
+      // ✅ NOUVEAU: Notifications
+      notifications: '++id, user_id, type, title, message, data, is_read, scheduled_for, created_at',
+      
       
       // Budgets
       budgets: '++id, user_id, name, category, monthly_limit, current_spent, alert_threshold, is_active, created_at, updated_at',
@@ -40,3 +50,28 @@ export class FinAppDatabase extends Dexie {
 }
 
 export const db = new FinAppDatabase();
+
+// ✅ TYPES DE FRÉQUENCES
+export const INCOME_FREQUENCIES = {
+  MONTHLY: 'monthly',
+  BI_MONTHLY: 'bi_monthly', 
+  WEEKLY: 'weekly',
+  BI_WEEKLY: 'bi_weekly',
+  DAILY: 'daily'
+};
+
+// ✅ STATUTS DES PAIEMENTS
+export const PAYMENT_STATUS = {
+  PENDING: 'pending',
+  COMPLETED: 'completed', 
+  FAILED: 'failed',
+  CANCELLED: 'cancelled'
+};
+
+// ✅ TYPES DE NOTIFICATIONS
+export const NOTIFICATION_TYPES = {
+  INCOME_REMINDER: 'income_reminder',
+  INCOME_PROCESSED: 'income_processed',
+  BUDGET_ALERT: 'budget_alert',
+  GOAL_MILESTONE: 'goal_milestone'
+};
