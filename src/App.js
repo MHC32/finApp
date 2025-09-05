@@ -1,18 +1,32 @@
-// src/App.js - CORRECTION avec route AddAccount
+// src/App.js - VERSION COMPLÈTE avec toutes les routes
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 
-// Pages
+// Pages Auth
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Setup from './pages/auth/Setup';
+
+// Pages principales
 import Dashboard from './pages/dashboard/Dashboard';
+
+// Pages Comptes
 import AccountsList from './pages/accounts/AccountsList';
-import AddAccount from './pages/accounts/AddAccount'; // ✅ Import ajouté
+import AddAccount from './pages/accounts/AddAccount';
+
+// Pages Transactions
 import TransactionsList from './pages/transactions/TransactionsList';
+import AddTransaction from './pages/transactions/AddTransaction';
+import TransactionDetails from './pages/transactions/TransactionDetails';
+
+// Pages Budgets
 import BudgetsList from './pages/budgets/BudgetsList';
+
+// Pages Sols
 import SolsList from './pages/sols/SolsList';
+
+// Pages Paramètres
 import Settings from './pages/settings/Settings';
 
 // Components
@@ -80,7 +94,9 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Auth Routes */}
+          {/* ========================= */}
+          {/*       ROUTES AUTH         */}
+          {/* ========================= */}
           <Route path="/login" element={
             <AuthRoute>
               <Login />
@@ -95,7 +111,11 @@ function App() {
           
           <Route path="/setup" element={<Setup />} />
 
-          {/* Protected App Routes */}
+          {/* ========================= */}
+          {/*    ROUTES PROTÉGÉES       */}
+          {/* ========================= */}
+          
+          {/* Dashboard Principal */}
           <Route path="/" element={
             <ProtectedRoute>
               <AppLayout>
@@ -104,6 +124,7 @@ function App() {
             </ProtectedRoute>
           } />
           
+          {/* ===== ROUTES COMPTES ===== */}
           <Route path="/accounts" element={
             <ProtectedRoute>
               <AppLayout>
@@ -112,7 +133,6 @@ function App() {
             </ProtectedRoute>
           } />
           
-          {/* ✅ NOUVELLE ROUTE AJOUTÉE */}
           <Route path="/accounts/add" element={
             <ProtectedRoute>
               <AppLayout>
@@ -121,6 +141,7 @@ function App() {
             </ProtectedRoute>
           } />
           
+          {/* ===== ROUTES TRANSACTIONS ===== */}
           <Route path="/transactions" element={
             <ProtectedRoute>
               <AppLayout>
@@ -129,6 +150,23 @@ function App() {
             </ProtectedRoute>
           } />
           
+          <Route path="/transactions/add" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <AddTransaction />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/transactions/:id" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <TransactionDetails />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+          
+          {/* ===== ROUTES BUDGETS ===== */}
           <Route path="/budgets" element={
             <ProtectedRoute>
               <AppLayout>
@@ -137,6 +175,7 @@ function App() {
             </ProtectedRoute>
           } />
           
+          {/* ===== ROUTES SOLS ===== */}
           <Route path="/sols" element={
             <ProtectedRoute>
               <AppLayout>
@@ -145,6 +184,7 @@ function App() {
             </ProtectedRoute>
           } />
           
+          {/* ===== ROUTES PARAMÈTRES ===== */}
           <Route path="/settings" element={
             <ProtectedRoute>
               <AppLayout>

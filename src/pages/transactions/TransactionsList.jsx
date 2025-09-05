@@ -1,5 +1,6 @@
 // src/pages/transactions/TransactionsList.jsx
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Filter, Search, Edit, Trash2, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import { useTransactions } from '../../hooks/useTransactions';
 import { useAccounts } from '../../hooks/useAccounts';
@@ -148,8 +149,14 @@ const TransactionsList = () => {
           </Button>
           <Button onClick={() => setShowForm(true)}>
             <Plus className="w-4 h-4 mr-2" />
-            Nouvelle Transaction
+            Modal
           </Button>
+          <Link to="/transactions/add">
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvelle Transaction
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -289,10 +296,18 @@ const TransactionsList = () => {
                 : "Aucune transaction ne correspond à vos filtres"
               }
             </p>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter une transaction
-            </Button>
+            <div className="flex justify-center space-x-3">
+              <Button onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Modal
+              </Button>
+              <Link to="/transactions/add">
+                <Button variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Page dédiée
+                </Button>
+              </Link>
+            </div>
           </div>
         </Card>
       ) : (
@@ -317,7 +332,11 @@ const TransactionsList = () => {
                     
                     return (
                       <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center space-x-3">
+                        {/* Zone cliquable pour les détails */}
+                        <Link 
+                          to={`/transactions/${transaction.id}`}
+                          className="flex items-center space-x-3 flex-1 cursor-pointer"
+                        >
                           <div className="text-2xl">
                             {getTransactionIcon(transaction.category)}
                           </div>
@@ -340,9 +359,6 @@ const TransactionsList = () => {
                               <span>• {transaction.payment_method}</span>
                             </div>
                           </div>
-                        </div>
-
-                        <div className="flex items-center space-x-3">
                           <div className="text-right">
                             <div className={`font-semibold ${
                               transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
@@ -353,21 +369,28 @@ const TransactionsList = () => {
                               {format(new Date(transaction.date), 'HH:mm')}
                             </div>
                           </div>
+                        </Link>
 
-                          <div className="flex space-x-1">
-                            <button
-                              onClick={() => setEditingTransaction(transaction)}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setDeletingTransaction(transaction)}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {/* Actions séparées */}
+                        <div className="flex space-x-1 ml-3">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setEditingTransaction(transaction);
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setDeletingTransaction(transaction);
+                            }}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     );
