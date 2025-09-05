@@ -1,5 +1,7 @@
+// src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 
 const Login = () => {
@@ -143,9 +145,9 @@ const Login = () => {
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Pas encore de compte ?{' '}
-            <button className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
               Créer un compte
-            </button>
+            </Link>
           </p>
         </div>
       </div>

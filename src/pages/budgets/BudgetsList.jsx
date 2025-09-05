@@ -1,3 +1,4 @@
+// src/pages/budgets/BudgetsList.jsx (SANS ESPACE dans le nom)
 import React from 'react';
 
 export default function BudgetsList() {

@@ -1,5 +1,7 @@
+// src/pages/auth/Register.jsx
 import React, { useState } from 'react';
-import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 
 const Register = () => {
@@ -9,6 +11,8 @@ const Register = () => {
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuthStore();
@@ -26,7 +30,7 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.name) {
+    if (!formData.name.trim()) {
       newErrors.name = 'Nom requis';
     }
     
@@ -81,7 +85,6 @@ const Register = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Formulaire d'inscription - similaire au login mais avec plus de champs */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Nom complet</label>
             <div className="relative">
@@ -99,7 +102,79 @@ const Register = () => {
             {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
           </div>
 
-          {/* Autres champs... */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={handleChange('email')}
+                placeholder="votre@email.com"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleChange('password')}
+                placeholder="••••••••"
+                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
+            </div>
+            {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={handleChange('confirmPassword')}
+                placeholder="••••••••"
+                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-400" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-400" />
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="text-sm text-red-600">{errors.confirmPassword}</p>}
+          </div>
+
           <button
             type="submit"
             disabled={isLoading}
@@ -118,6 +193,16 @@ const Register = () => {
             )}
           </button>
         </form>
+
+        {/* Lien vers connexion */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Déjà un compte ?{' '}
+            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              Se connecter
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

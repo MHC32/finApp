@@ -1,3 +1,4 @@
+// src/store/authStore.js
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -15,6 +16,7 @@ export const useAuthStore = create(
         set({
           user: userData,
           isAuthenticated: true,
+          setupCompleted: true, // ✅ Marquer setup comme complété pour login
           isLoading: false
         });
       },
@@ -31,7 +33,7 @@ export const useAuthStore = create(
         set({
           user: userData,
           isAuthenticated: true,
-          setupCompleted: false,
+          setupCompleted: false, // ✅ Setup requis après inscription
           isLoading: false
         });
       },
