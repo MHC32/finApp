@@ -1,3 +1,4 @@
+// src/components/layout/Navigation.jsx (SANS ESPACE dans le nom)
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 

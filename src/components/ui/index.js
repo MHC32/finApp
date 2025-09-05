@@ -1,8 +1,7 @@
-import Button from './Button';
-import Card from './Card';
-import Input from './Input';
-import Modal from './Modal';
-import Badge from './Badge';
-import LoadingSpinner from './LoadingSpinner';
-
-export { Button, Card, Input, Modal, Badge, LoadingSpinner };
+// src/components/ui/index.js - VÉRIFIEZ que ce fichier existe et contient :
+export { default as Button } from './Button';
+export { default as Card } from './Card';
+export { default as Input } from './Input';
+export { default as Modal } from './Modal';
+export { default as Badge } from './Badge';
+export { default as LoadingSpinner } from './LoadingSpinner';

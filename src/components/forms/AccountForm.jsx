@@ -1,3 +1,4 @@
+// src/components/forms/AccountForm.jsx
 import React, { useState } from 'react';
 import { Button, Input, Card } from '../ui';
 import { CreditCard, DollarSign, Palette } from 'lucide-react';
@@ -193,3 +194,5 @@ const AccountForm = ({ onSubmit, initialData = {}, onCancel }) => {
     </Card>
   );
 };
+
+export default AccountForm;
