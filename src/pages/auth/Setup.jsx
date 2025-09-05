@@ -139,16 +139,27 @@ const Setup = () => {
                   ...prev,
                   profile: { ...prev.profile, theme }
                 }))}
-                className={`p-3 rounded-lg border-2 transition-colors ${
+                className={`p-3 rounded-lg border-2 transition-colors relative ${
                   setupData.profile.theme === theme
                     ? 'border-blue-500 bg-blue-50 text-blue-900'
                     : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                 }`}
+                disabled={theme === 'dark'}
               >
                 {theme === 'light' ? '☀️' : '🌙'} {theme === 'light' ? 'Clair' : 'Sombre'}
+                {theme === 'dark' && (
+                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-yellow-900 text-xs px-1 rounded">
+                    Bientôt
+                  </span>
+                )}
               </button>
             ))}
           </div>
+          {setupData.profile.theme === 'dark' && (
+            <p className="text-xs text-gray-500 mt-2">
+              💡 Le thème sombre sera disponible dans une prochaine version
+            </p>
+          )}
         </div>
 
         <div>

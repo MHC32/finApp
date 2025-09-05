@@ -1,7 +1,8 @@
-// src/App.js - VERSION COMPLÈTE avec toutes les routes
-import React, { useState } from 'react';
+// src/App.js - VERSION COMPLÈTE avec initialisation du thème
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
+import { useThemeStore } from './store/themeStore';
 
 // Pages Auth
 import Login from './pages/auth/Login';
@@ -37,14 +38,14 @@ const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header Mobile */}
-        <header className="lg:hidden bg-white shadow-sm border-b px-4 py-3">
+        <header className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-gray-900 ml-12">FinApp Haiti</h1>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white ml-12">FinApp Haiti</h1>
           </div>
         </header>
 
@@ -90,6 +91,13 @@ const AuthRoute = ({ children }) => {
 };
 
 function App() {
+  const { initTheme } = useThemeStore();
+
+  // ✅ Initialiser le thème au démarrage
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
+
   return (
     <Router>
       <div className="App">
