@@ -1,4 +1,4 @@
-// src/hooks/useTransactions.js - VERSION CORRIGÉE
+// src/hooks/useTransactions.js - VERSION DEBUG
 import { useState, useEffect } from 'react';
 import { db } from '../database/db';
 import { useAuthStore } from '../store/authStore';
@@ -47,14 +47,22 @@ export const useTransactions = () => {
 
   // ✅ FONCTION POUR DÉCLENCHER LE RECHARGEMENT DES COMPTES
   const triggerAccountsReload = () => {
+    console.log("🔔 DEBUG: triggerAccountsReload() appelée");
     // Émettre un événement personnalisé pour signaler aux autres hooks
     window.dispatchEvent(new CustomEvent('accountsChanged'));
+    console.log("📡 DEBUG: Événement 'accountsChanged' émis");
   };
 
   // Ajouter une transaction
   const addTransaction = async (transactionData) => {
     try {
-      console.log('💰 Ajout transaction:', transactionData);
+      console.log('🟢 === DÉBUT ADD TRANSACTION ===');
+      console.log('📥 Données reçues:', transactionData);
+      
+      // ✅ VÉRIFIER LES TYPES DE DONNÉES
+      console.log('🔍 Types de données:');
+      console.log('- amount type:', typeof transactionData.amount, 'value:', transactionData.amount);
+      console.log('- account_id type:', typeof transactionData.account_id, 'value:', transactionData.account_id);
       
       const newTransaction = {
         ...transactionData,
@@ -64,41 +72,70 @@ export const useTransactions = () => {
         updated_at: new Date()
       };
       
+      console.log('💾 Transaction à sauvegarder:', newTransaction);
+      
       const id = await db.transactions.add(newTransaction);
+      console.log('✅ Transaction sauvegardée avec ID:', id);
       
       // ✅ METTRE À JOUR LE SOLDE DU COMPTE
       if (transactionData.account_id) {
-        console.log(`💳 Mise à jour du compte ${transactionData.account_id}`);
-        console.log(`💵 Montant: ${transactionData.amount}`);
+        console.log('\n💳 === MISE À JOUR DU COMPTE ===');
+        console.log(`🎯 Compte ciblé ID: ${transactionData.account_id}`);
+        console.log(`💵 Montant de la transaction: ${transactionData.amount}`);
         
-        const account = await db.accounts.get(transactionData.account_id);
+        // ✅ FIX: Conversion du account_id en nombre
+        const accountId = parseInt(transactionData.account_id);
+        console.log(`🔄 Conversion account_id: "${transactionData.account_id}" → ${accountId}`);
+        
+        const account = await db.accounts.get(accountId);
+        console.log('📊 Compte trouvé:', account);
+        
         if (account) {
-          console.log(`💰 Solde avant: ${account.current_balance}`);
+          console.log(`💰 Solde AVANT: ${account.current_balance} (type: ${typeof account.current_balance})`);
           
-          // ✅ LOGIQUE CORRIGÉE: Ajouter le montant tel quel (négatif pour dépenses)
-          const newBalance = account.current_balance + transactionData.amount;
+          // ✅ CONVERSION EXPLICITE EN NOMBRE
+          const currentBalance = parseFloat(account.current_balance) || 0;
+          const transactionAmount = parseFloat(transactionData.amount) || 0;
           
-          console.log(`💰 Solde après: ${newBalance}`);
+          console.log(`🔢 Conversion - Solde: ${currentBalance}, Transaction: ${transactionAmount}`);
           
-          await db.accounts.update(transactionData.account_id, {
+          // ✅ CALCUL AVEC LOGS DÉTAILLÉS
+          const newBalance = currentBalance + transactionAmount;
+          
+          console.log(`🧮 Calcul: ${currentBalance} + (${transactionAmount}) = ${newBalance}`);
+          console.log(`💰 Solde APRÈS: ${newBalance}`);
+          
+          await db.accounts.update(accountId, {
             current_balance: newBalance,
             updated_at: new Date()
           });
           
+          console.log('✅ Compte mis à jour en base de données');
+          
+          // ✅ VÉRIFIER LA MISE À JOUR
+          const updatedAccount = await db.accounts.get(accountId);
+          console.log('🔍 Vérification - Nouveau solde en DB:', updatedAccount.current_balance);
+          
           // ✅ DÉCLENCHER LE RECHARGEMENT DES COMPTES
           triggerAccountsReload();
           
-          console.log('✅ Compte mis à jour avec succès');
+          console.log('✅ Processus de mise à jour terminé avec succès');
         } else {
-          console.error('❌ Compte non trouvé');
+          console.error('❌ ERREUR: Compte non trouvé pour ID:', accountId, '(converti depuis:', transactionData.account_id, ')');
         }
+      } else {
+        console.warn('⚠️ ATTENTION: Aucun account_id fourni');
       }
       
       const transaction = await db.transactions.get(id);
       setTransactions(prev => [transaction, ...prev]);
+      
+      console.log('🟢 === FIN ADD TRANSACTION ===\n');
       return transaction;
     } catch (err) {
-      console.error('❌ Erreur lors de l\'ajout:', err);
+      console.error('❌ === ERREUR ADD TRANSACTION ===');
+      console.error('💥 Erreur détaillée:', err);
+      console.error('📍 Stack trace:', err.stack);
       setError('Erreur lors de l\'ajout de la transaction');
       throw err;
     }
@@ -107,7 +144,9 @@ export const useTransactions = () => {
   // Modifier une transaction
   const updateTransaction = async (id, updates) => {
     try {
-      console.log('✏️ Modification transaction:', id, updates);
+      console.log('🟡 === DÉBUT UPDATE TRANSACTION ===');
+      console.log('🎯 Transaction ID:', id);
+      console.log('📝 Mises à jour:', updates);
       
       const oldTransaction = await db.transactions.get(id);
       console.log('📋 Ancienne transaction:', oldTransaction);
@@ -127,12 +166,13 @@ export const useTransactions = () => {
         
         // ✅ ANNULER L'ANCIENNE TRANSACTION
         if (oldTransaction.account_id) {
-          const oldAccount = await db.accounts.get(oldTransaction.account_id);
+          const oldAccountId = parseInt(oldTransaction.account_id);
+          const oldAccount = await db.accounts.get(oldAccountId);
           if (oldAccount) {
             console.log(`🔙 Annulation sur compte ${oldAccount.name}: ${oldTransaction.amount}`);
-            const restoredBalance = oldAccount.current_balance - oldTransaction.amount;
+            const restoredBalance = parseFloat(oldAccount.current_balance) - parseFloat(oldTransaction.amount);
             
-            await db.accounts.update(oldTransaction.account_id, {
+            await db.accounts.update(oldAccountId, {
               current_balance: restoredBalance,
               updated_at: new Date()
             });
@@ -143,12 +183,13 @@ export const useTransactions = () => {
         
         // ✅ APPLIQUER LA NOUVELLE TRANSACTION
         if (updates.account_id) {
-          const newAccount = await db.accounts.get(updates.account_id);
+          const newAccountId = parseInt(updates.account_id);
+          const newAccount = await db.accounts.get(newAccountId);
           if (newAccount) {
             console.log(`➕ Application sur compte ${newAccount.name}: ${updates.amount}`);
-            const newBalance = newAccount.current_balance + updates.amount;
+            const newBalance = parseFloat(newAccount.current_balance) + parseFloat(updates.amount);
             
-            await db.accounts.update(updates.account_id, {
+            await db.accounts.update(newAccountId, {
               current_balance: newBalance,
               updated_at: new Date()
             });
@@ -168,6 +209,8 @@ export const useTransactions = () => {
           transaction.id === id ? updatedTransaction : transaction
         )
       );
+      
+      console.log('🟡 === FIN UPDATE TRANSACTION ===\n');
       return updatedTransaction;
     } catch (err) {
       console.error('❌ Erreur lors de la modification:', err);
@@ -177,45 +220,52 @@ export const useTransactions = () => {
   };
 
   // Supprimer une transaction
-  const deleteTransaction = async (id) => {
-    try {
-      console.log('🗑️ Suppression transaction:', id);
-      
-      const transaction = await db.transactions.get(id);
-      console.log('📋 Transaction à supprimer:', transaction);
-      
-      // ✅ METTRE À JOUR LE SOLDE DU COMPTE
-      if (transaction.account_id) {
-        const account = await db.accounts.get(transaction.account_id);
-        if (account) {
-          console.log(`🔙 Annulation du montant ${transaction.amount} sur ${account.name}`);
-          console.log(`💰 Solde avant suppression: ${account.current_balance}`);
-          
-          // ✅ LOGIQUE CORRIGÉE: Soustraire le montant de la transaction
-          const newBalance = account.current_balance - transaction.amount;
-          
-          console.log(`💰 Solde après suppression: ${newBalance}`);
-          
-          await db.accounts.update(transaction.account_id, {
-            current_balance: newBalance,
-            updated_at: new Date()
-          });
-          
-          // ✅ DÉCLENCHER LE RECHARGEMENT DES COMPTES
-          triggerAccountsReload();
-          console.log('✅ Solde mis à jour après suppression');
-        }
+  // Supprimer une transaction
+const deleteTransaction = async (id) => {
+  try {
+    console.log('🔴 === DÉBUT DELETE TRANSACTION ===');
+    console.log('🗑️ Suppression transaction ID:', id);
+    
+    const transaction = await db.transactions.get(id);
+    console.log('📋 Transaction à supprimer:', transaction);
+    
+    // ✅ METTRE À JOUR LE SOLDE DU COMPTE
+    if (transaction.account_id) {
+      // CORRECTION: Utiliser transaction.account_id directement
+      const account = await db.accounts.get(transaction.account_id);
+      if (account) {
+        console.log(`🔙 Annulation du montant ${transaction.amount} sur ${account.name}`);
+        console.log(`💰 Solde avant suppression: ${account.current_balance}`);
+        
+        // ✅ CONVERSION ET CALCUL
+        const currentBalance = parseFloat(account.current_balance);
+        const transactionAmount = parseFloat(transaction.amount);
+        const newBalance = currentBalance - transactionAmount;
+        
+        console.log(`🧮 Calcul: ${currentBalance} - (${transactionAmount}) = ${newBalance}`);
+        
+        // CORRECTION: Utiliser transaction.account_id au lieu de accountId
+        await db.accounts.update(transaction.account_id, {
+          current_balance: newBalance,
+          updated_at: new Date()
+        });
+        
+        // ✅ DÉCLENCHER LE RECHARGEMENT DES COMPTES
+        triggerAccountsReload();
+        console.log('✅ Solde mis à jour après suppression');
       }
-      
-      await db.transactions.delete(id);
-      setTransactions(prev => prev.filter(transaction => transaction.id !== id));
-      console.log('✅ Transaction supprimée avec succès');
-    } catch (err) {
-      console.error('❌ Erreur lors de la suppression:', err);
-      setError('Erreur lors de la suppression de la transaction');
-      throw err;
     }
-  };
+    
+    await db.transactions.delete(id);
+    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+    
+    console.log('🔴 === FIN DELETE TRANSACTION ===\n');
+  } catch (err) {
+    console.error('❌ Erreur lors de la suppression:', err);
+    setError('Erreur lors de la suppression de la transaction');
+    throw err;
+  }
+};
 
   // Statistiques
   const getStats = () => {

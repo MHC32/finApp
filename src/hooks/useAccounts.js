@@ -1,4 +1,4 @@
-// src/hooks/useAccounts.js - VERSION CORRIGÉE avec synchronisation
+// src/hooks/useAccounts.js - VERSION DEBUG avec synchronisation
 import { useState, useEffect } from 'react';
 import { db } from '../database/db';
 import { useAuthStore } from '../store/authStore';
@@ -13,18 +13,29 @@ export const useAccounts = () => {
   const loadAccounts = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Rechargement des comptes...');
+      console.log('🔄 === RECHARGEMENT DES COMPTES ===');
+      console.log('👤 User ID:', user?.id);
       
       const userAccounts = await db.accounts
         .where('user_id')
         .equals(user?.id)
         .toArray();
       
-      console.log('📊 Comptes chargés:', userAccounts);
+      console.log('📊 Comptes chargés depuis la DB:', userAccounts.length);
+      userAccounts.forEach((account, index) => {
+        console.log(`📋 Compte ${index + 1}:`, {
+          id: account.id,
+          name: account.name,
+          current_balance: account.current_balance,
+          balance_type: typeof account.current_balance
+        });
+      });
+      
       setAccounts(userAccounts);
+      console.log('✅ State des comptes mis à jour');
     } catch (err) {
       setError('Erreur lors du chargement des comptes');
-      console.error(err);
+      console.error('❌ Erreur loadAccounts:', err);
     } finally {
       setLoading(false);
     }
@@ -33,15 +44,18 @@ export const useAccounts = () => {
   // ✅ ÉCOUTER LES CHANGEMENTS DE COMPTES
   useEffect(() => {
     const handleAccountsChanged = () => {
-      console.log('🔔 Événement accountsChanged reçu - Rechargement des comptes');
+      console.log('🔔 === ÉVÉNEMENT ACCOUNTS CHANGED REÇU ===');
+      console.log('📡 Event listener déclenché - Rechargement des comptes');
       loadAccounts();
     };
 
+    console.log('👂 Installation du listener accountsChanged');
     // Écouter l'événement personnalisé
     window.addEventListener('accountsChanged', handleAccountsChanged);
 
     // Nettoyer l'écouteur au démontage
     return () => {
+      console.log('🧹 Nettoyage du listener accountsChanged');
       window.removeEventListener('accountsChanged', handleAccountsChanged);
     };
   }, [user?.id]);
@@ -49,7 +63,8 @@ export const useAccounts = () => {
   // Ajouter un compte
   const addAccount = async (accountData) => {
     try {
-      console.log('➕ Ajout compte:', accountData);
+      console.log('➕ === AJOUT COMPTE ===');
+      console.log('📥 Données reçues:', accountData);
       
       const newAccount = {
         ...accountData,
@@ -58,11 +73,20 @@ export const useAccounts = () => {
         updated_at: new Date()
       };
       
+      console.log('💾 Compte à sauvegarder:', newAccount);
+      
       const id = await db.accounts.add(newAccount);
       const account = await db.accounts.get(id);
       
-      console.log('✅ Compte ajouté:', account);
-      setAccounts(prev => [...prev, account]);
+      console.log('✅ Compte ajouté avec ID:', id);
+      console.log('📊 Compte récupéré:', account);
+      
+      setAccounts(prev => {
+        const updated = [...prev, account];
+        console.log('🔄 State accounts mis à jour, nouveau total:', updated.length);
+        return updated;
+      });
+      
       return account;
     } catch (err) {
       console.error('❌ Erreur ajout compte:', err);
@@ -74,7 +98,9 @@ export const useAccounts = () => {
   // Modifier un compte
   const updateAccount = async (id, updates) => {
     try {
-      console.log('✏️ Modification compte:', id, updates);
+      console.log('✏️ === MODIFICATION COMPTE ===');
+      console.log('🎯 Compte ID:', id);
+      console.log('📝 Mises à jour:', updates);
       
       await db.accounts.update(id, {
         ...updates,
@@ -100,7 +126,8 @@ export const useAccounts = () => {
   // Supprimer un compte
   const deleteAccount = async (id) => {
     try {
-      console.log('🗑️ Suppression compte:', id);
+      console.log('🗑️ === SUPPRESSION COMPTE ===');
+      console.log('🎯 Compte ID:', id);
       
       await db.accounts.delete(id);
       setAccounts(prev => prev.filter(account => account.id !== id));
@@ -115,25 +142,36 @@ export const useAccounts = () => {
 
   // Calculer le solde total
   const getTotalBalance = () => {
-    const total = accounts.reduce((total, account) => {
+    console.log('🧮 === CALCUL SOLDE TOTAL ===');
+    
+    const total = accounts.reduce((total, account, index) => {
+      console.log(`💰 Compte ${index + 1} (${account.name}):`, {
+        balance: account.current_balance,
+        type: typeof account.current_balance,
+        is_active: account.is_active
+      });
+      
       if (account.is_active) {
-        return total + (account.current_balance || 0);
+        const balance = parseFloat(account.current_balance) || 0;
+        console.log(`➕ Ajout au total: ${balance}`);
+        return total + balance;
       }
       return total;
     }, 0);
     
-    console.log('💰 Solde total calculé:', total);
+    console.log('🎯 Solde total calculé:', total);
     return total;
   };
 
   // ✅ FONCTION POUR FORCER LE RECHARGEMENT
   const refreshAccounts = async () => {
-    console.log('🔄 Rechargement forcé des comptes');
+    console.log('🔄 === RECHARGEMENT FORCÉ DES COMPTES ===');
     await loadAccounts();
   };
 
   useEffect(() => {
     if (user?.id) {
+      console.log('🚀 Chargement initial des comptes pour user:', user.id);
       loadAccounts();
     }
   }, [user?.id]);
@@ -147,6 +185,6 @@ export const useAccounts = () => {
     deleteAccount,
     loadAccounts,
     getTotalBalance,
-    refreshAccounts // ✅ Nouvelle fonction pour forcer le rechargement
+    refreshAccounts
   };
 };
