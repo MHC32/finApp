@@ -1,10 +1,9 @@
-// Modifications à ajouter dans src/App.js pour initialiser les services
-
-// ✅ 1. IMPORTS À AJOUTER EN HAUT DU FICHIER
+// src/App.js - VERSION COMPLÈTE AVEC TAUX DE CHANGE
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
+import { useExchangeStore } from './store/exchangeStore';
 
 // ✅ NOUVEAU: Import du service de revenus automatiques
 import { IncomeService } from './services/incomeService';
@@ -114,13 +113,14 @@ const AuthRoute = ({ children }) => {
 function App() {
   const { initTheme } = useThemeStore();
   const { isAuthenticated, setupCompleted } = useAuthStore();
+  const { initialize: initExchange } = useExchangeStore();
 
   // ✅ NOUVEAU: Initialiser le thème au démarrage
   useEffect(() => {
     initTheme();
   }, [initTheme]);
 
-  // ✅ NOUVEAU: Initialiser les services de revenus automatiques
+  // ✅ NOUVEAU: Initialiser TOUS les services
   useEffect(() => {
     // Initialiser seulement si l'utilisateur est connecté et a terminé le setup
     if (isAuthenticated && setupCompleted) {
@@ -132,8 +132,15 @@ function App() {
       }).catch(error => {
         console.error('❌ Erreur lors de l\'initialisation des services:', error);
       });
+
+      // ✅ NOUVEAU: Initialiser le service de taux de change
+      initExchange().then(() => {
+        console.log('✅ Service de taux de change initialisé');
+      }).catch(error => {
+        console.error('❌ Erreur lors de l\'initialisation du taux de change:', error);
+      });
     }
-  }, [isAuthenticated, setupCompleted]);
+  }, [isAuthenticated, setupCompleted, initExchange]);
 
   return (
     <Router>

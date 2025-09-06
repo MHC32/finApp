@@ -1,4 +1,4 @@
-// src/components/layout/Navigation.jsx - Avec support du thème sombre
+// src/components/layout/Navigation.jsx - Avec support revenus automatiques
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  DollarSign
 } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 
@@ -24,6 +25,7 @@ const Navigation = ({ isOpen, setIsOpen }) => {
     { path: '/', icon: Home, label: 'Dashboard', emoji: '🏠' },
     { path: '/accounts', icon: CreditCard, label: 'Comptes', emoji: '🏦' },
     { path: '/transactions', icon: Receipt, label: 'Transactions', emoji: '💰' },
+    { path: '/income', icon: DollarSign, label: 'Revenus Auto', emoji: '📅' }, // ✅ NOUVEAU
     { path: '/budgets', icon: PieChart, label: 'Budgets', emoji: '📊' },
     { path: '/sols', icon: Users, label: 'Sols', emoji: '👥' },
     { path: '/settings', icon: Settings, label: 'Paramètres', emoji: '⚙️' }
@@ -88,6 +90,12 @@ const Navigation = ({ isOpen, setIsOpen }) => {
                 >
                   <span className="text-lg">{item.emoji}</span>
                   <span className="font-medium">{item.label}</span>
+                  {/* ✅ NOUVEAU: Badge pour Revenus Auto */}
+                  {item.path === '/income' && (
+                    <span className="ml-auto text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">
+                      Auto
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}
