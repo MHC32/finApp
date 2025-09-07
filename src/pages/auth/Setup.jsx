@@ -105,44 +105,6 @@ const Setup = () => {
     }
   };
 
-  const saveIncomeSourcesToDatabase = async () => {
-  if (!user?.id || setupData.income_sources.length === 0) return;
-
-  try {
-    console.log('💰 === SAUVEGARDE REVENUS AUTOMATIQUES ===');
-    console.log('Nombre de sources à sauvegarder:', setupData.income_sources.length);
-
-    // ✅ IMPORTER LE SERVICE DYNAMIQUEMENT
-    const { IncomeService } = await import('../../services/incomeService');
-
-    for (const incomeSource of setupData.income_sources) {
-      console.log('💾 Sauvegarde source:', incomeSource.name);
-      
-      // ✅ PRÉPARER LES DONNÉES POUR LE SERVICE
-      const incomeData = {
-        name: incomeSource.name,
-        employer: incomeSource.employer || '',
-        amount: parseFloat(incomeSource.amount),
-        currency: incomeSource.currency,
-        frequency: incomeSource.frequency,
-        payment_day: parseInt(incomeSource.payment_day),
-        payment_time: incomeSource.payment_time,
-        destination_account_id: parseInt(incomeSource.destination_account_id), // ✅ Conversion en nombre
-        category: incomeSource.category
-      };
-
-      await IncomeService.createIncomeSource(user.id, incomeData);
-      console.log('✅ Source sauvegardée:', incomeSource.name);
-    }
-
-    console.log('🎉 Toutes les sources de revenus sauvegardées avec succès');
-  } catch (error) {
-    console.error('❌ Erreur lors de la sauvegarde des revenus:', error);
-    throw error;
-  }
-};
-
-
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
     setSetupData(prev => ({
@@ -1406,6 +1368,8 @@ const Setup = () => {
               saveSessionPreferences();
 
               // Sauvegarder les comptes
+              await saveAccountsToDatabase();
+
               await saveAccountsToDatabase();
 
               setTimeout(() => {

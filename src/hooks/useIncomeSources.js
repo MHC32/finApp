@@ -1,4 +1,4 @@
-// src/hooks/useIncomeSources.js
+// src/hooks/useIncomeSources.js - VERSION CORRIGÉE COMPLÈTE
 import { useState, useEffect } from 'react';
 import { db, INCOME_FREQUENCIES } from '../database/db';
 import { useAuthStore } from '../store/authStore';
@@ -16,7 +16,10 @@ export const useIncomeSources = () => {
     try {
       setLoading(true);
       
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIncomeSources([]);
+        return;
+      }
 
       const userIncomeSources = await db.income_sources
         .where('user_id')
@@ -24,11 +27,12 @@ export const useIncomeSources = () => {
         .toArray();
 
       console.log('📥 Sources de revenus chargées:', userIncomeSources.length);
-      setIncomeSources(userIncomeSources);
+      setIncomeSources(userIncomeSources || []);
 
     } catch (err) {
       console.error('❌ Erreur lors du chargement des sources:', err);
       setError('Erreur lors du chargement des revenus');
+      setIncomeSources([]);
     } finally {
       setLoading(false);
     }
@@ -37,14 +41,18 @@ export const useIncomeSources = () => {
   // ✅ CHARGER LES NOTIFICATIONS
   const loadNotifications = async () => {
     try {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setNotifications([]);
+        return;
+      }
 
       const unreadNotifications = await IncomeService.getUnreadNotifications(user.id);
-      setNotifications(unreadNotifications);
+      setNotifications(unreadNotifications || []);
       
-      console.log('🔔 Notifications non lues:', unreadNotifications.length);
+      console.log('🔔 Notifications non lues:', (unreadNotifications || []).length);
     } catch (err) {
       console.error('❌ Erreur notifications:', err);
+      setNotifications([]);
     }
   };
 
@@ -53,9 +61,13 @@ export const useIncomeSources = () => {
     try {
       console.log('➕ Ajout source de revenus:', incomeData);
       
+      if (!user?.id) {
+        throw new Error('Utilisateur non connecté');
+      }
+
       const newIncomeSource = await IncomeService.createIncomeSource(user.id, incomeData);
       
-      setIncomeSources(prev => [...prev, newIncomeSource]);
+      setIncomeSources(prev => [...(prev || []), newIncomeSource]);
       console.log('✅ Source ajoutée avec succès');
       
       return newIncomeSource;
@@ -91,7 +103,7 @@ export const useIncomeSources = () => {
       const updatedSource = await db.income_sources.get(id);
       
       setIncomeSources(prev => 
-        prev.map(source => source.id === id ? updatedSource : source)
+        (prev || []).map(source => source.id === id ? updatedSource : source)
       );
 
       console.log('✅ Source modifiée avec succès');
@@ -109,7 +121,7 @@ export const useIncomeSources = () => {
       console.log('🗑️ Suppression source:', id);
 
       await db.income_sources.delete(id);
-      setIncomeSources(prev => prev.filter(source => source.id !== id));
+      setIncomeSources(prev => (prev || []).filter(source => source.id !== id));
 
       console.log('✅ Source supprimée avec succès');
     } catch (err) {
@@ -135,7 +147,7 @@ export const useIncomeSources = () => {
     try {
       await IncomeService.markNotificationAsRead(notificationId);
       setNotifications(prev => 
-        prev.map(notif => 
+        (prev || []).map(notif => 
           notif.id === notificationId ? { ...notif, is_read: true } : notif
         )
       );
@@ -155,40 +167,82 @@ export const useIncomeSources = () => {
     }
   };
 
-  // ✅ OBTENIR LES STATISTIQUES
+  // ✅ OBTENIR LES STATISTIQUES - VERSION CORRIGÉE
   const getIncomeStats = () => {
-    const activeIncomeSources = incomeSources.filter(source => source.is_active);
+    // Vérification de sécurité pour incomeSources
+    const safeIncomeSources = Array.isArray(incomeSources) ? incomeSources : [];
+    const activeIncomeSources = safeIncomeSources.filter(source => source && source.is_active);
     
+    // ✅ CORRECTION: Calcul sécurisé du total mensuel
     const monthlyTotal = activeIncomeSources.reduce((total, source) => {
-      let monthlyAmount = source.amount;
+      // Vérifier que source et source.amount existent et sont valides
+      if (!source || !source.amount) return total;
       
-      // Convertir selon la fréquence
-      switch (source.frequency) {
+      // Convertir en nombre et vérifier la validité
+      const amount = parseFloat(source.amount);
+      if (isNaN(amount) || amount < 0) return total;
+      
+      let monthlyAmount = amount;
+      
+      // Convertir selon la fréquence avec vérifications
+      const frequency = source.frequency;
+      switch (frequency) {
         case INCOME_FREQUENCIES.WEEKLY:
-          monthlyAmount = source.amount * 4.33; // ~4.33 semaines par mois
+        case 'weekly':
+          monthlyAmount = amount * 4.33; // ~4.33 semaines par mois
           break;
         case INCOME_FREQUENCIES.BI_WEEKLY:
-          monthlyAmount = source.amount * 2.17; // ~2.17 fois par mois
+        case 'bi_weekly':
+          monthlyAmount = amount * 2.17; // ~2.17 fois par mois
           break;
         case INCOME_FREQUENCIES.BI_MONTHLY:
-          monthlyAmount = source.amount * 2;
+        case 'bi_monthly':
+          monthlyAmount = amount * 2;
           break;
         case INCOME_FREQUENCIES.DAILY:
-          monthlyAmount = source.amount * 30;
+        case 'daily':
+          monthlyAmount = amount * 30;
           break;
-        // MONTHLY reste tel quel
+        case INCOME_FREQUENCIES.MONTHLY:
+        case 'monthly':
+        default:
+          monthlyAmount = amount; // Reste tel quel
+          break;
       }
       
-      return total + monthlyAmount;
+      // Vérifier que le résultat est un nombre valide
+      return total + (isNaN(monthlyAmount) ? 0 : monthlyAmount);
     }, 0);
 
-    return {
-      totalSources: incomeSources.length,
-      activeSources: activeIncomeSources.length,
-      monthlyTotal,
-      nextPayment: activeIncomeSources
-        .sort((a, b) => new Date(a.next_payment_date) - new Date(b.next_payment_date))[0] || null
+    // ✅ CORRECTION: Calcul sécurisé du prochain paiement
+    let nextPayment = null;
+    try {
+      const activeSources = activeIncomeSources.filter(source => 
+        source && source.next_payment_date
+      );
+      
+      if (activeSources.length > 0) {
+        nextPayment = activeSources.sort((a, b) => {
+          const dateA = new Date(a.next_payment_date);
+          const dateB = new Date(b.next_payment_date);
+          return dateA - dateB;
+        })[0];
+      }
+    } catch (err) {
+      console.error('❌ Erreur calcul prochain paiement:', err);
+      nextPayment = null;
+    }
+
+    // ✅ RETOUR SÉCURISÉ avec valeurs par défaut
+    const stats = {
+      totalSources: safeIncomeSources.length || 0,
+      activeSources: activeIncomeSources.length || 0,
+      monthlyTotal: Math.max(0, monthlyTotal || 0), // Assurer un nombre positif
+      nextPayment: nextPayment
     };
+
+    console.log('📊 Stats calculées:', stats);
+    return stats;
   };
 
   // ✅ EFFET DE CHARGEMENT INITIAL
@@ -196,11 +250,18 @@ export const useIncomeSources = () => {
     if (user?.id) {
       loadIncomeSources();
       loadNotifications();
+    } else {
+      // Réinitialiser si pas d'utilisateur
+      setIncomeSources([]);
+      setNotifications([]);
+      setLoading(false);
     }
   }, [user?.id]);
 
   // ✅ EFFET POUR RECHARGER PÉRIODIQUEMENT
   useEffect(() => {
+    if (!user?.id) return;
+
     const interval = setInterval(() => {
       loadNotifications();
     }, 5 * 60 * 1000); // Toutes les 5 minutes
@@ -208,9 +269,25 @@ export const useIncomeSources = () => {
     return () => clearInterval(interval);
   }, [user?.id]);
 
+  // ✅ EFFET POUR ÉCOUTER LES CHANGEMENTS DE TRANSACTIONS
+  useEffect(() => {
+    const handleTransactionsChanged = () => {
+      console.log('🔔 Transactions changées - Rechargement des revenus');
+      if (user?.id) {
+        loadIncomeSources();
+      }
+    };
+
+    window.addEventListener('transactionsChanged', handleTransactionsChanged);
+    
+    return () => {
+      window.removeEventListener('transactionsChanged', handleTransactionsChanged);
+    };
+  }, [user?.id]);
+
   return {
-    incomeSources,
-    notifications,
+    incomeSources: incomeSources || [],
+    notifications: notifications || [],
     loading,
     error,
     addIncomeSource,

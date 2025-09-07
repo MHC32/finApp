@@ -1,4 +1,3 @@
-// src/components/forms/IncomeSourceForm.jsx - FORMULAIRE REVENUS AUTO COMPLET
 import React, { useState } from 'react';
 import { DollarSign, Calendar, Clock, Building, Tag, CreditCard } from 'lucide-react';
 import { Button, Input } from '../ui';
@@ -23,46 +22,7 @@ const IncomeSourceForm = ({ onSubmit, onCancel, initialData = null }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // ✅ FRÉQUENCES AVEC EXPLICATIONS
-  const frequencies = [
-    { 
-      value: 'monthly', 
-      label: '📅 Mensuel', 
-      description: 'Une fois par mois',
-      example: 'Le 30 de chaque mois'
-    },
-    { 
-      value: 'bi_monthly', 
-      label: '📅 Bi-mensuel', 
-      description: 'Deux fois par mois',
-      example: 'Le 15 et le 30 de chaque mois'
-    },
-    { 
-      value: 'weekly', 
-      label: '📅 Hebdomadaire', 
-      description: 'Chaque semaine',
-      example: 'Tous les vendredis'
-    },
-    { 
-      value: 'bi_weekly', 
-      label: '📅 Bi-hebdomadaire', 
-      description: 'Toutes les deux semaines',
-      example: 'Un vendredi sur deux'
-    }
-  ];
-
-  // ✅ CATÉGORIES DE REVENUS
-  const incomeCategories = [
-    { value: 'salary', label: '💼 Salaire fixe', emoji: '💼' },
-    { value: 'freelance', label: '🚀 Freelance', emoji: '🚀' },
-    { value: 'business', label: '🏢 Revenus d\'entreprise', emoji: '🏢' },
-    { value: 'rental', label: '🏠 Revenus locatifs', emoji: '🏠' },
-    { value: 'investment', label: '📈 Investissements', emoji: '📈' },
-    { value: 'pension', label: '👴 Pension/Retraite', emoji: '👴' },
-    { value: 'other', label: '💰 Autre revenu', emoji: '💰' }
-  ];
-
-  // ✅ VALIDATION COMPLÈTE
+  // ✅ FIX 1: VALIDATION RENFORCÉE
   const validateForm = () => {
     const newErrors = {};
     
@@ -77,333 +37,247 @@ const IncomeSourceForm = ({ onSubmit, onCancel, initialData = null }) => {
     if (!formData.destination_account_id) {
       newErrors.destination_account_id = 'Compte de destination requis';
     }
-    
+
+    // Validation spécifique selon la fréquence
     if (formData.frequency === 'monthly' && (formData.payment_day < 1 || formData.payment_day > 31)) {
-      newErrors.payment_day = 'Jour de paiement invalide (1-31)';
+      newErrors.payment_day = 'Le jour doit être entre 1 et 31';
     }
-    
+
     if (formData.frequency === 'weekly' && (formData.payment_day < 0 || formData.payment_day > 6)) {
-      newErrors.payment_day = 'Jour de la semaine invalide (0=Dimanche, 6=Samedi)';
+      newErrors.payment_day = 'Jour de la semaine invalide';
     }
     
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
-  // ✅ SOUMISSION DU FORMULAIRE
+  // ✅ FIX 2: GESTION SOUMISSION AMÉLIORÉE
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
-    
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setLoading(true);
     try {
-      await onSubmit(formData);
-    } catch (err) {
-      setErrors({ submit: 'Erreur lors de l\'enregistrement' });
+      // ✅ CORRECTION CRITIQUE: S'assurer que les IDs sont des nombres
+      const submitData = {
+        ...formData,
+        amount: parseFloat(formData.amount),
+        payment_day: parseInt(formData.payment_day),
+        destination_account_id: parseInt(formData.destination_account_id)
+      };
+      
+      console.log('📤 Soumission données formulaire:', submitData);
+      await onSubmit(submitData);
+      
+    } catch (error) {
+      console.error('❌ Erreur formulaire revenus:', error);
+      setErrors({ submit: 'Erreur lors de l\'ajout de la source de revenus' });
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ GESTION DES CHANGEMENTS
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  const frequencies = [
+    { value: 'monthly', label: '📅 Mensuel', description: 'Une fois par mois' },
+    { value: 'bi_monthly', label: '📅 Bi-mensuel', description: 'Deux fois par mois' },
+    { value: 'weekly', label: '📅 Hebdomadaire', description: 'Chaque semaine' },
+    { value: 'bi_weekly', label: '📅 Bi-hebdomadaire', description: 'Toutes les deux semaines' }
+  ];
 
-  // ✅ OBTENIR L'AIDE POUR LE JOUR DE PAIEMENT
-  const getPaymentDayHelper = () => {
+  const incomeCategories = [
+    { value: 'salary', label: '💼 Salaire fixe' },
+    { value: 'freelance', label: '🚀 Freelance' },
+    { value: 'business', label: '🏢 Entreprise' },
+    { value: 'rental', label: '🏠 Locatif' },
+    { value: 'investment', label: '📈 Investissement' },
+    { value: 'pension', label: '👴 Pension' },
+    { value: 'other', label: '💰 Autre' }
+  ];
+
+  // Générer les options de jour selon la fréquence
+  const getPaymentDayOptions = () => {
     switch (formData.frequency) {
       case 'monthly':
-      case 'bi_monthly':
-        return 'Jour du mois (1-31). Ex: 30 pour le 30 de chaque mois';
+        return Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: `${i + 1}` }));
       case 'weekly':
       case 'bi_weekly':
-        return 'Jour de la semaine (0=Dimanche, 1=Lundi, ..., 6=Samedi)';
+        return [
+          { value: 1, label: 'Lundi' },
+          { value: 2, label: 'Mardi' },
+          { value: 3, label: 'Mercredi' },
+          { value: 4, label: 'Jeudi' },
+          { value: 5, label: 'Vendredi' },
+          { value: 6, label: 'Samedi' },
+          { value: 0, label: 'Dimanche' }
+        ];
       default:
-        return '';
+        return [];
     }
   };
-
-  // ✅ CALCULER L'ESTIMATION MENSUELLE
-  const getMonthlyEstimate = () => {
-    const amount = parseFloat(formData.amount) || 0;
-    let monthlyAmount = amount;
-    
-    switch (formData.frequency) {
-      case 'weekly':
-        monthlyAmount = amount * 4.33;
-        break;
-      case 'bi_weekly':
-        monthlyAmount = amount * 2.17;
-        break;
-      case 'bi_monthly':
-        monthlyAmount = amount * 2;
-        break;
-      // monthly reste tel quel
-    }
-    
-    return monthlyAmount;
-  };
-
-  const selectedCategory = incomeCategories.find(cat => cat.value === formData.category);
-  const selectedFrequency = frequencies.find(freq => freq.value === formData.frequency);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* ✅ En-tête avec aperçu */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3 mb-3">
-            <span className="text-2xl">{selectedCategory?.emoji || '💰'}</span>
-            <div>
-              <h3 className="font-medium text-gray-900">
-                {formData.name || 'Nouvelle source de revenus'}
-              </h3>
-              <p className="text-sm text-gray-600">
-                {selectedFrequency?.description || 'Choisissez une fréquence'}
-              </p>
-            </div>
-          </div>
-          
-          {/* Aperçu du montant */}
-          {formData.amount && (
-            <div className="bg-white rounded-lg p-3 border">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Montant par paiement :</span>
-                  <div className="font-semibold text-green-600">
-                    {parseFloat(formData.amount).toLocaleString()} {formData.currency}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Estimation mensuelle :</span>
-                  <div className="font-semibold text-blue-600">
-                    ~{getMonthlyEstimate().toLocaleString()} {formData.currency}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {errors.submit && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-red-800 text-sm">{errors.submit}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input
+          label="Nom de la source"
+          value={formData.name}
+          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          error={errors.name}
+          placeholder="Ex: Salaire principal"
+          required
+        />
+
+        <Input
+          label="Employeur (optionnel)"
+          value={formData.employer}
+          onChange={(e) => setFormData(prev => ({ ...prev, employer: e.target.value }))}
+          placeholder="Ex: Mon entreprise"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input
+          label="Montant"
+          type="number"
+          value={formData.amount}
+          onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+          error={errors.amount}
+          placeholder="0.00"
+          required
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Devise
+          </label>
+          <select
+            value={formData.currency}
+            onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="HTG">🇭🇹 Gourde (HTG)</option>
+            <option value="USD">🇺🇸 Dollar (USD)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Compte de destination
+        </label>
+        <select
+          value={formData.destination_account_id}
+          onChange={(e) => setFormData(prev => ({ ...prev, destination_account_id: e.target.value }))}
+          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          required
+        >
+          <option value="">Sélectionner un compte</option>
+          {accounts.map(account => (
+            <option key={account.id} value={account.id}>
+              {account.name} - {account.bank_name} ({account.currency})
+            </option>
+          ))}
+        </select>
+        {errors.destination_account_id && (
+          <p className="text-red-600 text-sm mt-1">{errors.destination_account_id}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Fréquence
+          </label>
+          <select
+            value={formData.frequency}
+            onChange={(e) => setFormData(prev => ({ ...prev, frequency: e.target.value }))}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          >
+            {frequencies.map(freq => (
+              <option key={freq.value} value={freq.value}>
+                {freq.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* ✅ Informations de base */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input
-            label="Nom de la source *"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            error={errors.name}
-            placeholder="Ex: Salaire BUH, Freelance Design..."
-            icon={Tag}
-            required
-          />
-
-          <Input
-            label="Employeur / Source"
-            value={formData.employer}
-            onChange={(e) => handleChange('employer', e.target.value)}
-            placeholder="Ex: Banque de l'Union Haïtienne"
-            icon={Building}
-          />
-        </div>
-
-        {/* ✅ Montant et devise */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Montant par paiement *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <DollarSign className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount}
-                onChange={(e) => handleChange('amount', e.target.value)}
-                className={`
-                  block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg 
-                  placeholder-gray-400 focus:outline-none focus:ring-2 
-                  focus:ring-blue-500 focus:border-transparent
-                  ${errors.amount ? 'border-red-500' : ''}
-                `}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            {errors.amount && <p className="text-sm text-red-600 mt-1">{errors.amount}</p>}
-          </div>
-
+        {formData.frequency !== 'bi_monthly' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Devise
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {formData.frequency === 'monthly' ? 'Jour du mois' : 'Jour de la semaine'}
             </label>
             <select
-              value={formData.currency}
-              onChange={(e) => handleChange('currency', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="HTG">🇭🇹 HTG (Gourdes)</option>
-              <option value="USD">🇺🇸 USD (Dollars)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* ✅ Catégorie */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Catégorie de revenus
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {incomeCategories.map(category => (
-              <button
-                key={category.value}
-                type="button"
-                onClick={() => handleChange('category', category.value)}
-                className={`
-                  p-3 border-2 rounded-lg transition-all duration-200 text-left
-                  ${formData.category === category.value 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md' 
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }
-                `}
-              >
-                <div className="text-xl mb-1">{category.emoji}</div>
-                <div className="text-xs font-medium">{category.label}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ✅ Fréquence de paiement */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Fréquence de paiement
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {frequencies.map(frequency => (
-              <button
-                key={frequency.value}
-                type="button"
-                onClick={() => handleChange('frequency', frequency.value)}
-                className={`
-                  p-4 border-2 rounded-lg transition-all duration-200 text-left
-                  ${formData.frequency === frequency.value 
-                    ? 'border-green-500 bg-green-50 text-green-700 shadow-md' 
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }
-                `}
-              >
-                <div className="font-medium">{frequency.label}</div>
-                <div className="text-sm text-gray-600">{frequency.description}</div>
-                <div className="text-xs text-gray-500 mt-1">{frequency.example}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ✅ Configuration temporelle */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {formData.frequency.includes('weekly') ? 'Jour de la semaine' : 'Jour du mois'}
-            </label>
-            <input
-              type="number"
-              min={formData.frequency.includes('weekly') ? 0 : 1}
-              max={formData.frequency.includes('weekly') ? 6 : 31}
               value={formData.payment_day}
-              onChange={(e) => handleChange('payment_day', parseInt(e.target.value))}
-              className={`
-                block w-full px-3 py-2 border border-gray-300 rounded-lg 
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                ${errors.payment_day ? 'border-red-500' : ''}
-              `}
-            />
-            <p className="text-xs text-gray-500 mt-1">{getPaymentDayHelper()}</p>
-            {errors.payment_day && <p className="text-sm text-red-600 mt-1">{errors.payment_day}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Heure de traitement
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Clock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="time"
-                value={formData.payment_time}
-                onChange={(e) => handleChange('payment_time', e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Heure à laquelle créer la transaction</p>
-          </div>
-        </div>
-
-        {/* ✅ Compte de destination */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Compte de destination *
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <CreditCard className="h-5 w-5 text-gray-400" />
-            </div>
-            <select
-              value={formData.destination_account_id}
-              onChange={(e) => handleChange('destination_account_id', e.target.value)}
-              className={`
-                block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg 
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                ${errors.destination_account_id ? 'border-red-500' : ''}
-              `}
-              required
+              onChange={(e) => setFormData(prev => ({ ...prev, payment_day: parseInt(e.target.value) }))}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
-              <option value="">Sélectionner un compte</option>
-              {accounts.map(account => (
-                <option key={account.id} value={account.id}>
-                  {account.name} - {account.bank_name} ({account.currency})
+              {getPaymentDayOptions().map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
-          </div>
-          {errors.destination_account_id && (
-            <p className="text-sm text-red-600 mt-1">{errors.destination_account_id}</p>
-          )}
-        </div>
-
-        {/* ✅ Message d'erreur général */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-red-600 text-sm">{errors.submit}</p>
+            {errors.payment_day && (
+              <p className="text-red-600 text-sm mt-1">{errors.payment_day}</p>
+            )}
           </div>
         )}
+      </div>
 
-        {/* ✅ Actions */}
-        <div className="flex justify-end space-x-4 pt-4 border-t">
-          {onCancel && (
-            <Button variant="outline" onClick={onCancel}>
-              Annuler
-            </Button>
-          )}
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Enregistrement...' : 
-             initialData ? 'Modifier la source' : 'Créer la source'
-            }
-          </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Catégorie
+          </label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          >
+            {incomeCategories.map(cat => (
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
         </div>
-      </form>
-    </div>
+
+        <Input
+          label="Heure de traitement"
+          type="time"
+          value={formData.payment_time}
+          onChange={(e) => setFormData(prev => ({ ...prev, payment_time: e.target.value }))}
+        />
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={loading}
+        >
+          Annuler
+        </Button>
+        <Button
+          type="submit"
+          loading={loading}
+          disabled={loading}
+        >
+          {initialData ? 'Modifier' : 'Ajouter'}
+        </Button>
+      </div>
+    </form>
   );
 };
 
