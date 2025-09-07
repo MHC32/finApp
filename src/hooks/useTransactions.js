@@ -1,4 +1,4 @@
-// src/hooks/useTransactions.js - VERSION DEBUG
+// src/hooks/useTransactions.js - VERSION MISE À JOUR avec déclenchement budgets
 import { useState, useEffect } from 'react';
 import { db } from '../database/db';
 import { useAuthStore } from '../store/authStore';
@@ -45,12 +45,21 @@ export const useTransactions = () => {
     }
   };
 
-  // ✅ FONCTION POUR DÉCLENCHER LE RECHARGEMENT DES COMPTES
-  const triggerAccountsReload = () => {
-    console.log("🔔 DEBUG: triggerAccountsReload() appelée");
-    // Émettre un événement personnalisé pour signaler aux autres hooks
+  // ✅ FONCTION POUR DÉCLENCHER LES RECHARGEMENTS
+  const triggerUpdates = () => {
+    console.log("🔔 DEBUG: Déclenchement des mises à jour");
+    
+    // Déclencher le rechargement des comptes
     window.dispatchEvent(new CustomEvent('accountsChanged'));
     console.log("📡 DEBUG: Événement 'accountsChanged' émis");
+    
+    // ✅ NOUVEAU: Déclencher le rechargement des budgets
+    window.dispatchEvent(new CustomEvent('budgetsChanged'));
+    console.log("📡 DEBUG: Événement 'budgetsChanged' émis");
+    
+    // ✅ NOUVEAU: Déclencher le rechargement des transactions elles-mêmes
+    window.dispatchEvent(new CustomEvent('transactionsChanged'));
+    console.log("📡 DEBUG: Événement 'transactionsChanged' émis");
   };
 
   // Ajouter une transaction
@@ -59,83 +68,56 @@ export const useTransactions = () => {
       console.log('🟢 === DÉBUT ADD TRANSACTION ===');
       console.log('📥 Données reçues:', transactionData);
       
-      // ✅ VÉRIFIER LES TYPES DE DONNÉES
-      console.log('🔍 Types de données:');
-      console.log('- amount type:', typeof transactionData.amount, 'value:', transactionData.amount);
-      console.log('- account_id type:', typeof transactionData.account_id, 'value:', transactionData.account_id);
-      
+      // Préparer les données de transaction
       const newTransaction = {
         ...transactionData,
         user_id: user?.id,
+        amount: parseFloat(transactionData.amount),
         date: new Date(transactionData.date),
         created_at: new Date(),
         updated_at: new Date()
       };
-      
-      console.log('💾 Transaction à sauvegarder:', newTransaction);
-      
-      const id = await db.transactions.add(newTransaction);
-      console.log('✅ Transaction sauvegardée avec ID:', id);
-      
-      // ✅ METTRE À JOUR LE SOLDE DU COMPTE
-      if (transactionData.account_id) {
-        console.log('\n💳 === MISE À JOUR DU COMPTE ===');
-        console.log(`🎯 Compte ciblé ID: ${transactionData.account_id}`);
-        console.log(`💵 Montant de la transaction: ${transactionData.amount}`);
+
+      console.log('💾 Données à sauvegarder:', newTransaction);
+
+      // Sauvegarder la transaction
+      const transactionId = await db.transactions.add(newTransaction);
+      console.log('✅ Transaction sauvegardée avec ID:', transactionId);
+
+      // Récupérer la transaction créée
+      const createdTransaction = await db.transactions.get(transactionId);
+      console.log('📄 Transaction créée:', createdTransaction);
+
+      // Mettre à jour le solde du compte
+      const account = await db.accounts.get(transactionData.account_id);
+      if (account) {
+        const newBalance = parseFloat(account.current_balance) + parseFloat(transactionData.amount);
         
-        // ✅ FIX: Conversion du account_id en nombre
-        const accountId = parseInt(transactionData.account_id);
-        console.log(`🔄 Conversion account_id: "${transactionData.account_id}" → ${accountId}`);
-        
-        const account = await db.accounts.get(accountId);
-        console.log('📊 Compte trouvé:', account);
-        
-        if (account) {
-          console.log(`💰 Solde AVANT: ${account.current_balance} (type: ${typeof account.current_balance})`);
-          
-          // ✅ CONVERSION EXPLICITE EN NOMBRE
-          const currentBalance = parseFloat(account.current_balance) || 0;
-          const transactionAmount = parseFloat(transactionData.amount) || 0;
-          
-          console.log(`🔢 Conversion - Solde: ${currentBalance}, Transaction: ${transactionAmount}`);
-          
-          // ✅ CALCUL AVEC LOGS DÉTAILLÉS
-          const newBalance = currentBalance + transactionAmount;
-          
-          console.log(`🧮 Calcul: ${currentBalance} + (${transactionAmount}) = ${newBalance}`);
-          console.log(`💰 Solde APRÈS: ${newBalance}`);
-          
-          await db.accounts.update(accountId, {
-            current_balance: newBalance,
-            updated_at: new Date()
-          });
-          
-          console.log('✅ Compte mis à jour en base de données');
-          
-          // ✅ VÉRIFIER LA MISE À JOUR
-          const updatedAccount = await db.accounts.get(accountId);
-          console.log('🔍 Vérification - Nouveau solde en DB:', updatedAccount.current_balance);
-          
-          // ✅ DÉCLENCHER LE RECHARGEMENT DES COMPTES
-          triggerAccountsReload();
-          
-          console.log('✅ Processus de mise à jour terminé avec succès');
-        } else {
-          console.error('❌ ERREUR: Compte non trouvé pour ID:', accountId, '(converti depuis:', transactionData.account_id, ')');
-        }
-      } else {
-        console.warn('⚠️ ATTENTION: Aucun account_id fourni');
+        console.log('💰 Mise à jour du solde:');
+        console.log('  - Solde actuel:', account.current_balance);
+        console.log('  - Montant transaction:', transactionData.amount);
+        console.log('  - Nouveau solde:', newBalance);
+
+        await db.accounts.update(transactionData.account_id, {
+          current_balance: newBalance,
+          updated_at: new Date()
+        });
+
+        console.log('✅ Solde du compte mis à jour');
       }
-      
-      const transaction = await db.transactions.get(id);
-      setTransactions(prev => [transaction, ...prev]);
-      
-      console.log('🟢 === FIN ADD TRANSACTION ===\n');
-      return transaction;
+
+      // Mettre à jour le state local
+      setTransactions(prev => [createdTransaction, ...prev]);
+
+      // ✅ DÉCLENCHER TOUTES LES MISES À JOUR
+      triggerUpdates();
+
+      console.log('🎉 === FIN ADD TRANSACTION SUCCÈS ===');
+      return createdTransaction;
+
     } catch (err) {
       console.error('❌ === ERREUR ADD TRANSACTION ===');
-      console.error('💥 Erreur détaillée:', err);
-      console.error('📍 Stack trace:', err.stack);
+      console.error('Erreur détaillée:', err);
       setError('Erreur lors de l\'ajout de la transaction');
       throw err;
     }
@@ -144,142 +126,178 @@ export const useTransactions = () => {
   // Modifier une transaction
   const updateTransaction = async (id, updates) => {
     try {
-      console.log('🟡 === DÉBUT UPDATE TRANSACTION ===');
-      console.log('🎯 Transaction ID:', id);
-      console.log('📝 Mises à jour:', updates);
-      
+      console.log('✏️ === DÉBUT UPDATE TRANSACTION ===');
+      console.log('ID:', id, 'Updates:', updates);
+
+      // Récupérer l'ancienne transaction pour calculer la différence
       const oldTransaction = await db.transactions.get(id);
-      console.log('📋 Ancienne transaction:', oldTransaction);
-      
-      await db.transactions.update(id, {
+      if (!oldTransaction) {
+        throw new Error('Transaction non trouvée');
+      }
+
+      console.log('📄 Ancienne transaction:', oldTransaction);
+
+      // Préparer les nouvelles données
+      const updatedData = {
         ...updates,
+        amount: parseFloat(updates.amount),
         date: new Date(updates.date),
         updated_at: new Date()
-      });
-      
-      // ✅ RECALCULER LE SOLDE DU COMPTE SI NÉCESSAIRE
-      if (oldTransaction.account_id && (
-        oldTransaction.amount !== updates.amount || 
-        oldTransaction.account_id !== updates.account_id
-      )) {
-        console.log('🔄 Recalcul des soldes nécessaire');
-        
-        // ✅ ANNULER L'ANCIENNE TRANSACTION
+      };
+
+      // Mettre à jour la transaction
+      await db.transactions.update(id, updatedData);
+      console.log('✅ Transaction mise à jour');
+
+      // Recalculer les soldes si nécessaire
+      if (updates.amount !== undefined || updates.account_id !== undefined) {
+        // Annuler l'effet de l'ancienne transaction
         if (oldTransaction.account_id) {
-          const oldAccountId = parseInt(oldTransaction.account_id);
-          const oldAccount = await db.accounts.get(oldAccountId);
+          const oldAccount = await db.accounts.get(oldTransaction.account_id);
           if (oldAccount) {
-            console.log(`🔙 Annulation sur compte ${oldAccount.name}: ${oldTransaction.amount}`);
-            const restoredBalance = parseFloat(oldAccount.current_balance) - parseFloat(oldTransaction.amount);
-            
-            await db.accounts.update(oldAccountId, {
-              current_balance: restoredBalance,
+            const revertedBalance = parseFloat(oldAccount.current_balance) - parseFloat(oldTransaction.amount);
+            await db.accounts.update(oldTransaction.account_id, {
+              current_balance: revertedBalance,
               updated_at: new Date()
             });
-            
-            console.log(`💰 Solde restauré: ${restoredBalance}`);
+            console.log('💰 Solde ancien compte restauré:', revertedBalance);
           }
         }
-        
-        // ✅ APPLIQUER LA NOUVELLE TRANSACTION
-        if (updates.account_id) {
-          const newAccountId = parseInt(updates.account_id);
-          const newAccount = await db.accounts.get(newAccountId);
-          if (newAccount) {
-            console.log(`➕ Application sur compte ${newAccount.name}: ${updates.amount}`);
-            const newBalance = parseFloat(newAccount.current_balance) + parseFloat(updates.amount);
-            
-            await db.accounts.update(newAccountId, {
-              current_balance: newBalance,
-              updated_at: new Date()
-            });
-            
-            console.log(`💰 Nouveau solde: ${newBalance}`);
-          }
+
+        // Appliquer l'effet de la nouvelle transaction
+        const newAccountId = updates.account_id || oldTransaction.account_id;
+        const newAccount = await db.accounts.get(newAccountId);
+        if (newAccount) {
+          const newBalance = parseFloat(newAccount.current_balance) + parseFloat(updatedData.amount);
+          await db.accounts.update(newAccountId, {
+            current_balance: newBalance,
+            updated_at: new Date()
+          });
+          console.log('💰 Nouveau solde appliqué:', newBalance);
         }
-        
-        // ✅ DÉCLENCHER LE RECHARGEMENT DES COMPTES
-        triggerAccountsReload();
-        console.log('✅ Soldes mis à jour avec succès');
       }
-      
+
+      // Récupérer la transaction mise à jour
       const updatedTransaction = await db.transactions.get(id);
-      setTransactions(prev => 
-        prev.map(transaction => 
-          transaction.id === id ? updatedTransaction : transaction
-        )
-      );
       
-      console.log('🟡 === FIN UPDATE TRANSACTION ===\n');
+      // Mettre à jour le state local
+      setTransactions(prev => 
+        prev.map(transaction => transaction.id === id ? updatedTransaction : transaction)
+      );
+
+      // ✅ DÉCLENCHER TOUTES LES MISES À JOUR
+      triggerUpdates();
+
+      console.log('🎉 === FIN UPDATE TRANSACTION SUCCÈS ===');
       return updatedTransaction;
+
     } catch (err) {
-      console.error('❌ Erreur lors de la modification:', err);
+      console.error('❌ === ERREUR UPDATE TRANSACTION ===');
+      console.error('Erreur détaillée:', err);
       setError('Erreur lors de la modification de la transaction');
       throw err;
     }
   };
 
   // Supprimer une transaction
-  // Supprimer une transaction
-const deleteTransaction = async (id) => {
-  try {
-    console.log('🔴 === DÉBUT DELETE TRANSACTION ===');
-    console.log('🗑️ Suppression transaction ID:', id);
-    
-    const transaction = await db.transactions.get(id);
-    console.log('📋 Transaction à supprimer:', transaction);
-    
-    // ✅ METTRE À JOUR LE SOLDE DU COMPTE
-    if (transaction.account_id) {
-      // CORRECTION: Utiliser transaction.account_id directement
-      const account = await db.accounts.get(transaction.account_id);
-      if (account) {
-        console.log(`🔙 Annulation du montant ${transaction.amount} sur ${account.name}`);
-        console.log(`💰 Solde avant suppression: ${account.current_balance}`);
-        
-        // ✅ CONVERSION ET CALCUL
-        const currentBalance = parseFloat(account.current_balance);
-        const transactionAmount = parseFloat(transaction.amount);
-        const newBalance = currentBalance - transactionAmount;
-        
-        console.log(`🧮 Calcul: ${currentBalance} - (${transactionAmount}) = ${newBalance}`);
-        
-        // CORRECTION: Utiliser transaction.account_id au lieu de accountId
-        await db.accounts.update(transaction.account_id, {
-          current_balance: newBalance,
-          updated_at: new Date()
-        });
-        
-        // ✅ DÉCLENCHER LE RECHARGEMENT DES COMPTES
-        triggerAccountsReload();
-        console.log('✅ Solde mis à jour après suppression');
-      }
-    }
-    
-    await db.transactions.delete(id);
-    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
-    
-    console.log('🔴 === FIN DELETE TRANSACTION ===\n');
-  } catch (err) {
-    console.error('❌ Erreur lors de la suppression:', err);
-    setError('Erreur lors de la suppression de la transaction');
-    throw err;
-  }
-};
+  const deleteTransaction = async (id) => {
+    try {
+      console.log('🗑️ === DÉBUT DELETE TRANSACTION ===');
+      console.log('ID:', id);
 
-  // Statistiques
-  const getStats = () => {
-    const income = transactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    const expenses = transactions
-      .filter(t => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
-    return { income, expenses, net: income - expenses };
+      // Récupérer la transaction à supprimer
+      const transaction = await db.transactions.get(id);
+      if (!transaction) {
+        throw new Error('Transaction non trouvée');
+      }
+
+      console.log('📄 Transaction à supprimer:', transaction);
+
+      // Annuler l'effet sur le solde du compte
+      if (transaction.account_id) {
+        const account = await db.accounts.get(transaction.account_id);
+        if (account) {
+          const revertedBalance = parseFloat(account.current_balance) - parseFloat(transaction.amount);
+          await db.accounts.update(transaction.account_id, {
+            current_balance: revertedBalance,
+            updated_at: new Date()
+          });
+          console.log('💰 Solde du compte restauré:', revertedBalance);
+        }
+      }
+
+      // Supprimer la transaction
+      await db.transactions.delete(id);
+      console.log('✅ Transaction supprimée');
+
+      // Mettre à jour le state local
+      setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+
+      // ✅ DÉCLENCHER TOUTES LES MISES À JOUR
+      triggerUpdates();
+
+      console.log('🎉 === FIN DELETE TRANSACTION SUCCÈS ===');
+
+    } catch (err) {
+      console.error('❌ === ERREUR DELETE TRANSACTION ===');
+      console.error('Erreur détaillée:', err);
+      setError('Erreur lors de la suppression de la transaction');
+      throw err;
+    }
   };
 
+  // Obtenir les statistiques des transactions
+  const getStats = (filters = {}) => {
+    let filteredTransactions = transactions;
+
+    // Appliquer les filtres pour les stats
+    if (filters.dateFrom || filters.dateTo || filters.account_id || filters.category) {
+      filteredTransactions = transactions.filter(transaction => {
+        const transactionDate = new Date(transaction.date);
+        
+        if (filters.dateFrom && transactionDate < new Date(filters.dateFrom)) return false;
+        if (filters.dateTo && transactionDate > new Date(filters.dateTo)) return false;
+        if (filters.account_id && transaction.account_id !== filters.account_id) return false;
+        if (filters.category && transaction.category !== filters.category) return false;
+        
+        return true;
+      });
+    }
+
+    const income = filteredTransactions
+      .filter(t => t.amount > 0)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const expenses = filteredTransactions
+      .filter(t => t.amount < 0)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    return {
+      income,
+      expenses,
+      net: income - expenses,
+      count: filteredTransactions.length
+    };
+  };
+
+  // ✅ ÉCOUTER LES CHANGEMENTS DE TRANSACTIONS
+  useEffect(() => {
+    const handleTransactionsChanged = () => {
+      console.log('🔔 === ÉVÉNEMENT TRANSACTIONS CHANGED REÇU ===');
+      console.log('📡 Event listener déclenché - Rechargement des transactions');
+      loadTransactions();
+    };
+
+    console.log('👂 Installation du listener transactionsChanged');
+    window.addEventListener('transactionsChanged', handleTransactionsChanged);
+
+    return () => {
+      console.log('🧹 Nettoyage du listener transactionsChanged');
+      window.removeEventListener('transactionsChanged', handleTransactionsChanged);
+    };
+  }, [user?.id]);
+
+  // Charger les transactions au montage
   useEffect(() => {
     if (user?.id) {
       loadTransactions();
