@@ -1,7 +1,7 @@
-// src/hooks/useNotifications.js
+// src/hooks/useNotifications.js - VERSION SIMPLIFIÉE POUR SYSTÈME ACTUEL
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { NotificationService } from '../services/notificationService';
+import { db } from '../database/db';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -17,11 +17,20 @@ export const useNotifications = () => {
       
       if (!user?.id) return;
 
-      const userNotifications = await NotificationService.getUserNotifications(user.id, includeRead);
+      let query = db.notifications.where('user_id').equals(user.id);
+      
+      if (!includeRead) {
+        query = query.and(notification => !notification.is_read);
+      }
+
+      const userNotifications = await query
+        .reverse()
+        .sortBy('created_at');
+
       setNotifications(userNotifications);
 
       // Compter les non lues
-      const unreadCount = await NotificationService.getUnreadCount(user.id);
+      const unreadCount = userNotifications.filter(n => !n.is_read).length;
       setUnreadCount(unreadCount);
 
       console.log('📥 Notifications chargées:', userNotifications.length, 'Non lues:', unreadCount);
@@ -37,7 +46,10 @@ export const useNotifications = () => {
   // ✅ MARQUER UNE NOTIFICATION COMME LUE
   const markAsRead = async (notificationId) => {
     try {
-      await NotificationService.markAsRead(notificationId);
+      await db.notifications.update(notificationId, {
+        is_read: true,
+        read_at: new Date()
+      });
       
       // Mettre à jour le state local
       setNotifications(prev => 
@@ -62,7 +74,18 @@ export const useNotifications = () => {
   // ✅ MARQUER TOUTES COMME LUES
   const markAllAsRead = async () => {
     try {
-      await NotificationService.markAllAsRead(user.id);
+      const unreadNotifications = await db.notifications
+        .where('user_id')
+        .equals(user.id)
+        .and(notification => !notification.is_read)
+        .toArray();
+
+      for (const notification of unreadNotifications) {
+        await db.notifications.update(notification.id, {
+          is_read: true,
+          read_at: new Date()
+        });
+      }
       
       // Mettre à jour le state local
       setNotifications(prev => 
@@ -75,7 +98,7 @@ export const useNotifications = () => {
 
       setUnreadCount(0);
 
-      console.log('✅ Toutes les notifications marquées comme lues');
+      console.log(`✅ ${unreadNotifications.length} notifications marquées comme lues`);
 
     } catch (err) {
       console.error('❌ Erreur marquage toutes notifications:', err);
@@ -86,7 +109,7 @@ export const useNotifications = () => {
   // ✅ SUPPRIMER UNE NOTIFICATION
   const deleteNotification = async (notificationId) => {
     try {
-      await NotificationService.deleteNotification(notificationId);
+      await db.notifications.delete(notificationId);
       
       // Mettre à jour le state local
       const deletedNotification = notifications.find(n => n.id === notificationId);
@@ -105,45 +128,14 @@ export const useNotifications = () => {
     }
   };
 
-  // ✅ CRÉER UNE NOTIFICATION DE BUDGET
-  const createBudgetAlert = async (budgetId, budgetName, percentage, amountSpent, budgetAmount, currency) => {
-    try {
-      if (!user?.id) return;
-
-      const notificationId = await NotificationService.createBudgetAlert(
-        user.id,
-        budgetId, 
-        budgetName, 
-        percentage, 
-        amountSpent, 
-        budgetAmount, 
-        currency
-      );
-
-      if (notificationId) {
-        console.log('✅ Alerte budget créée:', notificationId);
-        // Les notifications seront rechargées par l'événement
-      }
-
-      return notificationId;
-
-    } catch (err) {
-      console.error('❌ Erreur création alerte budget:', err);
-      setError('Erreur lors de la création de l\'alerte');
-    }
+  // ✅ OBTENIR LES NOTIFICATIONS PAR TYPE
+  const getNotificationsByType = (type) => {
+    return notifications.filter(notification => notification.type === type);
   };
 
-  // ✅ NETTOYER LES ANCIENNES NOTIFICATIONS
-  const cleanupOldNotifications = async () => {
-    try {
-      if (!user?.id) return;
-
-      await NotificationService.cleanupOldNotifications(user.id);
-      console.log('🧹 Nettoyage des anciennes notifications effectué');
-
-    } catch (err) {
-      console.error('❌ Erreur nettoyage notifications:', err);
-    }
+  // ✅ OBTENIR LES NOTIFICATIONS NON LUES
+  const getUnreadNotifications = () => {
+    return notifications.filter(notification => !notification.is_read);
   };
 
   // ✅ ÉCOUTER LES CHANGEMENTS DE NOTIFICATIONS
@@ -151,7 +143,7 @@ export const useNotifications = () => {
     const handleNotificationsChanged = () => {
       console.log('🔔 === ÉVÉNEMENT NOTIFICATIONS CHANGED REÇU ===');
       console.log('📡 Event listener déclenché - Rechargement des notifications');
-      loadNotifications();
+      loadNotifications(true); // Charger toutes les notifications (lues + non lues)
     };
 
     console.log('👂 Installation du listener notificationsChanged');
@@ -166,22 +158,9 @@ export const useNotifications = () => {
   // ✅ CHARGER LES NOTIFICATIONS AU MONTAGE
   useEffect(() => {
     if (user?.id) {
-      loadNotifications();
-      
-      // Nettoyer les anciennes notifications une fois par session
-      cleanupOldNotifications();
+      loadNotifications(true); // Charger toutes les notifications au démarrage
     }
   }, [user?.id]);
-
-  // ✅ OBTENIR LES NOTIFICATIONS PAR TYPE
-  const getNotificationsByType = (type) => {
-    return notifications.filter(notification => notification.type === type);
-  };
-
-  // ✅ OBTENIR LES NOTIFICATIONS NON LUES
-  const getUnreadNotifications = () => {
-    return notifications.filter(notification => !notification.is_read);
-  };
 
   return {
     notifications,
@@ -192,9 +171,7 @@ export const useNotifications = () => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    createBudgetAlert,
     getNotificationsByType,
-    getUnreadNotifications,
-    cleanupOldNotifications
+    getUnreadNotifications
   };
 };

@@ -1,14 +1,128 @@
-// src/hooks/useBudgets.js
+// src/hooks/useBudgets.js - VERSION CORRIGÉE AVEC NOTIFICATIONS
 import { useState, useEffect } from 'react';
 import { db } from '../database/db';
 import { useAuthStore } from '../store/authStore';
-import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 export const useBudgets = () => {
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuthStore();
+
+  // ✅ NOUVEAU: Créer une notification de budget
+  const createBudgetNotification = async (budget, percentage) => {
+    try {
+      console.log('🚨 Création notification budget:', budget.name, percentage + '%');
+
+      let alertType, title, message;
+
+      if (percentage >= 100) {
+        alertType = 'danger';
+        title = '🚨 Budget dépassé !';
+        message = `Votre budget "${budget.name}" est dépassé de ${(percentage - 100).toFixed(1)}%. Vous avez dépensé ${budget.current_spent.toLocaleString()} ${budget.currency} sur ${budget.amount.toLocaleString()} ${budget.currency}.`;
+      } else if (percentage >= 80) {
+        alertType = 'warning';
+        title = '⚠️ Budget bientôt atteint';
+        message = `Attention ! Vous avez utilisé ${percentage.toFixed(1)}% de votre budget "${budget.name}" (${budget.current_spent.toLocaleString()} ${budget.currency} / ${budget.amount.toLocaleString()} ${budget.currency}).`;
+      } else {
+        // Pas d'alerte nécessaire
+        return null;
+      }
+
+      // Vérifier si une notification similaire existe déjà (éviter les doublons)
+      const existingNotifications = await db.notifications
+        .where('user_id')
+        .equals(user.id)
+        .and(notification => 
+          notification.type === 'budget_alert' &&
+          notification.data?.budget_id === budget.id &&
+          !notification.is_read
+        )
+        .toArray();
+
+      // Si une notification non lue existe déjà, la mettre à jour
+      if (existingNotifications.length > 0) {
+        const existingNotification = existingNotifications[0];
+        await db.notifications.update(existingNotification.id, {
+          title,
+          message,
+          data: {
+            budget_id: budget.id,
+            budget_name: budget.name,
+            percentage,
+            amount_spent: budget.current_spent,
+            budget_amount: budget.amount,
+            currency: budget.currency,
+            alert_type: alertType
+          },
+          updated_at: new Date()
+        });
+
+        console.log('✅ Notification budget mise à jour');
+        
+        // Déclencher l'événement pour mettre à jour l'UI
+        window.dispatchEvent(new CustomEvent('notificationsChanged'));
+        
+        return existingNotification.id;
+      }
+
+      // Créer une nouvelle notification
+      const notification = {
+        user_id: user.id,
+        type: 'budget_alert',
+        title,
+        message,
+        data: {
+          budget_id: budget.id,
+          budget_name: budget.name,
+          percentage,
+          amount_spent: budget.current_spent,
+          budget_amount: budget.amount,
+          currency: budget.currency,
+          alert_type: alertType
+        },
+        is_read: false,
+        scheduled_for: new Date(),
+        created_at: new Date()
+      };
+
+      const notificationId = await db.notifications.add(notification);
+      console.log('✅ Notification budget créée:', notificationId);
+
+      // Déclencher l'événement pour mettre à jour l'UI
+      window.dispatchEvent(new CustomEvent('notificationsChanged'));
+
+      return notificationId;
+
+    } catch (error) {
+      console.error('❌ Erreur création notification budget:', error);
+      return null;
+    }
+  };
+
+  // ✅ NOUVEAU: Vérifier et créer une alerte de budget si nécessaire
+  const checkAndCreateBudgetAlert = async (budget) => {
+    try {
+      // Seulement pour les budgets actifs
+      if (!budget.is_active || !budget.current_spent || budget.amount === 0) {
+        return;
+      }
+
+      const percentage = (budget.current_spent / budget.amount) * 100;
+      const alertThreshold = budget.alert_threshold || 80;
+
+      console.log(`🔍 Vérification budget "${budget.name}": ${percentage.toFixed(1)}% (seuil: ${alertThreshold}%)`);
+
+      // Créer une alerte si le seuil est atteint
+      if (percentage >= alertThreshold) {
+        await createBudgetNotification(budget, percentage);
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur vérification alerte budget:', error);
+    }
+  };
 
   // Charger tous les budgets
   const loadBudgets = async () => {
@@ -29,7 +143,12 @@ export const useBudgets = () => {
       const budgetsWithSpent = await Promise.all(
         userBudgets.map(async (budget) => {
           const spent = await calculateCurrentSpent(budget);
-          return { ...budget, current_spent: spent };
+          const budgetWithSpent = { ...budget, current_spent: spent };
+          
+          // ✅ NOUVEAU: Vérifier et créer des alertes si nécessaire
+          await checkAndCreateBudgetAlert(budgetWithSpent);
+          
+          return budgetWithSpent;
         })
       );
 
@@ -148,6 +267,9 @@ export const useBudgets = () => {
       const updatedBudget = await db.budgets.get(id);
       const currentSpent = await calculateCurrentSpent(updatedBudget);
       const budgetWithSpent = { ...updatedBudget, current_spent: currentSpent };
+
+      // ✅ NOUVEAU: Vérifier les alertes après modification
+      await checkAndCreateBudgetAlert(budgetWithSpent);
       
       setBudgets(prev => 
         prev.map(budget => budget.id === id ? budgetWithSpent : budget)
@@ -233,7 +355,7 @@ export const useBudgets = () => {
     }
   }, [user?.id]);
 
-  // ✅ ÉCOUTER LES CHANGEMENTS DE TRANSACTIONS POUR RECALCULER
+  // ✅ ÉCOUTER LES CHANGEMENTS DE TRANSACTIONS POUR RECALCULER ET VÉRIFIER ALERTES
   useEffect(() => {
     const handleBudgetsChanged = () => {
       console.log('🔔 === ÉVÉNEMENT BUDGETS CHANGED REÇU ===');
@@ -243,8 +365,8 @@ export const useBudgets = () => {
 
     const handleTransactionsChanged = () => {
       console.log('🔔 === ÉVÉNEMENT TRANSACTIONS CHANGED REÇU ===');
-      console.log('📡 Event listener déclenché - Recalcul des budgets');
-      loadBudgets(); // Recalculer les dépenses actuelles
+      console.log('📡 Event listener déclenché - Recalcul des budgets avec vérification alertes');
+      loadBudgets(); // Recalculer les dépenses actuelles et vérifier les alertes
     };
 
     console.log('👂 Installation des listeners budgets et transactions');

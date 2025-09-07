@@ -1,5 +1,5 @@
-// src/components/notifications/NotificationCenter.jsx - VERSION UNIFIÉE
-import React, { useState, useEffect } from 'react';
+// src/components/notifications/NotificationCenter.jsx - VERSION FINALE
+import React, { useState } from 'react';
 import { Bell, X, Check, Clock, DollarSign, AlertCircle, Target, Trash2 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { Button, Badge } from '../ui';
@@ -34,20 +34,19 @@ const NotificationCenter = () => {
   };
 
   const getNotificationColor = (type, isRead = false) => {
-    const baseOpacity = isRead ? 'dark:bg-gray-800/50' : 'dark:bg-gray-800';
-    const borderOpacity = isRead ? 'opacity-60' : '';
+    const baseOpacity = isRead ? 'opacity-75' : '';
     
     switch (type) {
       case 'income_reminder':
-        return `border-l-blue-500 bg-blue-50 ${baseOpacity} ${borderOpacity}`;
+        return `border-l-blue-500 bg-blue-50 dark:bg-blue-900/20 ${baseOpacity}`;
       case 'income_processed':
-        return `border-l-green-500 bg-green-50 ${baseOpacity} ${borderOpacity}`;
+        return `border-l-green-500 bg-green-50 dark:bg-green-900/20 ${baseOpacity}`;
       case 'budget_alert':
-        return `border-l-orange-500 bg-orange-50 ${baseOpacity} ${borderOpacity}`;
+        return `border-l-orange-500 bg-orange-50 dark:bg-orange-900/20 ${baseOpacity}`;
       case 'goal_milestone':
-        return `border-l-purple-500 bg-purple-50 ${baseOpacity} ${borderOpacity}`;
+        return `border-l-purple-500 bg-purple-50 dark:bg-purple-900/20 ${baseOpacity}`;
       default:
-        return `border-l-gray-500 bg-gray-50 ${baseOpacity} ${borderOpacity}`;
+        return `border-l-gray-500 bg-gray-50 dark:bg-gray-800 ${baseOpacity}`;
     }
   };
 
@@ -164,7 +163,7 @@ const NotificationCenter = () => {
                       key={notification.id}
                       className={`p-4 border-l-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${
                         getNotificationColor(notification.type, notification.is_read)
-                      } ${notification.is_read ? 'opacity-75' : ''}`}
+                      }`}
                       onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
                     >
                       <div className="flex items-start space-x-3">
@@ -208,17 +207,17 @@ const NotificationCenter = () => {
                             )}
                           </div>
                           
-                          {/* Données spécifiques selon le type */}
+                          {/* Données spécifiques pour les alertes budget */}
                           {notification.type === 'budget_alert' && notification.data && (
-                            <div className="mt-2 p-2 bg-orange-100 dark:bg-orange-900/20 rounded text-xs">
+                            <div className="mt-2 p-2 bg-orange-100 dark:bg-orange-900/30 rounded text-xs">
                               <div className="flex justify-between">
-                                <span>Budget:</span>
-                                <span className="font-medium">
+                                <span className="text-orange-800 dark:text-orange-300">Budget:</span>
+                                <span className="font-medium text-orange-900 dark:text-orange-200">
                                   {notification.data.amount_spent?.toLocaleString()} / {notification.data.budget_amount?.toLocaleString()} {notification.data.currency}
                                 </span>
                               </div>
                               <div className="flex justify-between mt-1">
-                                <span>Utilisation:</span>
+                                <span className="text-orange-800 dark:text-orange-300">Utilisation:</span>
                                 <span className={`font-medium ${notification.data.percentage > 100 ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>
                                   {notification.data.percentage?.toFixed(1)}%
                                 </span>
