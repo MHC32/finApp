@@ -1,11 +1,11 @@
-// src/App.js - VERSION COMPLÈTE AVEC ROUTES BUDGETS
+// src/App.js - VERSION COMPLÈTE AVEC TAUX DE CHANGE
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
 import { useExchangeStore } from './store/exchangeStore';
 
-// ✅ Import du service de revenus automatiques
+// ✅ NOUVEAU: Import du service de revenus automatiques
 import { IncomeService } from './services/incomeService';
 
 // Pages Auth
@@ -25,14 +25,13 @@ import TransactionsList from './pages/transactions/TransactionsList';
 import AddTransaction from './pages/transactions/AddTransaction';
 import TransactionDetails from './pages/transactions/TransactionDetails';
 
-// ✅ NOUVEAU: Pages Budgets complètes
+// Pages Budgets
 import BudgetsList from './pages/budgets/BudgetsList';
-import AddBudget from './pages/budgets/AddBudget';
 
 // Pages Sols
 import SolsList from './pages/sols/SolsList';
 
-// Pages Revenus
+// ✅ NOUVEAU: Pages Revenus
 import IncomeSourcesList from './pages/income/IncomeSourcesList';
 
 // Pages Paramètres
@@ -40,6 +39,7 @@ import Settings from './pages/settings/Settings';
 
 // Components
 import Navigation from './components/layout/Navigation';
+// ✅ NOUVEAU: Centre de notifications
 import NotificationCenter from './components/notifications/NotificationCenter';
 
 // Layout avec Navigation
@@ -55,6 +55,7 @@ const AppLayout = ({ children }) => {
         <header className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white ml-12">FinApp Haiti</h1>
+            {/* ✅ NOUVEAU: Centre de notifications dans le header mobile */}
             <NotificationCenter />
           </div>
         </header>
@@ -63,6 +64,7 @@ const AppLayout = ({ children }) => {
         <header className="hidden lg:flex bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-6 py-3">
           <div className="flex items-center justify-between w-full">
             <div></div>
+            {/* ✅ NOUVEAU: Centre de notifications dans le header desktop */}
             <NotificationCenter />
           </div>
         </header>
@@ -78,7 +80,7 @@ const AppLayout = ({ children }) => {
   );
 };
 
-// Route Protection
+// Route Protection (inchangé)
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, setupCompleted } = useAuthStore();
   
@@ -93,7 +95,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Auth Route
+// Auth Route (inchangé)
 const AuthRoute = ({ children }) => {
   const { isAuthenticated, setupCompleted } = useAuthStore();
   
@@ -113,28 +115,30 @@ function App() {
   const { isAuthenticated, setupCompleted } = useAuthStore();
   const { initialize: initExchange } = useExchangeStore();
 
-  // Initialiser le thème au démarrage
+  // ✅ NOUVEAU: Initialiser le thème au démarrage
   useEffect(() => {
     initTheme();
   }, [initTheme]);
 
-  // Initialiser TOUS les services
+  // ✅ NOUVEAU: Initialiser TOUS les services
   useEffect(() => {
+    // Initialiser seulement si l'utilisateur est connecté et a terminé le setup
     if (isAuthenticated && setupCompleted) {
-      console.log('🚀 Initialisation des services...');
+      console.log('🚀 Initialisation des services FinApp Haiti...');
       
-      // Initialiser les taux de change
-      initExchange();
-      
-      // Démarrer le service de revenus automatiques
-      IncomeService.processPendingPayments();
-      
-      // Planifier les vérifications périodiques (toutes les heures)
-      const interval = setInterval(() => {
-        IncomeService.processPendingPayments();
-      }, 60 * 60 * 1000);
+      // Initialiser le service de revenus automatiques
+      IncomeService.initialize().then(() => {
+        console.log('✅ Service de revenus automatiques initialisé');
+      }).catch(error => {
+        console.error('❌ Erreur lors de l\'initialisation des services:', error);
+      });
 
-      return () => clearInterval(interval);
+      // ✅ NOUVEAU: Initialiser le service de taux de change
+      initExchange().then(() => {
+        console.log('✅ Service de taux de change initialisé');
+      }).catch(error => {
+        console.error('❌ Erreur lors de l\'initialisation du taux de change:', error);
+      });
     }
   }, [isAuthenticated, setupCompleted, initExchange]);
 
@@ -142,7 +146,9 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* ===== ROUTES AUTH ===== */}
+          {/* ========================= */}
+          {/*       ROUTES AUTH         */}
+          {/* ========================= */}
           <Route path="/login" element={
             <AuthRoute>
               <Login />
@@ -155,11 +161,13 @@ function App() {
             </AuthRoute>
           } />
           
-          <Route path="/setup" element={
-            <Setup />
-          } />
+          <Route path="/setup" element={<Setup />} />
 
-          {/* ===== ROUTES PRINCIPALES ===== */}
+          {/* ========================= */}
+          {/*    ROUTES PROTÉGÉES       */}
+          {/* ========================= */}
+          
+          {/* Dashboard Principal */}
           <Route path="/" element={
             <ProtectedRoute>
               <AppLayout>
@@ -167,7 +175,7 @@ function App() {
               </AppLayout>
             </ProtectedRoute>
           } />
-
+          
           {/* ===== ROUTES COMPTES ===== */}
           <Route path="/accounts" element={
             <ProtectedRoute>
@@ -210,7 +218,7 @@ function App() {
             </ProtectedRoute>
           } />
           
-          {/* ===== ✅ NOUVEAU: ROUTES BUDGETS COMPLÈTES ===== */}
+          {/* ===== ROUTES BUDGETS ===== */}
           <Route path="/budgets" element={
             <ProtectedRoute>
               <AppLayout>
@@ -219,15 +227,7 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/budgets/add" element={
-            <ProtectedRoute>
-              <AppLayout>
-                <AddBudget />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          
-          {/* ===== ROUTES REVENUS ===== */}
+          {/* ===== NOUVEAU: ROUTES REVENUS ===== */}
           <Route path="/income" element={
             <ProtectedRoute>
               <AppLayout>
