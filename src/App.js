@@ -4,6 +4,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
 import { useExchangeStore } from './store/exchangeStore';
+import {  Menu } from 'lucide-react';
+import { useActivityTracker } from './hooks/useActivityTracker';
+import Header from './components/layout/Header';
 
 // ✅ NOUVEAU: Import du service de revenus automatiques
 import { IncomeService } from './services/incomeService';
@@ -45,26 +48,35 @@ import NotificationCenter from './components/notifications/NotificationCenter';
 // Layout avec Navigation
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+   useActivityTracker();
+
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header Mobile */}
+        {/* ✅ Header Mobile avec NotificationCenter */}
+        <Header />
         <header className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white ml-12">FinApp Haiti</h1>
-            {/* ✅ NOUVEAU: Centre de notifications dans le header mobile */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">FinApp Haiti</h1>
+            </div>
             <NotificationCenter />
           </div>
         </header>
 
-        {/* Header Desktop */}
-        <header className="hidden lg:flex bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-6 py-3">
+        {/* ✅ Header Desktop avec NotificationCenter */}
+        <header className="hidden lg:flex bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between w-full">
             <div></div>
-            {/* ✅ NOUVEAU: Centre de notifications dans le header desktop */}
             <NotificationCenter />
           </div>
         </header>
