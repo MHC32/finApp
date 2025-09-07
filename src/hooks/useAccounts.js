@@ -1,4 +1,4 @@
-// src/hooks/useAccounts.js - VERSION CORRIGÉE COMPLÈTE
+// src/hooks/useAccounts.js - VERSION CORRIGÉE AVEC MAPPING DES CHAMPS
 import { useState, useEffect } from 'react';
 import { db } from '../database/db';
 import { useAuthStore } from '../store/authStore';
@@ -9,7 +9,7 @@ export const useAccounts = () => {
   const [error, setError] = useState(null);
   const { user } = useAuthStore();
 
-  // ✅ FONCTION POUR NORMALISER LES IDS
+  // ✅ FONCTION POUR NORMALISER LES IDS (inchangée)
   const normalizeId = (id) => {
     if (id === null || id === undefined) {
       console.warn('⚠️ ID de compte null ou undefined');
@@ -26,32 +26,117 @@ export const useAccounts = () => {
     return numericId;
   };
 
-  // ✅ FONCTION POUR VALIDER LES DONNÉES DE COMPTE
-  const validateAccountData = (accountData) => {
-    const errors = [];
+  // ✅ CORRECTION MAJEURE: Fonction de mapping intelligent des champs
+  const mapAccountFields = (inputData) => {
+    console.log('🔄 === MAPPING DES CHAMPS COMPTE ===');
+    console.log('📥 Données d\'entrée:', inputData);
     
-    if (!accountData.name?.trim()) {
-      errors.push('Nom du compte requis');
+    // Créer un objet de sortie normalisé
+    const mappedData = {};
+    
+    // ✅ MAPPING INTELLIGENT DES CHAMPS
+    
+    // Nom du compte
+    mappedData.name = inputData.name || inputData.account_name || '';
+    
+    // Type de compte (plusieurs variantes possibles)
+    mappedData.type = inputData.type || inputData.account_type || '';
+    
+    // Solde - gérer initial_balance ET current_balance
+    if (inputData.initial_balance !== undefined) {
+      mappedData.initial_balance = inputData.initial_balance;
+    } else if (inputData.current_balance !== undefined) {
+      mappedData.initial_balance = inputData.current_balance;
+    } else {
+      mappedData.initial_balance = undefined;
     }
     
-    if (accountData.initial_balance === undefined || accountData.initial_balance === null) {
-      errors.push('Solde initial requis');
-    } else if (isNaN(parseFloat(accountData.initial_balance))) {
-      errors.push('Solde initial invalide');
-    }
+    // Banque
+    mappedData.bank = inputData.bank || inputData.bank_name || '';
     
-    if (!accountData.type) {
-      errors.push('Type de compte requis');
-    }
+    // Devise
+    mappedData.currency = inputData.currency || 'HTG';
     
-    if (!accountData.currency) {
-      errors.push('Devise requise');
-    }
+    // Numéro de compte
+    mappedData.account_number = inputData.account_number || inputData.number || '';
     
-    return errors;
+    // Statut actif
+    mappedData.is_active = inputData.is_active !== undefined ? inputData.is_active : true;
+    
+    // Description
+    mappedData.description = inputData.description || inputData.notes || '';
+    
+    // Couleur
+    mappedData.color = inputData.color || '#3B82F6';
+    
+    console.log('📤 Données mappées:', mappedData);
+    return mappedData;
   };
 
-  // ✅ CHARGER TOUS LES COMPTES AVEC VALIDATION
+  // ✅ CORRECTION MAJEURE: Validation avec mapping automatique
+  const validateAccountData = (rawAccountData) => {
+    console.log('🔍 === VALIDATION DONNÉES COMPTE ===');
+    
+    // Étape 1: Mapper les champs vers le format attendu
+    const accountData = mapAccountFields(rawAccountData);
+    
+    const errors = [];
+    
+    // Validation du nom
+    if (!accountData.name?.trim()) {
+      errors.push('Nom du compte requis');
+    } else if (accountData.name.trim().length < 2) {
+      errors.push('Nom du compte trop court (min. 2 caractères)');
+    }
+    
+    // Validation du solde initial
+    if (accountData.initial_balance === undefined || accountData.initial_balance === null) {
+      errors.push('Solde initial requis');
+    } else {
+      const balance = parseFloat(accountData.initial_balance);
+      if (isNaN(balance)) {
+        errors.push('Solde initial invalide (doit être un nombre)');
+      } else if (balance < -999999999) {
+        errors.push('Solde initial trop faible');
+      } else if (balance > 999999999) {
+        errors.push('Solde initial trop élevé');
+      }
+    }
+    
+    // Validation du type
+    if (!accountData.type?.trim()) {
+      errors.push('Type de compte requis');
+    } else {
+      const validTypes = ['checking', 'savings', 'credit', 'investment', 'cash', 'other'];
+      if (!validTypes.includes(accountData.type)) {
+        errors.push(`Type de compte invalide. Types valides: ${validTypes.join(', ')}`);
+      }
+    }
+    
+    // Validation de la devise
+    if (!accountData.currency?.trim()) {
+      errors.push('Devise requise');
+    } else {
+      const validCurrencies = ['HTG', 'USD', 'EUR'];
+      if (!validCurrencies.includes(accountData.currency)) {
+        errors.push(`Devise invalide. Devises valides: ${validCurrencies.join(', ')}`);
+      }
+    }
+    
+    // Validation de la couleur (format hexadécimal)
+    if (accountData.color && !/^#[0-9A-F]{6}$/i.test(accountData.color)) {
+      errors.push('Format de couleur invalide (ex: #3B82F6)');
+    }
+    
+    console.log(`📊 Validation terminée: ${errors.length} erreur(s)`);
+    if (errors.length > 0) {
+      console.log('❌ Erreurs trouvées:', errors);
+    }
+    
+    return { isValid: errors.length === 0, errors, mappedData: accountData };
+  };
+
+  // ✅ CHARGER TOUS LES COMPTES (inchangé mais documenté)
   const loadAccounts = async () => {
     if (!user?.id) {
       console.log('⚠️ Pas d\'utilisateur connecté pour charger les comptes');
@@ -73,7 +158,7 @@ export const useAccounts = () => {
       
       console.log(`📊 ${userAccounts.length} comptes trouvés dans la DB`);
       
-      // ✅ VALIDATION ET NETTOYAGE DES DONNÉES
+      // Validation et nettoyage des données
       const validAccounts = userAccounts.filter((account, index) => {
         const isValid = account.id && 
                        account.name && 
@@ -95,12 +180,12 @@ export const useAccounts = () => {
         return isValid;
       });
       
-      // ✅ TRIER LES COMPTES (actifs en premier, puis par nom)
+      // Trier les comptes (actifs en premier, puis par nom)
       const sortedAccounts = validAccounts.sort((a, b) => {
         if (a.is_active !== b.is_active) {
-          return a.is_active ? -1 : 1; // Actifs en premier
+          return a.is_active ? -1 : 1;
         }
-        return a.name.localeCompare(b.name); // Puis par nom
+        return a.name.localeCompare(b.name);
       });
       
       setAccounts(sortedAccounts);
@@ -115,28 +200,36 @@ export const useAccounts = () => {
     }
   };
 
-  // ✅ AJOUTER UN COMPTE AVEC VALIDATION RENFORCÉE
-  const addAccount = async (accountData) => {
+  // ✅ CORRECTION MAJEURE: Ajouter un compte avec validation et mapping complets
+  const addAccount = async (rawAccountData) => {
     try {
-      console.log('➕ === AJOUT COMPTE ===');
-      console.log('📥 Données reçues:', accountData);
+      console.log('➕ === AJOUT COMPTE (VERSION CORRIGÉE) ===');
+      console.log('📥 Données brutes reçues:', rawAccountData);
       
-      // Validation des données
-      const validationErrors = validateAccountData(accountData);
-      if (validationErrors.length > 0) {
-        throw new Error(`Données invalides: ${validationErrors.join(', ')}`);
+      // Étape 1: Validation avec mapping automatique
+      const validation = validateAccountData(rawAccountData);
+      
+      if (!validation.isValid) {
+        const errorMessage = `Données invalides: ${validation.errors.join(', ')}`;
+        console.error('❌ Validation échouée:', errorMessage);
+        throw new Error(errorMessage);
       }
       
-      // Vérifier l'unicité du nom
+      const accountData = validation.mappedData;
+      console.log('✅ Données validées et mappées:', accountData);
+      
+      // Étape 2: Vérifier l'unicité du nom
       const existingAccount = accounts.find(acc => 
         acc.name.toLowerCase().trim() === accountData.name.toLowerCase().trim()
       );
       
       if (existingAccount) {
-        throw new Error('Un compte avec ce nom existe déjà');
+        const errorMessage = 'Un compte avec ce nom existe déjà';
+        console.error('❌ Nom en doublon:', errorMessage);
+        throw new Error(errorMessage);
       }
       
-      // ✅ PRÉPARER LES DONNÉES NORMALISÉES
+      // Étape 3: Préparer les données pour la base de données
       const initialBalance = parseFloat(accountData.initial_balance) || 0;
       
       const newAccount = {
@@ -145,25 +238,27 @@ export const useAccounts = () => {
         type: accountData.type,
         bank: accountData.bank?.trim() || '',
         account_number: accountData.account_number?.trim() || '',
-        currency: accountData.currency || 'HTG',
+        currency: accountData.currency,
         initial_balance: initialBalance,
         current_balance: initialBalance, // Le solde courant commence au solde initial
-        is_active: accountData.is_active !== undefined ? accountData.is_active : true,
+        is_active: accountData.is_active,
         description: accountData.description?.trim() || '',
+        color: accountData.color || '#3B82F6',
         created_at: new Date(),
         updated_at: new Date()
       };
       
-      console.log('💾 Compte à sauvegarder:', newAccount);
+      console.log('💾 Compte à sauvegarder en base:', newAccount);
       
-      // Sauvegarder en base
+      // Étape 4: Sauvegarder en base de données
       const accountId = await db.accounts.add(newAccount);
       console.log('✅ Compte sauvegardé avec ID:', accountId);
       
-      // Récupérer le compte créé
+      // Étape 5: Récupérer le compte créé
       const createdAccount = await db.accounts.get(accountId);
+      console.log('📄 Compte récupéré de la base:', createdAccount);
       
-      // ✅ METTRE À JOUR LE STATE LOCAL
+      // Étape 6: Mettre à jour le state local
       setAccounts(prev => {
         const updated = [...prev, createdAccount].sort((a, b) => {
           if (a.is_active !== b.is_active) {
@@ -172,7 +267,7 @@ export const useAccounts = () => {
           return a.name.localeCompare(b.name);
         });
         
-        console.log(`🔄 State comptes mis à jour: ${updated.length} comptes`);
+        console.log(`🔄 State comptes mis à jour: ${updated.length} comptes total`);
         return updated;
       });
       
@@ -186,11 +281,11 @@ export const useAccounts = () => {
     }
   };
 
-  // ✅ MODIFIER UN COMPTE AVEC VALIDATION
-  const updateAccount = async (accountId, updates) => {
+  // ✅ MODIFIER UN COMPTE (avec validation améliorée)
+  const updateAccount = async (accountId, rawUpdates) => {
     try {
       console.log('✏️ === MODIFICATION COMPTE ===');
-      console.log('🎯 Compte ID:', accountId, 'Mises à jour:', updates);
+      console.log('🎯 Compte ID:', accountId, 'Mises à jour brutes:', rawUpdates);
       
       const numericAccountId = normalizeId(accountId);
       if (!numericAccountId) {
@@ -203,7 +298,10 @@ export const useAccounts = () => {
         throw new Error('Compte non trouvé');
       }
       
-      // Validation des mises à jour
+      // Mapper et valider les mises à jour (seulement les champs modifiés)
+      const updates = mapAccountFields(rawUpdates);
+      
+      // Validation spécifique pour les mises à jour
       if (updates.name) {
         updates.name = updates.name.trim();
         if (!updates.name) {
@@ -221,7 +319,7 @@ export const useAccounts = () => {
         }
       }
       
-      // ✅ PRÉPARER LES DONNÉES DE MISE À JOUR
+      // Préparer les données de mise à jour
       const updateData = {
         ...updates,
         updated_at: new Date()
@@ -232,7 +330,7 @@ export const useAccounts = () => {
       if (updateData.account_number) updateData.account_number = updateData.account_number.trim();
       if (updateData.description) updateData.description = updateData.description.trim();
       
-      console.log('📄 Données de mise à jour:', updateData);
+      console.log('📄 Données de mise à jour finales:', updateData);
       
       // Mettre à jour en base
       await db.accounts.update(numericAccountId, updateData);
@@ -241,7 +339,7 @@ export const useAccounts = () => {
       // Récupérer le compte mis à jour
       const updatedAccount = await db.accounts.get(numericAccountId);
       
-      // ✅ METTRE À JOUR LE STATE LOCAL
+      // Mettre à jour le state local
       setAccounts(prev => {
         const updated = prev.map(account => 
           account.id === numericAccountId ? updatedAccount : account
@@ -266,7 +364,7 @@ export const useAccounts = () => {
     }
   };
 
-  // ✅ SUPPRIMER UN COMPTE AVEC VÉRIFICATIONS
+  // ✅ SUPPRIMER UN COMPTE (inchangé mais sécurisé)
   const deleteAccount = async (accountId) => {
     try {
       console.log('🗑️ === SUPPRESSION COMPTE ===');
@@ -283,7 +381,7 @@ export const useAccounts = () => {
         throw new Error('Compte non trouvé');
       }
       
-      // ✅ VÉRIFIER S'IL Y A DES TRANSACTIONS LIÉES
+      // Vérifier s'il y a des transactions liées
       const relatedTransactions = await db.transactions
         .where('account_id')
         .equals(numericAccountId)
@@ -298,7 +396,7 @@ export const useAccounts = () => {
       await db.accounts.delete(numericAccountId);
       console.log('✅ Compte supprimé de la base');
       
-      // ✅ METTRE À JOUR LE STATE LOCAL
+      // Mettre à jour le state local
       setAccounts(prev => {
         const updated = prev.filter(account => account.id !== numericAccountId);
         console.log(`🔄 State comptes mis à jour: ${updated.length} comptes restants`);
@@ -314,7 +412,8 @@ export const useAccounts = () => {
     }
   };
 
-  // ✅ CALCULER LE SOLDE TOTAL AVEC VALIDATION
+  // ✅ FONCTIONS UTILITAIRES (inchangées)
+  
   const getTotalBalance = () => {
     try {
       console.log('🧮 === CALCUL SOLDE TOTAL ===');
@@ -344,7 +443,6 @@ export const useAccounts = () => {
     }
   };
 
-  // ✅ OBTENIR LES STATISTIQUES DES COMPTES
   const getAccountsStats = () => {
     const activeAccounts = accounts.filter(acc => acc.is_active);
     const inactiveAccounts = accounts.filter(acc => !acc.is_active);
@@ -364,19 +462,17 @@ export const useAccounts = () => {
     };
   };
 
-  // ✅ OBTENIR UN COMPTE PAR ID
   const getAccountById = (accountId) => {
     const numericId = normalizeId(accountId);
     return accounts.find(acc => acc.id === numericId) || null;
   };
 
-  // ✅ FONCTION POUR FORCER LE RECHARGEMENT
   const refreshAccounts = async () => {
     console.log('🔄 === RECHARGEMENT FORCÉ DES COMPTES ===');
     await loadAccounts();
   };
 
-  // ✅ ÉCOUTER LES CHANGEMENTS DE COMPTES
+  // ✅ EVENT LISTENERS (inchangés)
   useEffect(() => {
     const handleAccountsChanged = () => {
       console.log('🔔 === ÉVÉNEMENT ACCOUNTS CHANGED REÇU ===');
@@ -393,7 +489,7 @@ export const useAccounts = () => {
     };
   }, [user?.id]);
 
-  // ✅ CHARGEMENT INITIAL
+  // Chargement initial
   useEffect(() => {
     if (user?.id) {
       console.log('🚀 Chargement initial des comptes pour user:', user.id);
@@ -418,6 +514,9 @@ export const useAccounts = () => {
     getAccountById,
     refreshAccounts,
     // Utilitaires
-    normalizeId
+    normalizeId,
+    // ✅ NOUVELLES FONCTIONS EXPOSÉES POUR DEBUG
+    mapAccountFields,
+    validateAccountData
   };
 };
