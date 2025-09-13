@@ -1,7 +1,7 @@
 // src/hooks/useActivityTracker.js - HOOK POUR LE SUIVI D'ACTIVITÉ
 import { useEffect } from 'react';
 import { useAuth } from './useAuth.js';
-import { useAuthStore } from '../stores/authStore.js';
+import { useAuthStore } from '../store/authStore.js';
 
 export function useActivityTracker() {
   const { isAuthenticated } = useAuth();

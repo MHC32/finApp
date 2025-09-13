@@ -1,5 +1,5 @@
 // src/hooks/useNotifications.js - HOOK POUR LES NOTIFICATIONS
-import { useAuthStore } from '../stores/authStore.js';
+import { useAuthStore } from '../store/authStore.js';
 
 export function useNotifications() {
   const {
