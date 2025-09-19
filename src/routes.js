@@ -1,62 +1,105 @@
 /**
 =========================================================
-* Material Dashboard 2 React - v2.2.0
+* FinApp Haiti - Routes Configuration
+* Based on Material Dashboard 2 React - v2.2.0
 =========================================================
-
-* Product Page: https://www.creative-tim.com/product/material-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-/** 
-  All of the routes for the Material Dashboard 2 React are added here,
-  You can add a new route, customize the routes and delete the routes here.
+// @mui icons
+import Icon from "@mui/material/Icon";
 
-  Once you add a new route on this file it will be visible automatically on
-  the Sidenav.
+// FinApp Haiti layouts - nos nouvelles pages
+import FinancialDashboard from "layouts/dashboard";
+import AccountsPage from "layouts/accounts";
+import SolsPage from "layouts/sols";
+import BudgetsPage from "layouts/budgets";
 
-  For adding a new route you can follow the existing routes in the routes array.
-  1. The `type` key with the `collapse` value is used for a route.
-  2. The `type` key with the `title` value is used for a title inside the Sidenav. 
-  3. The `type` key with the `divider` value is used for a divider between Sidenav items.
-  4. The `name` key is used for the name of the route on the Sidenav.
-  5. The `key` key is used for the key of the route (It will help you with the key prop inside a loop).
-  6. The `icon` key is used for the icon of the route on the Sidenav, you have to add a node.
-  7. The `collapse` key is used for making a collapsible item on the Sidenav that has other routes
-  inside (nested routes), you need to pass the nested routes inside an array as a value for the `collapse` key.
-  8. The `route` key is used to store the route location which is used for the react router.
-  9. The `href` key is used to store the external links location.
-  10. The `title` key is only for the item with the type of `title` and its used for the title text on the Sidenav.
-  10. The `component` key is used to store the component of its route.
-*/
-
-// Material Dashboard 2 React layouts
-import Dashboard from "layouts/financial-dashboard";
+// Material Dashboard 2 React layouts (gardées pour compatibilité)
 import Notifications from "layouts/notifications";
 import Profile from "layouts/profile";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
 
-// @mui icons
-import Icon from "@mui/material/Icon";
-
 const routes = [
+  // Pages principales FinApp Haiti
   {
     type: "collapse",
-    name: "Dashboard",
+    name: "Dashboard Financier",
     key: "dashboard",
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
-    component: <Dashboard />,
+    component: <FinancialDashboard />,
   },
- 
+  {
+    type: "collapse",
+    name: "Mes Comptes",
+    key: "accounts",
+    icon: <Icon fontSize="small">account_balance</Icon>,
+    route: "/accounts",
+    component: <AccountsPage />,
+  },
+  {
+    type: "collapse",
+    name: "Sols/Tontines",
+    key: "sols",
+    icon: <Icon fontSize="small">people</Icon>,
+    route: "/sols",
+    component: <SolsPage />,
+  },
+  {
+    type: "collapse",
+    name: "Budgets",
+    key: "budgets",
+    icon: <Icon fontSize="small">bar_chart</Icon>,
+    route: "/budgets",
+    component: <BudgetsPage />,
+  },
   
-
+  // Divider
+  {
+    type: "divider",
+  },
+  
+  // Sections à venir (placeholders pour Phase 3+)
+  {
+    type: "title",
+    title: "À venir",
+  },
+  {
+    type: "collapse",
+    name: "Investissements",
+    key: "investments",
+    icon: <Icon fontSize="small">trending_up</Icon>,
+    route: "/investments",
+    component: <div>Page Investissements - En construction</div>,
+  },
+  {
+    type: "collapse",
+    name: "Éducation Financière",
+    key: "education",
+    icon: <Icon fontSize="small">school</Icon>,
+    route: "/education",
+    component: <div>Page Éducation - En construction</div>,
+  },
+  
+  // Divider
+  {
+    type: "divider",
+  },
+  
+  // Pages système (gardées)
+  {
+    type: "title",
+    title: "Compte et Paramètres",
+  },
+  {
+    type: "collapse",
+    name: "Profil",
+    key: "profile",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/profile",
+    component: <Profile />,
+  },
   {
     type: "collapse",
     name: "Notifications",
@@ -65,29 +108,27 @@ const routes = [
     route: "/notifications",
     component: <Notifications />,
   },
+  
+  // Authentication (cachées en mode connecté)
   {
     type: "collapse",
-    name: "Profile",
-    key: "profile",
-    icon: <Icon fontSize="small">person</Icon>,
-    route: "/profile",
-    component: <Profile />,
-  },
-  {
-    type: "collapse",
-    name: "Sign In",
+    name: "Se connecter",
     key: "sign-in",
     icon: <Icon fontSize="small">login</Icon>,
     route: "/authentication/sign-in",
     component: <SignIn />,
+    // Cette route sera cachée quand l'utilisateur est connecté
+    hidden: true,
   },
   {
     type: "collapse",
-    name: "Sign Up",
+    name: "Créer un compte",
     key: "sign-up",
     icon: <Icon fontSize="small">assignment</Icon>,
     route: "/authentication/sign-up",
     component: <SignUp />,
+    // Cette route sera cachée quand l'utilisateur est connecté
+    hidden: true,
   },
 ];
 
