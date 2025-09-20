@@ -626,7 +626,7 @@ function TransactionsPage() {
           <DialogContent>
             <MDBox py={2}>
               <MDTypography variant="body2" color="text">
-                Formulaire de transaction rapide à implémenter
+                Ici on intégrera le QuickTransactionForm avec CategorySelector
               </MDTypography>
             </MDBox>
           </DialogContent>

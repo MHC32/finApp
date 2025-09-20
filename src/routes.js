@@ -13,6 +13,7 @@ import FinancialDashboard from "layouts/dashboard";
 import AccountsPage from "layouts/accounts";
 import SolsPage from "layouts/sols";
 import BudgetsPage from "layouts/budgets";
+import TransactionsPage from "layouts/transactions"; // NOUVELLE PAGE AJOUTÉE
 
 // Material Dashboard 2 React layouts (gardées pour compatibilité)
 import Notifications from "layouts/notifications";
@@ -40,6 +41,14 @@ const routes = [
   },
   {
     type: "collapse",
+    name: "Transactions", // NOUVELLE ROUTE AJOUTÉE
+    key: "transactions",
+    icon: <Icon fontSize="small">receipt_long</Icon>,
+    route: "/transactions",
+    component: <TransactionsPage />,
+  },
+  {
+    type: "collapse",
     name: "Sols/Tontines",
     key: "sols",
     icon: <Icon fontSize="small">people</Icon>,
@@ -60,7 +69,7 @@ const routes = [
     type: "divider",
   },
   
-  // Sections à venir (placeholders pour Phase 3+)
+  // Sections à venir (placeholders pour Phase 4+)
   {
     type: "title",
     title: "À venir",
