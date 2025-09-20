@@ -1,10 +1,10 @@
 /**
 =========================================================
-* FinApp Haiti - Transaction Page
+* FinApp Haiti - Transaction Page MISE À JOUR
 =========================================================
 
-* Page complète de gestion des transactions avec formulaires
-* Utilise QuickTransactionForm, TransactionForm, CategorySelector
+* Page complète de gestion des transactions avec TransactionTable
+* Intègre le nouveau composant TransactionTable développé
 * Pattern cohérent avec les autres pages FinApp
 =========================================================
 */
@@ -14,82 +14,44 @@ import { useState } from "react";
 // @mui material components
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import IconButton from "@mui/material/IconButton";
-import Fab from "@mui/material/Fab";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import Chip from "@mui/material/Chip";
-import Box from "@mui/material/Box";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import Avatar from "@mui/material/Avatar";
-import Divider from "@mui/material/Divider";
-
-// @mui icons
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import SearchIcon from "@mui/icons-material/Search";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
-import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
-import SchoolIcon from "@mui/icons-material/School";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import WorkIcon from "@mui/icons-material/Work";
-import HomeIcon from "@mui/icons-material/Home";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import Alert from "@mui/material/Alert";
+import Container from "@mui/material/Container";
 
 // Material Dashboard 2 React components
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import MDButton from "components/MDButton";
-import MDInput from "components/MDInput";
-
-// Material Dashboard 2 React context
-import { useMaterialUIController } from "context";
 
 // FinApp components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import DashboardNavbar from "examples/Navbars/DashboardNavbar";
+import FinAppNavbar from "../../examples/Navbars/FinAppNavbar";
+import FinAppSidenav from "../../examples/Sidenav/FinAppSidenav";
 import Footer from "examples/Footer";
 
+// Nouveau composant TransactionTable
+import TransactionTable from "../../components/FinApp/TransactionTable";
+
+// Composants graphiques pour analyse
+import ExpenseChart from "../../components/FinApp/ExpenseChart";
+import IncomeExpenseChart from "../../components/FinApp/IncomeExpenseChart";
+
 function TransactionsPage() {
-  const [controller] = useMaterialUIController();
-  const { darkMode } = controller;
-
-  // États pour la gestion des onglets et filtres
+  // États pour navigation
+  const [sidenavOpen, setSidenavOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState("HTG");
   const [activeTab, setActiveTab] = useState(0);
-  const [menuAnchor, setMenuAnchor] = useState(null);
-  const [filterAnchor, setFilterAnchor] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedAccount, setSelectedAccount] = useState("all");
-  const [dateRange, setDateRange] = useState("30_days");
 
-  // États pour les dialogs
-  const [quickTransactionOpen, setQuickTransactionOpen] = useState(false);
-  const [fullTransactionOpen, setFullTransactionOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const handleSidenavToggle = () => {
+    setSidenavOpen(!sidenavOpen);
+  };
 
-  // Données mockées des transactions haïtiennes
-  const transactions = [
+  // Données mockées des transactions haïtiennes ÉTENDUES
+  const mockTransactions = [
     {
       id: 1,
       type: "expense",
-      amount: 500,
+      amount: -500,
       currency: "HTG",
       description: "Diri ak pwa",
       category: "alimentation",
@@ -101,7 +63,8 @@ function TransactionsPage() {
       location: "Marché Croix-des-Bossales",
       tags: ["nécessaire", "famille"],
       receipt: null,
-      note: "Déjeuner famille"
+      note: "Déjeuner famille",
+      balance: 24500
     },
     {
       id: 2,
@@ -109,8 +72,8 @@ function TransactionsPage() {
       amount: 25000,
       currency: "HTG",
       description: "Salaire septembre",
-      category: "salaire",
-      categoryLabel: "Salaire",
+      category: "travail",
+      categoryLabel: "Revenus",
       account: "sogebank_checking",
       accountLabel: "Sogebank Courant",
       date: "2024-09-20",
@@ -118,12 +81,13 @@ function TransactionsPage() {
       location: "Virement bancaire",
       tags: ["mensuel", "fixe"],
       receipt: null,
-      note: ""
+      note: "",
+      balance: 25000
     },
     {
       id: 3,
       type: "expense",
-      amount: 150,
+      amount: -150,
       currency: "HTG",
       description: "Transport tap-tap",
       category: "transport",
@@ -135,16 +99,17 @@ function TransactionsPage() {
       location: "Route Delmas",
       tags: ["quotidien"],
       receipt: null,
-      note: "Aller-retour travail"
+      note: "Aller-retour travail",
+      balance: 1850
     },
     {
       id: 4,
       type: "expense",
-      amount: 50,
+      amount: -50,
       currency: "USD",
       description: "Internet mensuel",
-      category: "abonnements",
-      categoryLabel: "Abonnements",
+      category: "logement",
+      categoryLabel: "Logement",
       account: "unibank_checking",
       accountLabel: "Unibank Courant",
       date: "2024-09-19",
@@ -152,7 +117,8 @@ function TransactionsPage() {
       location: "Digicel Store",
       tags: ["mensuel", "nécessaire"],
       receipt: "recu_internet_sept.jpg",
-      note: "Package 5GB"
+      note: "Package 5GB",
+      balance: 450
     },
     {
       id: 5,
@@ -160,7 +126,7 @@ function TransactionsPage() {
       amount: 8000,
       currency: "HTG",
       description: "Vente légumes",
-      category: "business",
+      category: "autre",
       categoryLabel: "Business",
       account: "cash",
       accountLabel: "Liquide",
@@ -169,12 +135,13 @@ function TransactionsPage() {
       location: "Marché local",
       tags: ["business", "agriculture"],
       receipt: null,
-      note: "Tomates et épinards"
+      note: "Tomates et épinards",
+      balance: 2000
     },
     {
       id: 6,
       type: "expense",
-      amount: 1200,
+      amount: -1200,
       currency: "HTG",
       description: "Consultation médecin",
       category: "sante",
@@ -186,16 +153,17 @@ function TransactionsPage() {
       location: "Hôpital Bernard Mevs",
       tags: ["santé", "urgent"],
       receipt: "facture_medecin.jpg",
-      note: "Contrôle de routine"
+      note: "Contrôle de routine",
+      balance: 18800
     },
     {
       id: 7,
       type: "expense",
-      amount: 3500,
+      amount: -3500,
       currency: "HTG",
       description: "Électricité (EDH)",
-      category: "utilities",
-      categoryLabel: "Services",
+      category: "logement",
+      categoryLabel: "Logement",
       account: "sogebank_checking",
       accountLabel: "Sogebank Courant", 
       date: "2024-09-17",
@@ -203,7 +171,8 @@ function TransactionsPage() {
       location: "Bureau EDH",
       tags: ["mensuel", "nécessaire"],
       receipt: "facture_edh_sept.jpg",
-      note: "Facture septembre"
+      note: "Facture septembre",
+      balance: 21500
     },
     {
       id: 8,
@@ -220,278 +189,198 @@ function TransactionsPage() {
       location: "Western Union Delmas",
       tags: ["famille", "diaspora"],
       receipt: null,
-      note: "Manman nan Miami"
+      note: "Manman nan Miami",
+      balance: 500
+    },
+    {
+      id: 9,
+      type: "expense",
+      amount: -2500,
+      currency: "HTG",
+      description: "Courses mois",
+      category: "alimentation",
+      categoryLabel: "Alimentation",
+      account: "sogebank_checking",
+      accountLabel: "Sogebank Courant",
+      date: "2024-09-15",
+      time: "09:30",
+      location: "Supermarché Caribbean",
+      tags: ["courses", "famille"],
+      receipt: "recu_courses_sept.jpg",
+      note: "Courses famille pour la semaine",
+      balance: 23500
+    },
+    {
+      id: 10,
+      type: "expense",
+      amount: -800,
+      currency: "HTG",
+      description: "Médicaments",
+      category: "sante",
+      categoryLabel: "Santé",
+      account: "cash",
+      accountLabel: "Liquide",
+      date: "2024-09-14",
+      time: "14:45",
+      location: "Pharmacie Centrale",
+      tags: ["santé", "médicaments"],
+      receipt: "facture_pharmacie.jpg",
+      note: "Vitamines et paracétamol",
+      balance: 1200
+    },
+    {
+      id: 11,
+      type: "income",
+      amount: 15000,
+      currency: "HTG",
+      description: "Freelance web",
+      category: "travail",
+      categoryLabel: "Revenus",
+      account: "unibank_checking",
+      accountLabel: "Unibank Courant",
+      date: "2024-09-13",
+      time: "16:00",
+      location: "Virement client",
+      tags: ["freelance", "web"],
+      receipt: null,
+      note: "Site web restaurant",
+      balance: 500
+    },
+    {
+      id: 12,
+      type: "expense",
+      amount: -450,
+      currency: "HTG",
+      description: "Carburant moto",
+      category: "transport",
+      categoryLabel: "Transport",
+      account: "cash",
+      accountLabel: "Liquide",
+      date: "2024-09-12",
+      time: "07:20",
+      location: "Station Texaco",
+      tags: ["carburant", "moto"],
+      receipt: null,
+      note: "Plein essence",
+      balance: 2000
     }
   ];
 
-  // Fonctions utilitaires
-  const getCategoryIcon = (category) => {
-    const icons = {
-      alimentation: <RestaurantIcon />,
-      transport: <DirectionsCarIcon />,
-      education: <SchoolIcon />,
-      sante: <LocalHospitalIcon />,
-      salaire: <WorkIcon />,
-      business: <TrendingUpIcon />,
-      utilities: <HomeIcon />,
-      shopping: <ShoppingCartIcon />
-    };
-    return icons[category] || <TrendingDownIcon />;
+  // Gestionnaires d'événements pour TransactionTable
+  const handleTransactionEdit = (transaction) => {
+    console.log("Modifier transaction:", transaction);
+    // TODO: Ouvrir modal d'édition
   };
 
-  const formatCurrency = (amount, currency) => {
-    const formatted = new Intl.NumberFormat('fr-HT').format(amount);
-    return `${formatted} ${currency}`;
+  const handleTransactionDelete = (transactionId) => {
+    console.log("Supprimer transaction:", transactionId);
+    // TODO: Supprimer de la liste après confirmation
   };
 
-  const getTransactionColor = (type) => {
-    return type === 'income' ? 'success' : 'error';
+  const handleTransactionDuplicate = (transaction) => {
+    console.log("Dupliquer transaction:", transaction);
+    // TODO: Créer nouvelle transaction basée sur l'existante
   };
 
-  // Filtrer les transactions
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.categoryLabel.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || transaction.category === selectedCategory;
-    const matchesAccount = selectedAccount === 'all' || transaction.account === selectedAccount;
-    
-    return matchesSearch && matchesCategory && matchesAccount;
-  });
-
-  // Grouper par date
-  const groupedTransactions = filteredTransactions.reduce((groups, transaction) => {
-    const date = transaction.date;
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(transaction);
-    return groups;
-  }, {});
-
-  // Statistiques pour l'onglet Vue d'ensemble
-  const totalIncome = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + (t.currency === 'USD' ? t.amount * 113 : t.amount), 0);
-  
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + (t.currency === 'USD' ? t.amount * 113 : t.amount), 0);
+  const handleBulkAction = (action, selectedIds) => {
+    console.log(`Action groupée ${action} sur:`, selectedIds);
+    // TODO: Exécuter l'action sur les transactions sélectionnées
+  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const handleMenuClick = (event) => {
-    setMenuAnchor(event.currentTarget);
-  };
+  // Préparer données pour graphiques
+  const expenseData = mockTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((acc, transaction) => {
+      const category = transaction.category;
+      if (!acc[category]) {
+        acc[category] = 0;
+      }
+      acc[category] += Math.abs(transaction.amount);
+      return acc;
+    }, {});
 
-  const handleMenuClose = () => {
-    setMenuAnchor(null);
-  };
+  const incomeExpenseData = mockTransactions
+    .reduce((acc, transaction) => {
+      const month = transaction.date.substring(0, 7); // YYYY-MM
+      if (!acc[month]) {
+        acc[month] = { income: 0, expense: 0 };
+      }
+      if (transaction.type === 'income') {
+        acc[month].income += transaction.amount;
+      } else {
+        acc[month].expense += Math.abs(transaction.amount);
+      }
+      return acc;
+    }, {});
 
-  const handleFilterClick = (event) => {
-    setFilterAnchor(event.currentTarget);
-  };
+  // Calculer statistiques
+  const totalIncome = mockTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + (t.currency === 'USD' ? t.amount * 113 : t.amount), 0);
+  
+  const totalExpenses = mockTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + (t.currency === 'USD' ? Math.abs(t.amount) * 113 : Math.abs(t.amount)), 0);
 
-  const handleFilterClose = () => {
-    setFilterAnchor(null);
-  };
-
-  const handleTransactionClick = (transaction) => {
-    setSelectedTransaction(transaction);
-    setFullTransactionOpen(true);
-  };
+  const balance = totalIncome - totalExpenses;
 
   const renderOverviewTab = () => (
     <Grid container spacing={3}>
-      {/* Statistiques */}
+      {/* Statistiques rapides */}
       <Grid item xs={12}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <TrendingUpIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-              <MDTypography variant="h6" color="success" fontWeight="medium">
-                Revenus
-              </MDTypography>
-              <MDTypography variant="h4" fontWeight="bold">
-                {formatCurrency(totalIncome, 'HTG')}
-              </MDTypography>
-              <MDTypography variant="body2" color="text">
-                Ce mois-ci
-              </MDTypography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <TrendingDownIcon color="error" sx={{ fontSize: 40, mb: 1 }} />
-              <MDTypography variant="h6" color="error" fontWeight="medium">
-                Dépenses
-              </MDTypography>
-              <MDTypography variant="h4" fontWeight="bold">
-                {formatCurrency(totalExpenses, 'HTG')}
-              </MDTypography>
-              <MDTypography variant="body2" color="text">
-                Ce mois-ci
-              </MDTypography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <TrendingUpIcon color={totalIncome - totalExpenses > 0 ? "success" : "error"} sx={{ fontSize: 40, mb: 1 }} />
-              <MDTypography variant="h6" color={totalIncome - totalExpenses > 0 ? "success" : "error"} fontWeight="medium">
-                Balance
-              </MDTypography>
-              <MDTypography variant="h4" fontWeight="bold">
-                {formatCurrency(totalIncome - totalExpenses, 'HTG')}
-              </MDTypography>
-              <MDTypography variant="body2" color="text">
-                Économies
-              </MDTypography>
-            </Card>
-          </Grid>
-        </Grid>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <MDTypography variant="body2" fontWeight="medium">
+            Page Transactions avec TransactionTable intégrée
+          </MDTypography>
+          <MDTypography variant="caption">
+            Table avancée avec filtres, tri, export et actions CRUD
+          </MDTypography>
+        </Alert>
       </Grid>
 
-      {/* Liste des transactions */}
+      {/* Table des transactions */}
       <Grid item xs={12}>
-        <Card>
-          <MDBox p={3}>
-            <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <MDTypography variant="h6" fontWeight="medium">
-                Transactions Récentes
-              </MDTypography>
-              <MDBox display="flex" gap={1}>
-                <IconButton size="small" onClick={handleFilterClick}>
-                  <FilterListIcon />
-                </IconButton>
-                <IconButton size="small" onClick={handleMenuClick}>
-                  <MoreVertIcon />
-                </IconButton>
-              </MDBox>
-            </MDBox>
-
-            {/* Barre de recherche */}
-            <MDBox mb={3}>
-              <MDInput
-                placeholder="Rechercher une transaction..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                fullWidth
-                InputProps={{
-                  startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
-                }}
-              />
-            </MDBox>
-
-            {/* Liste groupée par date */}
-            {Object.entries(groupedTransactions)
-              .sort(([a], [b]) => new Date(b) - new Date(a))
-              .slice(0, 10)
-              .map(([date, dayTransactions]) => (
-                <Box key={date} mb={3}>
-                  <MDTypography variant="overline" color="text" fontWeight="bold">
-                    {new Date(date).toLocaleDateString('fr-HT', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </MDTypography>
-                  <List dense>
-                    {dayTransactions.map((transaction, index) => (
-                      <div key={transaction.id}>
-                        <ListItem 
-                          button 
-                          onClick={() => handleTransactionClick(transaction)}
-                          sx={{ borderRadius: 1, mb: 1 }}
-                        >
-                          <ListItemAvatar>
-                            <Avatar sx={{ 
-                              bgcolor: transaction.type === 'income' ? 'success.main' : 'error.main',
-                              width: 40,
-                              height: 40
-                            }}>
-                              {getCategoryIcon(transaction.category)}
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={
-                              <MDBox display="flex" justifyContent="space-between" alignItems="center">
-                                <MDTypography variant="subtitle2" fontWeight="medium">
-                                  {transaction.description}
-                                </MDTypography>
-                                <MDTypography 
-                                  variant="subtitle2" 
-                                  color={getTransactionColor(transaction.type)}
-                                  fontWeight="bold"
-                                >
-                                  {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount, transaction.currency)}
-                                </MDTypography>
-                              </MDBox>
-                            }
-                            secondary={
-                              <MDBox display="flex" justifyContent="space-between" alignItems="center" mt={0.5}>
-                                <MDBox display="flex" gap={1}>
-                                  <Chip 
-                                    label={transaction.categoryLabel} 
-                                    size="small" 
-                                    variant="outlined"
-                                    color="primary"
-                                  />
-                                  <Chip 
-                                    label={transaction.accountLabel} 
-                                    size="small" 
-                                    variant="outlined"
-                                  />
-                                </MDBox>
-                                <MDTypography variant="caption" color="text">
-                                  {transaction.time} • {transaction.location}
-                                </MDTypography>
-                              </MDBox>
-                            }
-                          />
-                        </ListItem>
-                        {index < dayTransactions.length - 1 && <Divider variant="inset" component="li" />}
-                      </div>
-                    ))}
-                  </List>
-                </Box>
-              ))
-            }
-
-            {filteredTransactions.length === 0 && (
-              <MDBox textAlign="center" py={4}>
-                <MDTypography variant="h6" color="text" fontWeight="regular">
-                  Aucune transaction trouvée
-                </MDTypography>
-                <MDTypography variant="body2" color="text">
-                  Ajustez vos filtres ou ajoutez une nouvelle transaction
-                </MDTypography>
-              </MDBox>
-            )}
-          </MDBox>
-        </Card>
+        <TransactionTable
+          transactions={mockTransactions}
+          currency={selectedCurrency}
+          title="Mes Transactions"
+          showQuickAdd={true}
+          showFilters={true}
+          showExport={true}
+          height={600}
+          pageSize={25}
+          onTransactionEdit={handleTransactionEdit}
+          onTransactionDelete={handleTransactionDelete}
+          onTransactionDuplicate={handleTransactionDuplicate}
+          onBulkAction={handleBulkAction}
+        />
       </Grid>
     </Grid>
   );
 
   const renderCategoriesTab = () => (
     <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Card>
-          <MDBox p={3}>
-            <MDTypography variant="h6" fontWeight="medium" mb={3}>
-              Dépenses par Catégorie
-            </MDTypography>
-            
-            {/* Ici on pourrait ajouter des graphiques avec recharts */}
-            <MDBox textAlign="center" py={4}>
-              <MDTypography variant="body1" color="text">
-                Graphique des catégories à implémenter
-              </MDTypography>
-            </MDBox>
-          </MDBox>
-        </Card>
+      <Grid item xs={12} md={6}>
+        <ExpenseChart
+          expenses={expenseData}
+          currency={selectedCurrency}
+          title="Dépenses par Catégorie"
+          showLegend={true}
+          height={400}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <IncomeExpenseChart
+          data={incomeExpenseData}
+          currency={selectedCurrency}
+          title="Évolution Revenus/Dépenses"
+          height={400}
+          showPredictions={true}
+        />
       </Grid>
     </Grid>
   );
@@ -502,15 +391,17 @@ function TransactionsPage() {
         <Card>
           <MDBox p={3}>
             <MDTypography variant="h6" fontWeight="medium" mb={3}>
-              Analyse des Dépenses
+              Analyses Financières Avancées
             </MDTypography>
             
-            {/* Ici on pourrait ajouter des analyses détaillées */}
-            <MDBox textAlign="center" py={4}>
-              <MDTypography variant="body1" color="text">
-                Analyses financières à implémenter
+            <Alert severity="info">
+              <MDTypography variant="body2" fontWeight="medium">
+                Analyses détaillées à venir
               </MDTypography>
-            </MDBox>
+              <MDTypography variant="caption">
+                Tendances, prévisions, recommandations intelligentes
+              </MDTypography>
+            </Alert>
           </MDBox>
         </Card>
       </Grid>
@@ -519,198 +410,123 @@ function TransactionsPage() {
 
   return (
     <DashboardLayout>
-      <DashboardNavbar />
-      <MDBox py={3}>
-        <MDBox mb={3}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <MDBox display="flex" justifyContent="space-between" alignItems="center">
-                <MDBox>
-                  <MDTypography variant="h4" fontWeight="medium">
-                    Transactions
-                  </MDTypography>
-                  <MDTypography variant="body2" color="text">
-                    Gérez vos revenus et dépenses
-                  </MDTypography>
-                </MDBox>
-              </MDBox>
-            </Grid>
-          </Grid>
-        </MDBox>
+      {/* Navigation */}
+      <FinAppNavbar 
+        onSidenavToggle={handleSidenavToggle}
+        currency={selectedCurrency}
+        onCurrencyChange={setSelectedCurrency}
+        notifications={5}
+      />
+      
+      <FinAppSidenav 
+        open={sidenavOpen}
+        onClose={() => setSidenavOpen(false)}
+        activePage="transactions"
+      />
 
-        {/* Onglets */}
-        <MDBox mb={3}>
-          <Card>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              indicatorColor="primary"
-              textColor="primary"
-              variant="fullWidth"
-            >
-              <Tab label="Vue d'ensemble" />
-              <Tab label="Par catégorie" />
-              <Tab label="Analyse" />
-            </Tabs>
-          </Card>
-        </MDBox>
-
-        {/* Contenu des onglets */}
-        {activeTab === 0 && renderOverviewTab()}
-        {activeTab === 1 && renderCategoriesTab()}
-        {activeTab === 2 && renderAnalyticsTab()}
-
-        {/* Bouton flottant pour ajouter une transaction */}
-        <Fab
-          color="primary"
-          aria-label="add transaction"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-          }}
-          onClick={() => setQuickTransactionOpen(true)}
-        >
-          <AddIcon />
-        </Fab>
-
-        {/* Menu actions */}
-        <Menu
-          anchorEl={menuAnchor}
-          open={Boolean(menuAnchor)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem onClick={() => { setQuickTransactionOpen(true); handleMenuClose(); }}>
-            Nouvelle transaction
-          </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
-            Exporter données
-          </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
-            Importer CSV
-          </MenuItem>
-        </Menu>
-
-        {/* Menu filtres */}
-        <Menu
-          anchorEl={filterAnchor}
-          open={Boolean(filterAnchor)}
-          onClose={handleFilterClose}
-        >
-          <MenuItem>
-            <FormControl fullWidth size="small">
-              <InputLabel>Catégorie</InputLabel>
-              <Select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                label="Catégorie"
-              >
-                <MenuItem value="all">Toutes</MenuItem>
-                <MenuItem value="alimentation">Alimentation</MenuItem>
-                <MenuItem value="transport">Transport</MenuItem>
-                <MenuItem value="sante">Santé</MenuItem>
-                <MenuItem value="utilities">Services</MenuItem>
-              </Select>
-            </FormControl>
-          </MenuItem>
-        </Menu>
-
-        {/* Dialog transaction rapide */}
-        <Dialog 
-          open={quickTransactionOpen} 
-          onClose={() => setQuickTransactionOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Nouvelle Transaction</DialogTitle>
-          <DialogContent>
-            <MDBox py={2}>
-              <MDTypography variant="body2" color="text">
-                Formulaire de transaction rapide à implémenter
-              </MDTypography>
-            </MDBox>
-          </DialogContent>
-          <DialogActions>
-            <MDButton onClick={() => setQuickTransactionOpen(false)}>
-              Annuler
-            </MDButton>
-            <MDButton variant="contained" onClick={() => setQuickTransactionOpen(false)}>
-              Ajouter
-            </MDButton>
-          </DialogActions>
-        </Dialog>
-
-        {/* Dialog détail transaction */}
-        <Dialog 
-          open={fullTransactionOpen} 
-          onClose={() => setFullTransactionOpen(false)}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            Détail Transaction
-            {selectedTransaction && (
-              <MDTypography variant="subtitle2" color="text">
-                {selectedTransaction.description}
-              </MDTypography>
-            )}
-          </DialogTitle>
-          <DialogContent>
-            {selectedTransaction && (
-              <MDBox py={2}>
+      {/* Contenu principal */}
+      <MDBox pt={6} pb={3}>
+        <Container maxWidth="xl">
+          
+          {/* Header */}
+          <MDBox mb={4}>
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} lg={8}>
+                <MDTypography variant="h3" fontWeight="bold" color="dark">
+                  Transactions
+                </MDTypography>
+                <MDTypography variant="h6" color="text" mt={1}>
+                  Gérez tous vos revenus et dépenses avec une table avancée
+                </MDTypography>
+              </Grid>
+              
+              <Grid item xs={12} lg={4}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <MDTypography variant="subtitle2" fontWeight="bold">Montant</MDTypography>
-                    <MDTypography variant="h6" color={getTransactionColor(selectedTransaction.type)}>
-                      {selectedTransaction.type === 'income' ? '+' : '-'} {formatCurrency(selectedTransaction.amount, selectedTransaction.currency)}
-                    </MDTypography>
+                  <Grid item xs={4}>
+                    <Card sx={{ textAlign: 'center', bgcolor: 'success.light', p: 2 }}>
+                      <MDTypography variant="button" color="success.dark" fontWeight="bold">
+                        Revenus
+                      </MDTypography>
+                      <MDTypography variant="h6" color="success.dark">
+                        +{totalIncome.toLocaleString()}
+                      </MDTypography>
+                      <MDTypography variant="caption" color="success.dark">
+                        {selectedCurrency}
+                      </MDTypography>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <MDTypography variant="subtitle2" fontWeight="bold">Catégorie</MDTypography>
-                    <MDTypography variant="body1">{selectedTransaction.categoryLabel}</MDTypography>
+                  
+                  <Grid item xs={4}>
+                    <Card sx={{ textAlign: 'center', bgcolor: 'error.light', p: 2 }}>
+                      <MDTypography variant="button" color="error.dark" fontWeight="bold">
+                        Dépenses
+                      </MDTypography>
+                      <MDTypography variant="h6" color="error.dark">
+                        -{totalExpenses.toLocaleString()}
+                      </MDTypography>
+                      <MDTypography variant="caption" color="error.dark">
+                        {selectedCurrency}
+                      </MDTypography>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <MDTypography variant="subtitle2" fontWeight="bold">Compte</MDTypography>
-                    <MDTypography variant="body1">{selectedTransaction.accountLabel}</MDTypography>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <MDTypography variant="subtitle2" fontWeight="bold">Date</MDTypography>
-                    <MDTypography variant="body1">
-                      {new Date(selectedTransaction.date).toLocaleDateString('fr-HT')} à {selectedTransaction.time}
-                    </MDTypography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <MDTypography variant="subtitle2" fontWeight="bold">Lieu</MDTypography>
-                    <MDTypography variant="body1">{selectedTransaction.location}</MDTypography>
-                  </Grid>
-                  {selectedTransaction.note && (
-                    <Grid item xs={12}>
-                      <MDTypography variant="subtitle2" fontWeight="bold">Note</MDTypography>
-                      <MDTypography variant="body1">{selectedTransaction.note}</MDTypography>
-                    </Grid>
-                  )}
-                  <Grid item xs={12}>
-                    <MDTypography variant="subtitle2" fontWeight="bold">Tags</MDTypography>
-                    <MDBox display="flex" gap={1} mt={1}>
-                      {selectedTransaction.tags.map((tag, index) => (
-                        <Chip key={index} label={tag} size="small" variant="outlined" />
-                      ))}
-                    </MDBox>
+                  
+                  <Grid item xs={4}>
+                    <Card sx={{ 
+                      textAlign: 'center', 
+                      bgcolor: balance >= 0 ? 'success.light' : 'warning.light', 
+                      p: 2 
+                    }}>
+                      <MDTypography 
+                        variant="button" 
+                        color={balance >= 0 ? 'success.dark' : 'warning.dark'} 
+                        fontWeight="bold"
+                      >
+                        Balance
+                      </MDTypography>
+                      <MDTypography 
+                        variant="h6" 
+                        color={balance >= 0 ? 'success.dark' : 'warning.dark'}
+                      >
+                        {balance >= 0 ? '+' : ''}{balance.toLocaleString()}
+                      </MDTypography>
+                      <MDTypography 
+                        variant="caption" 
+                        color={balance >= 0 ? 'success.dark' : 'warning.dark'}
+                      >
+                        {selectedCurrency}
+                      </MDTypography>
+                    </Card>
                   </Grid>
                 </Grid>
-              </MDBox>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <MDButton onClick={() => setFullTransactionOpen(false)}>
-              Fermer
-            </MDButton>
-            <MDButton variant="contained">
-              Modifier
-            </MDButton>
-          </DialogActions>
-        </Dialog>
+              </Grid>
+            </Grid>
+          </MDBox>
+
+          {/* Onglets */}
+          <MDBox mb={3}>
+            <Card>
+              <Tabs
+                value={activeTab}
+                onChange={handleTabChange}
+                indicatorColor="primary"
+                textColor="primary"
+                variant="fullWidth"
+              >
+                <Tab label="Table Avancée" />
+                <Tab label="Analyse Graphique" />
+                <Tab label="Prévisions" />
+              </Tabs>
+            </Card>
+          </MDBox>
+
+          {/* Contenu des onglets */}
+          {activeTab === 0 && renderOverviewTab()}
+          {activeTab === 1 && renderCategoriesTab()}
+          {activeTab === 2 && renderAnalyticsTab()}
+
+        </Container>
       </MDBox>
+      
       <Footer />
     </DashboardLayout>
   );

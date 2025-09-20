@@ -1,53 +1,42 @@
-// src/layouts/sols/index.js - MISE À JOUR AVEC SolTimelineChart
-
-import React, { useState, useEffect } from 'react';
+// src/layouts/sols/index.js - MISE À JOUR avec SolsTable
+import { useState } from "react";
 
 // @mui material components
-import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Fab from '@mui/material/Fab';
-import Chip from '@mui/material/Chip';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
-import Alert from '@mui/material/Alert';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Avatar from '@mui/material/Avatar';
-import AvatarGroup from '@mui/material/AvatarGroup';
+import Grid from "@mui/material/Grid";
+import Card from "@mui/material/Card";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import Alert from "@mui/material/Alert";
+import Container from "@mui/material/Container";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 
 // @mui icons
-import AddIcon from '@mui/icons-material/Add';
-import PeopleIcon from '@mui/icons-material/People';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import WarningIcon from '@mui/icons-material/Warning';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingIcon from '@mui/icons-material/Pending';
-import ShareIcon from '@mui/icons-material/Share';
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import TimelineIcon from '@mui/icons-material/Timeline';
+import PeopleIcon from "@mui/icons-material/People";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 // Material Dashboard 2 React components
 import MDBox from 'components/MDBox';
 import MDTypography from 'components/MDTypography';
 import MDButton from 'components/MDButton';
 
-// FinApp components selon structure définie
+// FinApp components
 import DashboardLayout from 'examples/LayoutContainers/DashboardLayout';
-import DashboardNavbar from 'examples/Navbars/DashboardNavbar';
+import FinAppNavbar from '../../examples/Navbars/FinAppNavbar';
+import FinAppSidenav from '../../examples/Sidenav/FinAppSidenav';
 import Footer from 'examples/Footer';
+
+// Composants Sols
 import SolCard from '../../components/FinApp/SolCard/index';
 import CurrencyDisplay from '../../components/FinApp/CurrencyDisplay/index';
-import SolTimelineChart from '../../examples/Charts/FinanceCharts/SolChart'; // NOUVEAU selon structure
+import SolTimelineChart from '../../examples/Charts/FinanceCharts/SolChart';
+import SolPerformanceChart from '../../components/FinApp/SolPerformanceChart';
 
-// Données mockées des sols COMPLÈTES pour SolTimelineChart
+// NOUVEAU: Composant SolsTable
+import SolsTable from '../../components/FinApp/SolsTable';
+
+// Données mockées des sols COMPLÈTES et ÉTENDUES
 const MOCK_SOLS = [
   {
     id: 1,
@@ -152,25 +141,96 @@ const MOCK_SOLS = [
       { participantId: 2, round: 1, paid: true, amount: 10000, date: "2024-01-16" },
       { participantId: 3, round: 1, paid: false, amount: 10000, date: null }
     ]
+  },
+  {
+    id: 4,
+    name: "Sol Quartier Delmas",
+    solType: "neighborhood",
+    participants: 15,
+    amount: 1500,
+    currency: "HTG",
+    frequency: "weekly",
+    nextPayment: "2024-01-25",
+    myPosition: 10,
+    currentTurn: 3,
+    status: "active",
+    description: "Sol communautaire du quartier",
+    organizer: "Madame Rose",
+    startDate: "2024-01-08",
+    endDate: "2024-04-15",
+    totalAmount: 22500,
+    participantsList: [
+      { id: 1, name: "Madame Rose", position: 1, status: "paid", avatar: null },
+      { id: 2, name: "Ti Pierre", position: 2, status: "paid", avatar: null },
+      { id: 3, name: "Manman Claudette", position: 3, status: "current", avatar: null },
+      { id: 4, name: "Jean-Claude", position: 4, status: "upcoming", avatar: null },
+      { id: 5, name: "Marie-Ange", position: 5, status: "upcoming", avatar: null }
+      // ... autres participants
+    ],
+    payments: []
+  },
+  {
+    id: 5,
+    name: "Sol Business Partagé",
+    solType: "business",
+    participants: 6,
+    amount: 8000,
+    currency: "HTG",
+    frequency: "monthly",
+    nextPayment: "2024-02-05",
+    myPosition: 4,
+    currentTurn: 2,
+    status: "active",
+    description: "Sol pour financer projets business",
+    organizer: "Entrepreneur Group",
+    startDate: "2024-01-05",
+    endDate: "2024-07-05",
+    totalAmount: 48000,
+    participantsList: [
+      { id: 1, name: "Boss Steeve", position: 1, status: "paid", avatar: null },
+      { id: 2, name: "Madame Jean", position: 2, status: "current", avatar: null },
+      { id: 3, name: "Ti Kom", position: 3, status: "upcoming", avatar: null },
+      { id: 4, name: "Vous", position: 4, status: "upcoming", avatar: null },
+      { id: 5, name: "Manman Paul", position: 5, status: "upcoming", avatar: null },
+      { id: 6, name: "Boss Michel", position: 6, status: "upcoming", avatar: null }
+    ],
+    payments: []
+  },
+  {
+    id: 6,
+    name: "Sol Amis Université",
+    solType: "friends",
+    participants: 10,
+    amount: 3000,
+    currency: "HTG",
+    frequency: "biweekly",
+    nextPayment: "2024-01-30",
+    myPosition: 8,
+    currentTurn: 4,
+    status: "active",
+    description: "Sol entre anciens camarades d'université",
+    organizer: "Groupe UEH 2020",
+    startDate: "2024-01-02",
+    endDate: "2024-05-30",
+    totalAmount: 30000,
+    participantsList: [],
+    payments: []
   }
 ];
 
 function SolsPage() {
-  // États pour la gestion des onglets et données
+  // États pour navigation
+  const [sidenavOpen, setSidenavOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState("HTG");
   const [activeTab, setActiveTab] = useState(0);
+  const [menuAnchor, setMenuAnchor] = useState(null);
+
+  // États pour gestion des sols
   const [sols, setSols] = useState(MOCK_SOLS);
   const [selectedSol, setSelectedSol] = useState(null);
-  const [menuAnchor, setMenuAnchor] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
 
-  // Calculer les statistiques globales
-  const stats = {
-    totalSols: sols.length,
-    activeSols: sols.filter(s => s.status === "active").length,
-    totalInvested: sols.reduce((sum, sol) => sum + (sol.amount * sol.myPosition), 0),
-    totalToReceive: sols.reduce((sum, sol) => sum + (sol.amount * sol.participants), 0),
-    nextPayments: sols.filter(s => s.status === "active").length,
-    upcomingReceptions: sols.filter(s => s.currentTurn === s.myPosition).length
+  const handleSidenavToggle = () => {
+    setSidenavOpen(!sidenavOpen);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -185,14 +245,67 @@ function SolsPage() {
     setMenuAnchor(null);
   };
 
-  const handleSolClick = (sol) => {
+  // Gestionnaires d'événements pour SolsTable
+  const handleSolJoin = (joinData) => {
+    console.log("Rejoindre sol:", joinData);
+    // TODO: Intégrer avec l'API pour rejoindre un sol
+  };
+
+  const handleSolCreate = (solData) => {
+    console.log("Créer sol:", solData);
+    // TODO: Intégrer avec l'API pour créer un nouveau sol
+    const newSol = {
+      ...solData,
+      id: Date.now(),
+      status: 'active',
+      currentTurn: 1,
+      myPosition: 1, // Créateur est en position 1
+      organizer: "Vous"
+    };
+    setSols([...sols, newSol]);
+  };
+
+  const handleSolPayment = (sol) => {
+    console.log("Effectuer paiement pour sol:", sol);
+    // TODO: Ouvrir modal de paiement
+  };
+
+  const handleSolDetails = (sol) => {
+    console.log("Voir détails du sol:", sol);
     setSelectedSol(sol);
-    console.log('Sol sélectionné:', sol);
+    // TODO: Ouvrir modal ou naviguer vers page détail
+  };
+
+  const handleSolLeave = (solId) => {
+    console.log("Quitter sol:", solId);
+    // TODO: Intégrer avec l'API pour quitter le sol
+    setSols(sols.filter(s => s.id !== solId));
+  };
+
+  const handleBulkAction = (action, selectedIds) => {
+    console.log(`Action groupée ${action} sur:`, selectedIds);
+    // TODO: Implémenter actions groupées
   };
 
   const handleRoundClick = (roundData, roundIndex) => {
     console.log('Tour cliqué:', roundData, 'Index:', roundIndex);
-    // Ici on pourrait ouvrir un modal avec détails du tour
+    // TODO: Ouvrir modal avec détails du tour
+  };
+
+  // Calculer les statistiques globales
+  const stats = {
+    totalSols: sols.length,
+    activeSols: sols.filter(s => s.status === "active").length,
+    totalInvested: sols.reduce((sum, sol) => {
+      const myContributions = Math.min(sol.currentTurn, sol.myPosition) * sol.amount;
+      return sum + myContributions;
+    }, 0),
+    totalToReceive: sols.reduce((sum, sol) => sum + (sol.amount * sol.participants), 0),
+    nextPayments: sols.filter(s => s.status === "active").length,
+    upcomingReceptions: sols.filter(s => {
+      const turnsUntilMe = (s.myPosition - s.currentTurn + s.participants) % s.participants;
+      return turnsUntilMe <= 2 && turnsUntilMe > 0;
+    }).length
   };
 
   const renderOverviewTab = () => (
@@ -210,88 +323,125 @@ function SolsPage() {
                 {stats.activeSols}
               </MDTypography>
               <MDTypography variant="body2" color="text">
-                sur {stats.totalSols} total
+                Sur {stats.totalSols} total
               </MDTypography>
             </Card>
           </Grid>
           
           <Grid item xs={12} md={3}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <TrendingUpIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
-              <MDTypography variant="h6" color="success" fontWeight="medium">
+            <Card sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light' }}>
+              <MDTypography variant="h6" color="error.dark" fontWeight="medium">
+                Total Investi
+              </MDTypography>
+              <CurrencyDisplay
+                amount={stats.totalInvested}
+                currency={selectedCurrency}
+                variant="h4"
+                fontWeight="bold"
+                color="error.dark"
+                showSymbol={true}
+              />
+              <MDTypography variant="body2" color="error.dark">
+                Contributions
+              </MDTypography>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} md={3}>
+            <Card sx={{ textAlign: 'center', p: 2, bgcolor: 'success.light' }}>
+              <MDTypography variant="h6" color="success.dark" fontWeight="medium">
                 À Recevoir
               </MDTypography>
               <CurrencyDisplay
                 amount={stats.totalToReceive}
-                currency="HTG"
+                currency={selectedCurrency}
                 variant="h4"
                 fontWeight="bold"
+                color="success.dark"
+                showSymbol={true}
               />
-              <MDTypography variant="body2" color="text">
-                Montants totaux
+              <MDTypography variant="body2" color="success.dark">
+                Potentiel total
               </MDTypography>
             </Card>
           </Grid>
           
           <Grid item xs={12} md={3}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <WarningIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
-              <MDTypography variant="h6" color="warning" fontWeight="medium">
-                Investissement
+            <Card sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.light' }}>
+              <MDTypography variant="h6" color="warning.dark" fontWeight="medium">
+                Tours Proches
               </MDTypography>
-              <CurrencyDisplay
-                amount={stats.totalInvested}
-                currency="HTG"
-                variant="h4"
-                fontWeight="bold"
-              />
-              <MDTypography variant="body2" color="text">
-                Total investi
-              </MDTypography>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={3}>
-            <Card sx={{ textAlign: 'center', p: 2 }}>
-              <CheckCircleIcon color="info" sx={{ fontSize: 40, mb: 1 }} />
-              <MDTypography variant="h6" color="info" fontWeight="medium">
-                Prochains Tours
-              </MDTypography>
-              <MDTypography variant="h4" fontWeight="bold">
+              <MDTypography variant="h4" fontWeight="bold" color="warning.dark">
                 {stats.upcomingReceptions}
               </MDTypography>
-              <MDTypography variant="body2" color="text">
-                Réceptions à venir
+              <MDTypography variant="body2" color="warning.dark">
+                Bientôt votre tour
               </MDTypography>
             </Card>
           </Grid>
         </Grid>
       </Grid>
 
-      {/* Cartes sols individuelles */}
+      {/* NOUVEAU: SolsTable intégrée */}
       <Grid item xs={12}>
-        <MDBox mb={2}>
-          <MDTypography variant="h6" fontWeight="medium">
-            Mes Sols Actifs
-          </MDTypography>
-        </MDBox>
+        <SolsTable
+          sols={sols}
+          currency={selectedCurrency}
+          title="Mes Sols/Tontines"
+          showQuickAdd={true}
+          showFilters={true}
+          showExport={true}
+          height={600}
+          pageSize={25}
+          viewMode="table"
+          onSolJoin={handleSolJoin}
+          onSolCreate={handleSolCreate}
+          onSolPayment={handleSolPayment}
+          onSolDetails={handleSolDetails}
+          onSolLeave={handleSolLeave}
+          onBulkAction={handleBulkAction}
+        />
+      </Grid>
+    </Grid>
+  );
+
+  const renderTimelineTab = () => (
+    <Grid container spacing={3}>
+      {/* Charts de performance */}
+      <Grid item xs={12} md={6}>
+        <SolPerformanceChart
+          sols={sols}
+          currency={selectedCurrency}
+          title="Performance des Sols"
+          defaultPeriod="6m"
+          height={400}
+          onSolClick={handleSolDetails}
+        />
+      </Grid>
+      
+      <Grid item xs={12} md={6}>
+        <SolTimelineChart
+          solData={selectedSol || sols[0]}
+          viewMode="timeline"
+          orientation="horizontal"
+          size="large"
+          onRoundClick={handleRoundClick}
+        />
+      </Grid>
+
+      {/* Cartes individuelles des sols */}
+      <Grid item xs={12}>
+        <MDTypography variant="h6" fontWeight="medium" mb={2}>
+          Vue Cartes des Sols
+        </MDTypography>
         <Grid container spacing={3}>
-          {sols.filter(sol => filterStatus === "all" || sol.status === filterStatus).map((sol) => (
-            <Grid item xs={12} sm={6} lg={4} key={sol.id}>
+          {sols.slice(0, 4).map((sol) => (
+            <Grid item xs={12} sm={6} lg={3} key={sol.id}>
               <SolCard
-                solType={sol.solType}
-                solName={sol.name}
-                participants={sol.participants}
-                participantsList={sol.participantsList}
-                amount={sol.amount}
-                currency={sol.currency}
-                frequency={sol.frequency}
-                nextPayment={sol.nextPayment}
-                myPosition={sol.myPosition}
-                currentTurn={sol.currentTurn}
-                status={sol.status}
-                description={sol.description}
-                onClick={() => handleSolClick(sol)}
+                sol={sol}
+                currency={selectedCurrency}
+                showActions={true}
+                onClick={() => handleSolDetails(sol)}
               />
             </Grid>
           ))}
@@ -300,199 +450,122 @@ function SolsPage() {
     </Grid>
   );
 
-  const renderTimelineTab = () => (
+  const renderAnalyticsTab = () => (
     <Grid container spacing={3}>
-      {/* Timeline pour chaque sol actif */}
-      {sols.filter(sol => sol.status === "active").map((sol) => (
-        <Grid item xs={12} key={sol.id}>
-          <SolTimelineChart
-            solData={sol}
-            viewMode="stepper"
-            orientation="horizontal"
-            showPaymentStatus={true}
-            showDates={true}
-            showAmounts={true}
-            showParticipants={true}
-            size="large"
-            title="Timeline du Sol"
-            onRoundClick={handleRoundClick}
-          />
-        </Grid>
-      ))}
-
-      {/* Vue compacte de tous les sols */}
       <Grid item xs={12}>
-        <Card>
-          <MDBox p={3}>
-            <MDTypography variant="h6" fontWeight="medium" mb={3}>
-              Vue d'ensemble des Timelines
-            </MDTypography>
-            
-            <Grid container spacing={2}>
-              {sols.filter(sol => sol.status === "active").map((sol) => (
-                <Grid item xs={12} md={6} key={sol.id}>
-                  <SolTimelineChart
-                    solData={sol}
-                    viewMode="timeline"
-                    orientation="horizontal"
-                    showPaymentStatus={false}
-                    showDates={false}
-                    showAmounts={false}
-                    showParticipants={true}
-                    size="medium"
-                    title={sol.name}
-                    onRoundClick={(round) => {
-                      console.log(`Round cliqué pour ${sol.name}:`, round);
-                    }}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </MDBox>
-        </Card>
+        <Alert severity="info">
+          <MDTypography variant="body2" fontWeight="medium">
+            Analytics Sols avancées
+          </MDTypography>
+          <MDTypography variant="caption">
+            Analyses de performance, prédictions de cash-flow, optimisation des positions
+          </MDTypography>
+        </Alert>
       </Grid>
-    </Grid>
-  );
-
-  const renderCalendarTab = () => (
-    <Grid container spacing={3}>
-      {/* Graphique timeline pour sol sélectionné */}
-      {selectedSol && (
-        <Grid item xs={12}>
-          <SolTimelineChart
-            solData={selectedSol}
-            viewMode="chart"
-            orientation="horizontal"
-            showPaymentStatus={true}
-            showDates={true}
-            showAmounts={true}
-            showParticipants={true}
-            size="large"
-            title={`Progression - ${selectedSol.name}`}
-            onRoundClick={handleRoundClick}
-          />
-        </Grid>
-      )}
-
-      {/* Sélecteur de sol */}
+      
+      {/* Performance globale */}
       <Grid item xs={12}>
-        <Card>
-          <MDBox p={3}>
-            <MDTypography variant="h6" fontWeight="medium" mb={3}>
-              Calendrier des Sols
-            </MDTypography>
-            
-            <MDBox display="flex" gap={2} mb={3} flexWrap="wrap">
-              {sols.map((sol) => (
-                <Chip
-                  key={sol.id}
-                  label={sol.name}
-                  onClick={() => setSelectedSol(sol)}
-                  color={selectedSol?.id === sol.id ? "primary" : "default"}
-                  variant={selectedSol?.id === sol.id ? "filled" : "outlined"}
-                />
-              ))}
-            </MDBox>
-
-            {!selectedSol && (
-              <Alert severity="info">
-                <MDTypography variant="body2" fontWeight="medium">
-                  Sélectionnez un sol pour voir sa timeline détaillée
-                </MDTypography>
-              </Alert>
-            )}
-          </MDBox>
-        </Card>
+        <SolPerformanceChart
+          sols={sols}
+          currency={selectedCurrency}
+          title="Analyse Complète de Performance"
+          defaultPeriod="1y"
+          defaultView="comparison"
+          height={500}
+          showComparison={true}
+          onSolClick={handleSolDetails}
+        />
       </Grid>
     </Grid>
   );
 
   return (
     <DashboardLayout>
-      <DashboardNavbar />
-      <MDBox py={3}>
-        <MDBox mb={3}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <MDBox display="flex" justifyContent="space-between" alignItems="center">
-                <MDBox>
-                  <MDTypography variant="h4" fontWeight="medium">
-                    Mes Sols & Tontines
-                  </MDTypography>
-                  <MDTypography variant="body2" color="text">
-                    Gérez vos participations aux sols
-                  </MDTypography>
+      {/* Navigation */}
+      <FinAppNavbar 
+        onSidenavToggle={handleSidenavToggle}
+        currency={selectedCurrency}
+        onCurrencyChange={setSelectedCurrency}
+        notifications={stats.upcomingReceptions + stats.nextPayments}
+      />
+      
+      <FinAppSidenav 
+        open={sidenavOpen}
+        onClose={() => setSidenavOpen(false)}
+        activePage="sols"
+      />
+
+      {/* Contenu principal */}
+      <MDBox pt={6} pb={3}>
+        <Container maxWidth="xl">
+          
+          {/* Header */}
+          <MDBox mb={4}>
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} lg={8}>
+                <MDTypography variant="h3" fontWeight="bold" color="dark">
+                  Mes Sols/Tontines
+                </MDTypography>
+                <MDTypography variant="h6" color="text" mt={1}>
+                  Gérez tous vos sols avec une table avancée et des analytics
+                </MDTypography>
+              </Grid>
+              
+              <Grid item xs={12} lg={4}>
+                <MDBox display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
+                  <IconButton onClick={handleMenuClick}>
+                    <MoreVertIcon />
+                  </IconButton>
                 </MDBox>
-              </MDBox>
+              </Grid>
             </Grid>
-          </Grid>
-        </MDBox>
+          </MDBox>
 
-        {/* Onglets */}
-        <MDBox mb={3}>
-          <Card>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              indicatorColor="primary"
-              textColor="primary"
-              variant="fullWidth"
-            >
-              <Tab 
-                label="Mes Sols" 
-                icon={<PeopleIcon />}
-                iconPosition="start"
-              />
-              <Tab 
-                label="Timeline" 
-                icon={<TimelineIcon />}
-                iconPosition="start"
-              />
-              <Tab 
-                label="Calendrier" 
-                icon={<CalendarTodayIcon />}
-                iconPosition="start"
-              />
-            </Tabs>
-          </Card>
-        </MDBox>
+          {/* Onglets */}
+          <MDBox mb={3}>
+            <Card>
+              <Tabs
+                value={activeTab}
+                onChange={handleTabChange}
+                indicatorColor="primary"
+                textColor="primary"
+                variant="fullWidth"
+              >
+                <Tab label="Table Avancée" />
+                <Tab label="Timeline & Cartes" />
+                <Tab label="Analytics" />
+              </Tabs>
+            </Card>
+          </MDBox>
 
-        {/* Contenu des onglets */}
-        {activeTab === 0 && renderOverviewTab()}
-        {activeTab === 1 && renderTimelineTab()}
-        {activeTab === 2 && renderCalendarTab()}
+          {/* Contenu des onglets */}
+          {activeTab === 0 && renderOverviewTab()}
+          {activeTab === 1 && renderTimelineTab()}
+          {activeTab === 2 && renderAnalyticsTab()}
 
-        {/* Bouton flottant pour nouveau sol */}
-        <Fab
-          color="primary"
-          aria-label="add sol"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-          }}
-          onClick={() => console.log('Créer nouveau sol')}
-        >
-          <AddIcon />
-        </Fab>
-
-        {/* Menu actions */}
-        <Menu
-          anchorEl={menuAnchor}
-          open={Boolean(menuAnchor)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem onClick={handleMenuClose}>
-            Créer nouveau sol
-          </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
-            Rejoindre un sol
-          </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
-            Exporter calendrier
-          </MenuItem>
-        </Menu>
+        </Container>
       </MDBox>
+
+      {/* Menu actions */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={() => { console.log('Créer sol'); handleMenuClose(); }}>
+          Créer un nouveau sol
+        </MenuItem>
+        <MenuItem onClick={() => { console.log('Rejoindre sol'); handleMenuClose(); }}>
+          Rejoindre un sol
+        </MenuItem>
+        <MenuItem onClick={() => { console.log('Export rapport'); handleMenuClose(); }}>
+          Exporter rapport
+        </MenuItem>
+        <MenuItem onClick={() => { console.log('Paramètres sols'); handleMenuClose(); }}>
+          Paramètres
+        </MenuItem>
+      </Menu>
+      
       <Footer />
     </DashboardLayout>
   );
