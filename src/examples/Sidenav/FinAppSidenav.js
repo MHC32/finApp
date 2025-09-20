@@ -1,339 +1,184 @@
-// src/examples/Sidenav/FinAppSidenav.js
-import { useEffect } from "react";
-
-// react-router-dom components
-import { useLocation, NavLink } from "react-router-dom";
-
-// prop-types is a library for typechecking of props.
-import PropTypes from "prop-types";
+// src/components/FinApp/FinAppSidenav/index.js
+import React from 'react';
+import PropTypes from 'prop-types';
 
 // @mui material components
-import List from "@mui/material/List";
-import Divider from "@mui/material/Divider";
-import Link from "@mui/material/Link";
-import Icon from "@mui/material/Icon";
-import Badge from "@mui/material/Badge";
+import Drawer from '@mui/material/Drawer';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Icon from '@mui/material/Icon';
 
 // Material Dashboard 2 React components
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-import MDButton from "components/MDButton";
+import MDBox from 'components/MDBox';
+import MDTypography from 'components/MDTypography';
 
-// Material Dashboard 2 React example components
-import SidenavCollapse from "examples/Sidenav/SidenavCollapse";
-import SidenavRoot from "examples/Sidenav/SidenavRoot";
-import sidenavLogoLabel from "examples/Sidenav/styles/sidenav";
+// Routes par défaut si non fournies
+const DEFAULT_ROUTES = [
+  {
+    type: "collapse",
+    name: "Dashboard Financier",
+    key: "dashboard",
+    icon: <Icon fontSize="small">dashboard</Icon>,
+    route: "/dashboard",
+  },
+  {
+    type: "collapse",
+    name: "Mes Comptes",
+    key: "accounts",
+    icon: <Icon fontSize="small">account_balance</Icon>,
+    route: "/accounts",
+  },
+  {
+    type: "collapse",
+    name: "Sols/Tontines",
+    key: "sols",
+    icon: <Icon fontSize="small">people</Icon>,
+    route: "/sols",
+  },
+  {
+    type: "collapse",
+    name: "Budgets",
+    key: "budgets",
+    icon: <Icon fontSize="small">bar_chart</Icon>,
+    route: "/budgets",
+  },
+];
 
-// FinApp components
-import CurrencyDisplay from "components/FinApp/CurrencyDisplay";
+function FinAppSidenav({ 
+  open = false, 
+  onClose, 
+  activePage = "dashboard",
+  routes = DEFAULT_ROUTES, // Valeur par défaut
+  ...other 
+}) {
 
-// Material Dashboard 2 React context
-import {
-  useMaterialUIController,
-  setMiniSidenav,
-  setTransparentSidenav,
-  setWhiteSidenav,
-} from "context";
-
-// Hook pour notifications (simulation - remplacer par vraie API)
-const useFinAppNotifications = () => {
-  return {
-    sols: 3,        // 3 échéances sols cette semaine
-    budgets: 1,     // 1 budget dépassé
-    investments: 2, // 2 projets nécessitent attention
-    total: 6,       // Total notifications non lues
+  const handleNavigation = (route) => {
+    console.log('Navigation vers:', route);
+    // Ici, intégrer avec React Router
+    if (onClose) onClose();
   };
-};
 
-// Hook pour solde rapide (simulation - remplacer par vraie API)
-const useQuickBalance = () => {
-  return {
-    total: 45750.50,
-    currency: "HTG",
-    accounts: [
-      { bank: "Sogebank", balance: 25750.50, currency: "HTG" },
-      { bank: "Unibank", balance: 1500.75, currency: "USD" },
-    ]
-  };
-};
-
-function FinAppSidenav({ color, brand, brandName, routes, ...rest }) {
-  const [controller, dispatch] = useMaterialUIController();
-  const { miniSidenav, transparentSidenav, whiteSidenav, darkMode, sidenavColor } = controller;
-  const location = useLocation();
-  const collapseName = location.pathname.replace("/", "");
-  
-  // Hooks FinApp
-  const notifications = useFinAppNotifications();
-  const balance = useQuickBalance();
-
-  let textColor = "white";
-
-  if (transparentSidenav || (whiteSidenav && !darkMode)) {
-    textColor = "dark";
-  } else if (whiteSidenav && darkMode) {
-    textColor = "inherit";
-  }
-
-  const closeSidenav = () => setMiniSidenav(dispatch, true);
-
-  useEffect(() => {
-    // A function that sets the mini state of the sidenav.
-    function handleMiniSidenav() {
-      setMiniSidenav(dispatch, window.innerWidth < 1200);
-      setTransparentSidenav(dispatch, window.innerWidth < 1200 ? false : transparentSidenav);
-      setWhiteSidenav(dispatch, window.innerWidth < 1200 ? false : whiteSidenav);
+  const renderNavItems = () => {
+    // Vérification de sécurité
+    if (!routes || !Array.isArray(routes)) {
+      return null;
     }
 
-    // Event listener for window resize
-    window.addEventListener("resize", handleMiniSidenav);
-
-    // Call the handleMiniSidenav function to set the state with the initial value.
-    handleMiniSidenav();
-
-    // Remove event listener on cleanup
-    return () => window.removeEventListener("resize", handleMiniSidenav);
-  }, [dispatch, transparentSidenav, whiteSidenav]);
-
-  // Render les items de navigation avec badges de notification
-  const renderRoutes = routes.map(({ type, name, icon, title, noCollapse, key, href, route, badge }) => {
-    let returnValue;
-
-    // Fonction pour obtenir les notifications par route
-    const getNotificationCount = (routeKey) => {
-      switch (routeKey) {
-        case "sols": return notifications.sols;
-        case "investments": return notifications.investments;  
-        case "budgets": return notifications.budgets;
-        case "notifications": return notifications.total;
-        default: return 0;
-      }
-    };
-
-    if (type === "collapse") {
-      const notificationCount = getNotificationCount(key);
-      
-      returnValue = href ? (
-        <Link
-          href={href}
-          key={key}
-          target="_blank"
-          rel="noreferrer"
-          sx={{ textDecoration: "none" }}
-        >
-          <SidenavCollapse
-            name={name}
-            icon={notificationCount > 0 ? (
-              <Badge badgeContent={notificationCount} color="error" variant="dot">
-                {icon}
-              </Badge>
-            ) : icon}
-            active={key === collapseName}
-            {...rest}
-          />
-        </Link>
-      ) : (
-        <NavLink key={key} to={route}>
-          <SidenavCollapse
-            name={name}
-            icon={notificationCount > 0 ? (
-              <Badge badgeContent={notificationCount} color="error" max={99}>
-                {icon}
-              </Badge>
-            ) : icon}
-            active={key === collapseName}
-            {...rest}
-          />
-        </NavLink>
-      );
-    } else if (type === "title") {
-      returnValue = (
-        <MDTypography
-          key={key}
-          color={textColor}
-          display="block"
-          variant="caption"
-          fontWeight="bold"
-          textTransform="uppercase"
-          pl={3}
-          mt={2}
-          mb={1}
-          ml={1}
-        >
-          {title}
-        </MDTypography>
-      );
-    } else if (type === "divider") {
-      returnValue = (
-        <Divider
-          key={key}
-          light={
-            (!darkMode && !whiteSidenav && !transparentSidenav) ||
-            (darkMode && !transparentSidenav && whiteSidenav)
-          }
-        />
-      );
-    }
-
-    return returnValue;
-  });
-
-  return (
-    <SidenavRoot
-      {...rest}
-      variant="permanent"
-      ownerState={{ transparentSidenav, whiteSidenav, miniSidenav, darkMode }}
-    >
-      {/* Header avec logo et nom */}
-      <MDBox pt={3} pb={1} px={4} textAlign="center">
-        <MDBox
-          display={{ xs: "block", xl: "none" }}
-          position="absolute"
-          top={0}
-          right={0}
-          p={1.625}
-          onClick={closeSidenav}
-          sx={{ cursor: "pointer" }}
-        >
-          <MDTypography variant="h6" color="secondary">
-            <Icon sx={{ fontWeight: "bold" }}>close</Icon>
-          </MDTypography>
-        </MDBox>
-        <MDBox component={NavLink} to="/" display="flex" alignItems="center">
-          {brand && (
-            <MDBox component="img" src={brand} alt="Brand" width="2rem" />
-          )}
-          <MDBox
-            width={!brandName && "100%"}
-            sx={(theme) => sidenavLogoLabel(theme, { miniSidenav })}
-          >
-            <MDTypography component="h6" variant="button" fontWeight="medium" color={textColor}>
-              {brandName}
-            </MDTypography>
-          </MDBox>
-        </MDBox>
-      </MDBox>
-
-      {/* Widget solde rapide (seulement si pas mini) */}
-      {!miniSidenav && (
-        <MDBox px={2} mb={2}>
-          <MDBox
-            sx={{
-              background: ({ palette: { gradients }, functions: { linearGradient } }) =>
-                linearGradient(gradients.info.main, gradients.info.state),
-              borderRadius: "0.75rem",
-              p: 2,
-              color: "white",
-            }}
-          >
-            <MDTypography variant="caption" color="white" fontWeight="medium" opacity={0.8}>
-              Solde Total
-            </MDTypography>
-            <CurrencyDisplay
-              amount={balance.total}
-              currency={balance.currency}
-              variant="h6"
-              color="white"
-              fontWeight="bold"
-              showSymbol={true}
-              animate={false}
-            />
-            <MDBox mt={1} display="flex" justifyContent="space-between" alignItems="center">
-              <MDTypography variant="caption" color="white" opacity={0.7}>
-                {balance.accounts.length} comptes
-              </MDTypography>
-              <MDButton
-                variant="text"
-                color="white"
-                size="small"
-                component={NavLink}
-                to="/accounts"
+    return routes.map((item) => {
+      if (item.type === "collapse") {
+        return (
+          <ListItem key={item.key} disablePadding>
+            <ListItemButton
+              selected={activePage === item.key}
+              onClick={() => handleNavigation(item.route)}
+              sx={{
+                minHeight: 48,
+                px: 2.5,
+                backgroundColor: activePage === item.key ? 'primary.light' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.light',
+                  '&:hover': {
+                    backgroundColor: 'primary.light',
+                  },
+                },
+              }}
+            >
+              <ListItemIcon
                 sx={{
-                  minWidth: "auto",
-                  p: 0.5,
-                  "& .MuiButton-root": {
-                    minWidth: "auto"
-                  }
+                  minWidth: 0,
+                  mr: 3,
+                  justifyContent: 'center',
+                  color: activePage === item.key ? 'primary.main' : 'text.secondary',
                 }}
               >
-                <Icon fontSize="small">arrow_forward</Icon>
-              </MDButton>
-            </MDBox>
-          </MDBox>
-        </MDBox>
-      )}
-
-      <Divider
-        light={
-          (!darkMode && !whiteSidenav && !transparentSidenav) ||
-          (darkMode && !transparentSidenav && whiteSidenav)
-        }
-      />
-
-      {/* Navigation principale */}
-      <List>{renderRoutes}</List>
-
-      {/* Footer avec actions rapides (seulement si pas mini) */}
-      {!miniSidenav && (
-        <>
-          <Divider
-            light={
-              (!darkMode && !whiteSidenav && !transparentSidenav) ||
-              (darkMode && !transparentSidenav && whiteSidenav)
-            }
-          />
-          <MDBox px={2} my={2}>
-            <MDTypography variant="caption" color={textColor} fontWeight="medium" pl={1} mb={1}>
-              Actions Rapides
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.name}
+                sx={{
+                  color: activePage === item.key ? 'primary.main' : 'text.primary',
+                  '& .MuiListItemText-primary': {
+                    fontSize: '0.875rem',
+                    fontWeight: activePage === item.key ? 600 : 400,
+                  }
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        );
+      } else if (item.type === "divider") {
+        return <Divider key={`divider-${Math.random()}`} sx={{ my: 1 }} />;
+      } else if (item.type === "title") {
+        return (
+          <MDBox key={`title-${Math.random()}`} px={2} py={1}>
+            <MDTypography variant="caption" fontWeight="bold" color="text" textTransform="uppercase">
+              {item.title}
             </MDTypography>
-            <MDBox display="flex" flexDirection="column" gap={1}>
-              <MDButton
-                variant="outlined"
-                color={sidenavColor}
-                size="small"
-                startIcon={<Icon>add</Icon>}
-                component={NavLink}
-                to="/transactions/add"
-                fullWidth
-              >
-                Transaction
-              </MDButton>
-              <MDButton
-                variant="outlined"
-                color={sidenavColor}
-                size="small"
-                startIcon={<Icon>people</Icon>}
-                component={NavLink}
-                to="/sols/create"
-                fullWidth
-              >
-                Nouveau Sol
-              </MDButton>
-            </MDBox>
           </MDBox>
-        </>
-      )}
+        );
+      }
+      return null;
+    });
+  };
 
-      {/* Badge notifications global (version mini) */}
-      {miniSidenav && notifications.total > 0 && (
-        <MDBox position="absolute" bottom={20} right={10}>
-          <Badge badgeContent={notifications.total} color="error" max={99}>
-            <Icon fontSize="medium" sx={{ color: textColor }}>
-              notifications
-            </Icon>
-          </Badge>
-        </MDBox>
-      )}
-    </SidenavRoot>
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      sx={{
+        width: 280,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: 280,
+          boxSizing: 'border-box',
+          backgroundColor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+        },
+      }}
+      {...other}
+    >
+      {/* Header */}
+      <MDBox p={2} textAlign="center">
+        <MDTypography variant="h6" fontWeight="bold" color="primary">
+          FinApp Haiti
+        </MDTypography>
+        <MDTypography variant="caption" color="text">
+          Gestion financière haïtienne
+        </MDTypography>
+      </MDBox>
+
+      <Divider />
+
+      {/* Navigation Items */}
+      <List sx={{ px: 1 }}>
+        {renderNavItems()}
+      </List>
+
+      {/* Footer */}
+      <Box sx={{ mt: 'auto', p: 2 }}>
+        <MDTypography variant="caption" color="text" textAlign="center">
+          Version 1.0.0
+        </MDTypography>
+      </Box>
+    </Drawer>
   );
 }
 
-// Typechecking props for the FinAppSidenav
 FinAppSidenav.propTypes = {
-  color: PropTypes.oneOf(["primary", "secondary", "info", "success", "warning", "error", "dark"]),
-  brand: PropTypes.string,
-  brandName: PropTypes.string,
-  routes: PropTypes.arrayOf(PropTypes.object).isRequired,
+  open: PropTypes.bool,
+  onClose: PropTypes.func,
+  activePage: PropTypes.string,
+  routes: PropTypes.array, // Ajout de la prop routes
 };
 
 export default FinAppSidenav;

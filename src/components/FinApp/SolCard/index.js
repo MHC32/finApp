@@ -1,479 +1,309 @@
-// src/components/FinApp/SolCard/index.js
-import { useState } from "react";
-import PropTypes from "prop-types";
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 
 // @mui material components
-import Card from "@mui/material/Card";
-import Avatar from "@mui/material/Avatar";
-import AvatarGroup from "@mui/material/AvatarGroup";
-import IconButton from "@mui/material/IconButton";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Icon from "@mui/material/Icon";
-import Tooltip from "@mui/material/Tooltip";
-import Chip from "@mui/material/Chip";
-import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
-import StepIcon from "@mui/material/StepIcon";
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardActions from '@mui/material/CardActions';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
+import Collapse from '@mui/material/Collapse';
+import Grid from '@mui/material/Grid';
+import Avatar from '@mui/material/Avatar';
+import AvatarGroup from '@mui/material/AvatarGroup';
+import LinearProgress from '@mui/material/LinearProgress';
+
+// @mui icons
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import PeopleIcon from '@mui/icons-material/People';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
 // Material Dashboard 2 React components
-import MDBox from "components/MDBox";
-import MDTypography from "components/MDTypography";
-import MDButton from "components/MDButton";
-import MDProgress from "components/MDProgress";
+import MDBox from 'components/MDBox';
+import MDTypography from 'components/MDTypography';
+import MDButton from 'components/MDButton';
 
 // FinApp components
-import CurrencyDisplay from "components/FinApp/CurrencyDisplay";
-
-// Configuration des statuts de sol
-const SOL_STATUS = {
-  active: { label: "Actif", color: "success", icon: "check_circle" },
-  pending: { label: "En attente", color: "warning", icon: "schedule" },
-  completed: { label: "Terminé", color: "info", icon: "task_alt" },
-  paused: { label: "Suspendu", color: "error", icon: "pause_circle" },
-};
-
-// Utilitaire pour calculer les données du sol
-const calculateSolData = (participants, currentRound, amount, frequency) => {
-  const totalRounds = participants.length;
-  const totalAmount = amount * participants.length;
-  const progressPercentage = (currentRound / totalRounds) * 100;
-  
-  // Calcul prochaine date (simulation)
-  const now = new Date();
-  const nextDate = new Date(now);
-  nextDate.setDate(now.getDate() + (frequency === "weekly" ? 7 : 30));
-  
-  return {
-    totalRounds,
-    totalAmount,
-    progressPercentage,
-    nextDate,
-    roundsLeft: totalRounds - currentRound,
-  };
-};
+import CurrencyDisplay from 'components/FinApp/CurrencyDisplay';
 
 function SolCard({
-  solName = "Sol Famille",
-  amount = 5000,
+  solName,
+  solType = "family",
+  participants = 0, // Nombre de participants
+  participantsList = [], // Liste détaillée des participants
+  amount,
   currency = "HTG",
   frequency = "monthly",
-  participants = [],
-  currentRound = 1,
-  userPosition = 1,
+  nextPayment,
+  myPosition,
+  currentTurn,
   status = "active",
-  nextPaymentDate = null,
-  userHasPaid = false,
-  lastWinner = null,
-  description = "",
-  color = "info",
-  showDetails = true,
-  showActions = true,
-  onClick,
+  description,
+  onViewDetails,
+  onMakePayment,
   ...other
 }) {
-  const [menuAnchor, setMenuAnchor] = useState(null);
-  const [showAllParticipants, setShowAllParticipants] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  const handleMenuOpen = (event) => {
-    event.stopPropagation();
-    setMenuAnchor(event.currentTarget);
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
   };
 
-  const handleMenuClose = () => {
-    setMenuAnchor(null);
-  };
+  // Calcul du progrès
+  const progress = currentTurn && participants ? (currentTurn / participants) * 100 : 0;
 
-  const handleCardClick = () => {
-    if (onClick) {
-      onClick();
+  // Déterminer la couleur selon le type de sol
+  const getTypeColor = () => {
+    switch (solType) {
+      case "family": return "success";
+      case "work": return "info";
+      case "investment": return "warning";
+      case "student": return "secondary";
+      case "community": return "primary";
+      default: return "primary";
     }
   };
 
-  // Calculs du sol
-  const solData = calculateSolData(participants, currentRound, amount, frequency);
-  const statusConfig = SOL_STATUS[status] || SOL_STATUS.active;
-  
-  // Participant actuel (qui reçoit ce tour)
-  const currentWinner = participants[currentRound - 1];
-  const isUserTurn = currentWinner?.id === "user"; // Simulation - remplacer par vraie logique
-  
-  // Prochaine échéance
-  const daysUntilPayment = nextPaymentDate ? 
-    Math.ceil((new Date(nextPaymentDate) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
-  
-  // Montant que l'utilisateur va recevoir
-  const userWillReceive = solData.totalAmount - (amount * (userPosition - 1));
+  // Déterminer le statut de couleur
+  const getStatusColor = () => {
+    switch (status) {
+      case "active": return "success";
+      case "pending": return "warning";
+      case "completed": return "info";
+      case "inactive": return "error";
+      default: return "primary";
+    }
+  };
+
+  // Formatter la fréquence
+  const formatFrequency = () => {
+    switch (frequency) {
+      case "weekly": return "Hebdomadaire";
+      case "biweekly": return "Bi-mensuel";
+      case "monthly": return "Mensuel";
+      case "quarterly": return "Trimestriel";
+      default: return frequency;
+    }
+  };
+
+  // Formatter le type
+  const formatType = () => {
+    switch (solType) {
+      case "family": return "Famille";
+      case "work": return "Travail";
+      case "investment": return "Investissement";
+      case "student": return "Étudiant";
+      case "community": return "Communauté";
+      default: return solType;
+    }
+  };
 
   return (
-    <Card
-      sx={{
-        cursor: onClick ? "pointer" : "default",
-        transition: "all 0.3s ease",
-        "&:hover": {
-          transform: onClick ? "translateY(-4px)" : "none",
-          boxShadow: ({ boxShadows: { xl } }) => xl,
-        },
-        border: isUserTurn ? 2 : 0,
-        borderColor: isUserTurn ? "success.main" : "transparent",
-        bgcolor: isUserTurn ? "success.50" : "background.paper",
+    <Card 
+      sx={{ 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        '&:hover': {
+          boxShadow: 6,
+          transform: 'translateY(-2px)',
+          transition: 'all 0.3s ease-in-out'
+        }
       }}
-      onClick={handleCardClick}
       {...other}
     >
-      <MDBox p={2.5}>
-        {/* Header avec nom du sol et statut */}
-        <MDBox display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <MDBox>
-            <MDBox display="flex" alignItems="center" gap={1} mb={1}>
-              <MDTypography variant="h6" fontWeight="medium">
+      <CardContent sx={{ flexGrow: 1 }}>
+        {/* Header avec titre et badges */}
+        <MDBox mb={2}>
+          <Grid container alignItems="center" spacing={1}>
+            <Grid item xs>
+              <MDTypography variant="h6" fontWeight="medium" gutterBottom>
                 {solName}
               </MDTypography>
-              {isUserTurn && (
-                <Chip 
-                  label="Votre tour !" 
-                  size="small" 
-                  color="success"
-                  icon={<Icon fontSize="small">celebration</Icon>}
-                />
-              )}
-            </MDBox>
-            
-            <MDBox display="flex" alignItems="center" gap={1}>
+            </Grid>
+            <Grid item>
               <Chip 
-                label={statusConfig.label}
-                size="small"
-                color={statusConfig.color}
-                icon={<Icon fontSize="small">{statusConfig.icon}</Icon>}
-              />
-              <Chip 
-                label={`${participants.length} participants`}
+                label={formatType()} 
+                color={getTypeColor()} 
                 size="small"
                 variant="outlined"
               />
+            </Grid>
+            <Grid item>
               <Chip 
-                label={frequency === "weekly" ? "Hebdomadaire" : "Mensuel"}
+                label={status} 
+                color={getStatusColor()} 
                 size="small"
-                variant="outlined"
               />
-            </MDBox>
-          </MDBox>
-
-          {/* Menu actions */}
-          {showActions && (
-            <MDBox>
-              <Tooltip title="Actions sol">
-                <IconButton size="small" onClick={handleMenuOpen}>
-                  <Icon fontSize="small">more_vert</Icon>
-                </IconButton>
-              </Tooltip>
-              
-              <Menu
-                anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
-                onClose={handleMenuClose}
-              >
-                <MenuItem onClick={handleMenuClose}>
-                  <Icon sx={{ mr: 1 }} fontSize="small">visibility</Icon>
-                  Voir détails
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose}>
-                  <Icon sx={{ mr: 1 }} fontSize="small">payment</Icon>
-                  Effectuer paiement
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose}>
-                  <Icon sx={{ mr: 1 }} fontSize="small">history</Icon>
-                  Historique paiements
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose}>
-                  <Icon sx={{ mr: 1 }} fontSize="small">people</Icon>
-                  Gérer participants
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose}>
-                  <Icon sx={{ mr: 1 }} fontSize="small">notifications</Icon>
-                  Rappels
-                </MenuItem>
-              </Menu>
-            </MDBox>
-          )}
+            </Grid>
+          </Grid>
         </MDBox>
 
-        {/* Montants et progression */}
-        <MDBox mb={2}>
-          <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <MDBox>
-              <MDTypography variant="caption" color="text" fontWeight="medium">
-                Cotisation par tour
-              </MDTypography>
-              <CurrencyDisplay
-                amount={amount}
-                currency={currency}
-                variant="h5"
-                color={color}
-                fontWeight="bold"
-                showSymbol={true}
-                animate={false}
-              />
-            </MDBox>
-            
-            <MDBox textAlign="right">
-              <MDTypography variant="caption" color="text" fontWeight="medium">
-                Total à recevoir
-              </MDTypography>
-              <CurrencyDisplay
-                amount={solData.totalAmount}
-                currency={currency}
-                variant="h6"
-                color="success"
-                fontWeight="medium"
-                showSymbol={true}
-                animate={false}
-              />
-            </MDBox>
-          </MDBox>
-
-          {/* Progression du sol */}
-          <MDBox mb={1}>
-            <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-              <MDTypography variant="caption" color="text">
-                Progression (Tour {currentRound}/{solData.totalRounds})
-              </MDTypography>
-              <MDTypography variant="caption" color="text">
-                {solData.progressPercentage.toFixed(0)}%
-              </MDTypography>
-            </MDBox>
-            
-            <MDProgress 
-              value={solData.progressPercentage} 
-              color={color}
-              variant="gradient"
-            />
-          </MDBox>
+        {/* Montant principal */}
+        <MDBox textAlign="center" mb={2}>
+          <CurrencyDisplay
+            amount={amount}
+            currency={currency}
+            variant="h4"
+            fontWeight="bold"
+            color="primary"
+            showTrend={false}
+          />
+          <MDTypography variant="caption" color="text">
+            {formatFrequency()}
+          </MDTypography>
         </MDBox>
 
-        {/* Participants avec avatars */}
+        {/* Informations participants */}
         <MDBox mb={2}>
-          <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <MDTypography variant="button" fontWeight="medium">
-              Participants
-            </MDTypography>
-            <MDButton
-              variant="text"
-              size="small"
-              onClick={() => setShowAllParticipants(!showAllParticipants)}
-            >
-              {showAllParticipants ? "Moins" : "Tous"}
-            </MDButton>
-          </MDBox>
-          
-          <AvatarGroup 
-            max={showAllParticipants ? participants.length : 6}
-            sx={{ 
-              justifyContent: "flex-start",
-              "& .MuiAvatar-root": { 
-                width: 32, 
-                height: 32,
-                fontSize: "0.875rem",
-                border: 2,
-                borderColor: "background.paper"
-              }
-            }}
-          >
-            {participants.map((participant, index) => (
-              <Tooltip key={participant.id} title={`${participant.name} - Position ${index + 1}`}>
-                <Avatar
-                  src={participant.avatar}
-                  sx={{
-                    bgcolor: index + 1 === currentRound ? "success.main" : 
-                             index + 1 === userPosition ? "primary.main" : 
-                             index + 1 < currentRound ? "grey.400" : "info.main",
-                    border: index + 1 === currentRound ? "2px solid" : "1px solid",
-                    borderColor: index + 1 === currentRound ? "success.main" : "grey.300"
+          <Grid container alignItems="center" spacing={2}>
+            <Grid item>
+              <Box display="flex" alignItems="center">
+                <PeopleIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                <MDTypography variant="body2" color="text">
+                  {participants} participants
+                </MDTypography>
+              </Box>
+            </Grid>
+            <Grid item>
+              <Box display="flex" alignItems="center">
+                <CalendarTodayIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                <MDTypography variant="body2" color="text">
+                  Position {myPosition}
+                </MDTypography>
+              </Box>
+            </Grid>
+          </Grid>
+        </MDBox>
+
+        {/* Avatars des participants (si liste disponible) */}
+        {Array.isArray(participantsList) && participantsList.length > 0 && (
+          <MDBox mb={2}>
+            <AvatarGroup max={6} sx={{ justifyContent: 'flex-start' }}>
+              {participantsList.slice(0, 6).map((participant, index) => (
+                <Avatar 
+                  key={index}
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    backgroundColor: participant.status === 'paid' ? 'success.light' : 
+                                   participant.status === 'current' ? 'warning.light' : 'grey.300'
                   }}
                 >
-                  {!participant.avatar && participant.name.charAt(0)}
+                  {participant.name.charAt(0)}
                 </Avatar>
-              </Tooltip>
-            ))}
-          </AvatarGroup>
-          
-          {/* Légende positions */}
-          <MDBox mt={1} display="flex" gap={2} flexWrap="wrap">
-            <MDBox display="flex" alignItems="center" gap={0.5}>
-              <Avatar sx={{ width: 16, height: 16, bgcolor: "success.main" }} />
-              <MDTypography variant="caption" color="text">Tour actuel</MDTypography>
-            </MDBox>
-            <MDBox display="flex" alignItems="center" gap={0.5}>
-              <Avatar sx={{ width: 16, height: 16, bgcolor: "primary.main" }} />
-              <MDTypography variant="caption" color="text">Votre position</MDTypography>
-            </MDBox>
-            <MDBox display="flex" alignItems="center" gap={0.5}>
-              <Avatar sx={{ width: 16, height: 16, bgcolor: "grey.400" }} />
-              <MDTypography variant="caption" color="text">Tours passés</MDTypography>
-            </MDBox>
+              ))}
+            </AvatarGroup>
           </MDBox>
+        )}
+
+        {/* Progrès du sol */}
+        <MDBox mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <MDTypography variant="body2" color="text">
+              Tour {currentTurn} sur {participants}
+            </MDTypography>
+            <MDTypography variant="body2" color="text">
+              {progress.toFixed(0)}%
+            </MDTypography>
+          </Box>
+          <LinearProgress 
+            variant="determinate" 
+            value={progress} 
+            sx={{ 
+              height: 8, 
+              borderRadius: 4,
+              backgroundColor: 'grey.200',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 4,
+              }
+            }}
+          />
         </MDBox>
 
-        {/* Informations détaillées */}
-        {showDetails && (
-          <MDBox mb={2}>
-            <MDBox 
-              display="flex" 
-              justifyContent="space-between" 
-              p={1.5}
-              borderRadius={1}
-              bgcolor="grey.50"
-            >
-              <MDBox textAlign="center">
-                <MDTypography variant="caption" color="text">
-                  Votre position
-                </MDTypography>
-                <MDTypography variant="h6" fontWeight="medium" color="primary">
-                  #{userPosition}
-                </MDTypography>
-              </MDBox>
-              
-              <MDBox textAlign="center">
-                <MDTypography variant="caption" color="text">
-                  Prochaine échéance
-                </MDTypography>
-                <MDTypography 
-                  variant="button" 
-                  fontWeight="medium" 
-                  color={daysUntilPayment <= 3 ? "warning" : "text"}
-                >
-                  {daysUntilPayment > 0 ? `${daysUntilPayment} jours` : "Aujourd'hui"}
-                </MDTypography>
-              </MDBox>
-              
-              <MDBox textAlign="center">
-                <MDTypography variant="caption" color="text">
-                  Statut paiement
-                </MDTypography>
-                <Chip
-                  label={userHasPaid ? "Payé" : "En attente"}
-                  size="small"
-                  color={userHasPaid ? "success" : "warning"}
-                  variant="outlined"
-                />
-              </MDBox>
+        {/* Prochaine échéance */}
+        {nextPayment && (
+          <MDBox>
+            <MDTypography variant="body2" color="text">
+              Prochain paiement : {new Date(nextPayment).toLocaleDateString('fr-FR')}
+            </MDTypography>
+          </MDBox>
+        )}
+
+        {/* Description (collapsible) */}
+        {description && (
+          <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <MDBox mt={2} pt={2} borderTop="1px solid" borderColor="divider">
+              <MDTypography variant="body2" color="text">
+                {description}
+              </MDTypography>
             </MDBox>
-
-            {/* Tour actuel et gagnant */}
-            {currentWinner && (
-              <MDBox mt={1.5} p={1.5} borderRadius={1} bgcolor={isUserTurn ? "success.50" : "info.50"}>
-                <MDTypography variant="button" fontWeight="medium" color={isUserTurn ? "success" : "info"}>
-                  {isUserTurn ? "🎉 C'est votre tour de recevoir !" : `Tour de ${currentWinner.name}`}
-                </MDTypography>
-                <MDTypography variant="caption" color="text" display="block" mt={0.5}>
-                  {isUserTurn ? 
-                    `Vous recevrez ${solData.totalAmount.toLocaleString()} ${currency} ce tour` :
-                    `${currentWinner.name} reçoit ${solData.totalAmount.toLocaleString()} ${currency}`
-                  }
-                </MDTypography>
-              </MDBox>
-            )}
-          </MDBox>
+          </Collapse>
         )}
+      </CardContent>
 
-        {/* Actions rapides */}
-        {showActions && (
-          <MDBox display="flex" gap={1}>
-            {!userHasPaid ? (
-              <MDButton
-                variant="gradient"
-                color="success"
-                size="small"
-                startIcon={<Icon>payment</Icon>}
-                sx={{ flex: 1 }}
-              >
-                Payer ({amount.toLocaleString()} {currency})
-              </MDButton>
-            ) : (
-              <MDButton
-                variant="outlined"
-                color="success"
-                size="small"
-                startIcon={<Icon>check</Icon>}
-                sx={{ flex: 1 }}
-                disabled
-              >
-                Payé ✓
-              </MDButton>
-            )}
-            
-            <MDButton
-              variant="outlined"
-              color={color}
+      {/* Actions */}
+      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
+        <MDButton 
+          variant="outlined" 
+          size="small"
+          onClick={onViewDetails}
+        >
+          Détails
+        </MDButton>
+        
+        <Box>
+          {description && (
+            <IconButton 
+              onClick={handleExpandClick}
               size="small"
-              startIcon={<Icon>history</Icon>}
-              sx={{ flex: 1 }}
+              sx={{ mr: 1 }}
             >
-              Historique
-            </MDButton>
-            
-            <MDButton
-              variant="outlined"
-              color={color}
-              size="small"
-              startIcon={<Icon>people</Icon>}
-              sx={{ flex: 1 }}
-            >
-              Participants
-            </MDButton>
-          </MDBox>
-        )}
-      </MDBox>
+              {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
+          )}
+          
+          <MDButton 
+            variant="contained" 
+            size="small"
+            onClick={onMakePayment}
+            startIcon={<AttachMoneyIcon />}
+          >
+            Payer
+          </MDButton>
+        </Box>
+      </CardActions>
     </Card>
   );
 }
 
-// Props par défaut
-SolCard.defaultProps = {
-  solName: "Sol Famille",
-  amount: 5000,
-  currency: "HTG",
-  frequency: "monthly",
-  participants: [],
-  currentRound: 1,
-  userPosition: 1,
-  status: "active",
-  nextPaymentDate: null,
-  userHasPaid: false,
-  lastWinner: null,
-  description: "",
-  color: "info",
-  showDetails: true,
-  showActions: true,
-  onClick: null,
+SolCard.propTypes = {
+  solName: PropTypes.string.isRequired,
+  solType: PropTypes.oneOf(["family", "work", "investment", "student", "community"]),
+  participants: PropTypes.number,
+  participantsList: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string,
+    position: PropTypes.number,
+    status: PropTypes.string,
+    avatar: PropTypes.string
+  })),
+  amount: PropTypes.number.isRequired,
+  currency: PropTypes.oneOf(["HTG", "USD"]),
+  frequency: PropTypes.oneOf(["weekly", "biweekly", "monthly", "quarterly"]),
+  nextPayment: PropTypes.string,
+  myPosition: PropTypes.number,
+  currentTurn: PropTypes.number,
+  status: PropTypes.oneOf(["active", "pending", "completed", "inactive"]),
+  description: PropTypes.string,
+  onViewDetails: PropTypes.func,
+  onMakePayment: PropTypes.func,
 };
 
-// Validation des props
-SolCard.propTypes = {
-  solName: PropTypes.string,
-  amount: PropTypes.number,
-  currency: PropTypes.oneOf(["HTG", "USD"]),
-  frequency: PropTypes.oneOf(["weekly", "monthly"]),
-  participants: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    name: PropTypes.string,
-    avatar: PropTypes.string,
-  })),
-  currentRound: PropTypes.number,
-  userPosition: PropTypes.number,
-  status: PropTypes.oneOf(Object.keys(SOL_STATUS)),
-  nextPaymentDate: PropTypes.string,
-  userHasPaid: PropTypes.bool,
-  lastWinner: PropTypes.object,
-  description: PropTypes.string,
-  color: PropTypes.oneOf(["primary", "secondary", "info", "success", "warning", "error", "dark"]),
-  showDetails: PropTypes.bool,
-  showActions: PropTypes.bool,
-  onClick: PropTypes.func,
-};
+
 
 export default SolCard;
-
-// Export des utilitaires
-export { SOL_STATUS, calculateSolData };

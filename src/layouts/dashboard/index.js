@@ -27,12 +27,12 @@ import MDTypography from 'components/MDTypography';
 import MDButton from 'components/MDButton';
 
 // FinApp components
-import FinAppNavbar from 'components/FinApp/FinAppNavbar';
-import FinAppSidenav from 'components/FinApp/FinAppSidenav';
-import AccountSummaryCard from 'components/FinApp/AccountSummaryCard';
-import BudgetCard from 'components/FinApp/BudgetCard';
-import SolCard from 'components/FinApp/SolCard';
-import CurrencyDisplay from 'components/FinApp/CurrencyDisplay';
+import FinAppNavbar from '../../examples/Navbars/FinAppNavbar/index';
+import FinAppSidenav from '../../examples/Sidenav/FinAppSidenav';
+import AccountSummaryCard from '../../components/FinApp/AccountSummaryCard/index';
+import BudgetCard from '../../components/FinApp/BudgetCard/index';
+import SolCard from '../../components/FinApp/SolCard/index';
+import CurrencyDisplay from '../../components/FinApp/CurrencyDisplay/index';
 
 // Layout components
 import DashboardLayout from 'examples/LayoutContainers/DashboardLayout';
@@ -163,6 +163,56 @@ const MOCK_DATA = {
     }
   ]
 };
+
+const CORRECTED_SOLS_DATA = [
+  {
+    id: 1,
+    name: "Sol Famille",
+    solType: "family",
+    participants: 8, // Nombre de participants
+    participantsList: [ // Liste des participants pour SolCard
+      { name: "Marie D.", position: 1, status: "paid" },
+      { name: "Jean P.", position: 2, status: "pending" },
+      { name: "Vous", position: 3, status: "upcoming" },
+      { name: "Sophie L.", position: 4, status: "upcoming" },
+      { name: "Pierre M.", position: 5, status: "upcoming" },
+      { name: "Anna C.", position: 6, status: "upcoming" },
+      { name: "David R.", position: 7, status: "upcoming" },
+      { name: "Lisa T.", position: 8, status: "upcoming" }
+    ],
+    amount: 5000,
+    currency: "HTG",
+    frequency: "monthly",
+    nextPayment: "2024-02-01",
+    myPosition: 3,
+    currentTurn: 1,
+    status: "active",
+    description: "Sol familial mensuel"
+  },
+  {
+    id: 2,
+    name: "Sol Bureau",
+    solType: "work",
+    participants: 12,
+    participantsList: [
+      { name: "Paul M.", position: 1, status: "paid" },
+      { name: "Claire S.", position: 2, status: "paid" },
+      { name: "Marc L.", position: 3, status: "paid" },
+      { name: "Julie D.", position: 4, status: "paid" },
+      { name: "Alex B.", position: 5, status: "current" },
+      { name: "Nina G.", position: 6, status: "upcoming" },
+      { name: "Vous", position: 7, status: "upcoming" }
+    ],
+    amount: 2000,
+    currency: "HTG",
+    frequency: "weekly",
+    nextPayment: "2024-01-22",
+    myPosition: 7,
+    currentTurn: 5,
+    status: "active",
+    description: "Sol hebdomadaire entre collègues"
+  }
+];
 
 function FinancialDashboard() {
   const [sidenavOpen, setSidenavOpen] = useState(false);

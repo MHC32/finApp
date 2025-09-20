@@ -15,8 +15,8 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 
 // Images - drapeaux
-import haitiFlag from "assets/images/flags/haiti.svg";
-import usaFlag from "assets/images/flags/usa.svg";
+import haitiFlag from "../../../assets/flags/haiti.svg";
+import usaFlag from "../../../assets/flags/usa.svg";
 
 // Configuration des devises
 const CURRENCIES = {

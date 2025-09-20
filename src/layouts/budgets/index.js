@@ -39,10 +39,10 @@ import MDTypography from 'components/MDTypography';
 import MDButton from 'components/MDButton';
 
 // FinApp components
-import FinAppNavbar from 'components/FinApp/FinAppNavbar';
-import FinAppSidenav from 'components/FinApp/FinAppSidenav';
-import BudgetCard from 'components/FinApp/BudgetCard';
-import CurrencyDisplay from 'components/FinApp/CurrencyDisplay';
+import FinAppNavbar from '../../examples/Navbars/FinAppNavbar/index';
+import FinAppSidenav from '../../examples/Sidenav/FinAppSidenav';
+import BudgetCard from '../../components/FinApp/BudgetCard/index';
+import CurrencyDisplay from '../../components/FinApp/CurrencyDisplay/index';
 
 // Layout components
 import DashboardLayout from 'examples/LayoutContainers/DashboardLayout';

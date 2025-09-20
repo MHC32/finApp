@@ -10,12 +10,12 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 
 // Images - logos des banques haïtiennes
-import brhLogo from "assets/images/logos/brh.png"; // Banque de la République d'Haïti
-import sogebankLogo from "assets/images/logos/sogebank.png";
-import unibankLogo from "assets/images/logos/unibank.png";
-import capitalBankLogo from "assets/images/logos/capital-bank.png";
-import bncLogo from "assets/images/logos/bnc.png"; // Banque Nationale de Crédit
-import pattern from "assets/images/illustrations/pattern-tree.svg";
+import brhLogo from "../../../assets/images/logos/brh.png"; 
+import sogebankLogo from "../../../assets/images/logos/sogebank.png";
+import unibankLogo from "../../../assets/images/logos/unibank.png";
+import capitalBankLogo from "../../../assets/images/logos/capital.png";
+import bncLogo from "../../../assets/images/logos/bnc.png"; 
+import pattern from "../../../assets/images/illustrations/pattern-tree.svg";
 
 // Configuration des banques haïtiennes
 const HAITI_BANKS = {

@@ -44,10 +44,10 @@ import MDTypography from 'components/MDTypography';
 import MDButton from 'components/MDButton';
 
 // FinApp components
-import FinAppNavbar from 'components/FinApp/FinAppNavbar';
-import FinAppSidenav from 'components/FinApp/FinAppSidenav';
-import SolCard from 'components/FinApp/SolCard';
-import CurrencyDisplay from 'components/FinApp/CurrencyDisplay';
+import FinAppNavbar from '../../examples/Navbars/FinAppNavbar/index';
+import FinAppSidenav from '../../examples/Sidenav/FinAppSidenav';
+import SolCard from '../../components/FinApp/SolCard/index';
+import CurrencyDisplay from '../../components/FinApp/CurrencyDisplay/index';
 
 // Layout components
 import DashboardLayout from 'examples/LayoutContainers/DashboardLayout';
