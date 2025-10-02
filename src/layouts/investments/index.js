@@ -44,8 +44,8 @@ import MDButton from 'components/MDButton';
 import DashboardLayout from 'examples/LayoutContainers/DashboardLayout';
 
 // FinApp components
-import FinAppNavbar from 'components/FinApp/FinAppNavbar';
-import FinAppSidenav from 'components/FinApp/FinAppSidenav';
+import FinAppNavbar from 'examples/Navbars/FinAppNavbar';
+import FinAppSidenav from 'examples/Sidenav/FinAppSidenav';
 import InvestmentForm from 'components/FinApp/InvestmentForm';
 import InvestmentCard from 'components/FinApp/InvestmentCard';
 import CurrencyDisplay from 'components/FinApp/CurrencyDisplay';

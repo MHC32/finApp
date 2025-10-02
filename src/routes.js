@@ -1,143 +1,148 @@
 /**
-=========================================================
-* FinApp Haiti - Routes Configuration
-* Based on Material Dashboard 2 React - v2.2.0
-=========================================================
-*/
+ * =========================================================
+ * FinApp Haiti - Routes Configuration
+ * Version : 1.0 - Phase 1
+ * =========================================================
+ */
 
-// @mui icons
-import Icon from "@mui/material/Icon";
+import { lazy } from 'react';
+import Icon from '@mui/material/Icon';
 
-// FinApp Haiti layouts - nos nouvelles pages
-import FinancialDashboard from "layouts/dashboard";
-import AccountsPage from "layouts/accounts";
-import SolsPage from "layouts/sols";
-import BudgetsPage from "layouts/budgets";
-import TransactionsPage from "layouts/transactions"; // NOUVELLE PAGE AJOUTÉE
+// Lazy loading des pages principales
+const Dashboard = lazy(() => import('layouts/dashboard'));
+const Accounts = lazy(() => import('layouts/accounts'));
+const Transactions = lazy(() => import('layouts/transactions'));
+const Sols = lazy(() => import('layouts/sols'));
+const Budgets = lazy(() => import('layouts/budgets'));
 
-// Material Dashboard 2 React layouts (gardées pour compatibilité)
-import Notifications from "layouts/notifications";
-import Profile from "layouts/profile";
-import SignIn from "layouts/authentication/sign-in";
-import SignUp from "layouts/authentication/sign-up";
+// Pages auth
+const SignIn = lazy(() => import('layouts/authentication/sign-in'));
+const SignUp = lazy(() => import('layouts/authentication/sign-up'));
 
+// Pages futures (placeholders pour l'instant)
+const Investments = lazy(() => import('layouts/investments'));
+const Education = lazy(() => import('layouts/education'));
+const Profile = lazy(() => import('layouts/profile'));
+
+/**
+ * Configuration des routes principales
+ */
 const routes = [
-  // Pages principales FinApp Haiti
+  // ==========================================
+  // SECTION 1 - PAGES PRINCIPALES
+  // ==========================================
   {
-    type: "collapse",
-    name: "Dashboard Financier",
-    key: "dashboard",
+    type: 'title',
+    title: 'Gestion Financière',
+    key: 'financial-section',
+  },
+  {
+    type: 'collapse',
+    name: 'Dashboard',
+    key: 'dashboard',
     icon: <Icon fontSize="small">dashboard</Icon>,
-    route: "/dashboard",
-    component: <FinancialDashboard />,
+    route: '/dashboard',
+    component: <Dashboard />,
   },
   {
-    type: "collapse",
-    name: "Mes Comptes",
-    key: "accounts",
+    type: 'collapse',
+    name: 'Comptes Bancaires',
+    key: 'accounts',
     icon: <Icon fontSize="small">account_balance</Icon>,
-    route: "/accounts",
-    component: <AccountsPage />,
+    route: '/accounts',
+    component: <Accounts />,
   },
   {
-    type: "collapse",
-    name: "Transactions", // NOUVELLE ROUTE AJOUTÉE
-    key: "transactions",
+    type: 'collapse',
+    name: 'Transactions',
+    key: 'transactions',
     icon: <Icon fontSize="small">receipt_long</Icon>,
-    route: "/transactions",
-    component: <TransactionsPage />,
+    route: '/transactions',
+    component: <Transactions />,
   },
   {
-    type: "collapse",
-    name: "Sols/Tontines",
-    key: "sols",
+    type: 'collapse',
+    name: 'Budgets',
+    key: 'budgets',
+    icon: <Icon fontSize="small">pie_chart</Icon>,
+    route: '/budgets',
+    component: <Budgets />,
+  },
+
+  // ==========================================
+  // SECTION 2 - FONCTIONNALITÉS AVANCÉES
+  // ==========================================
+  {
+    type: 'divider',
+    key: 'divider-1',
+  },
+  {
+    type: 'title',
+    title: 'Fonctionnalités Avancées',
+    key: 'advanced-section',
+  },
+  {
+    type: 'collapse',
+    name: 'Sols & Tontines',
+    key: 'sols',
     icon: <Icon fontSize="small">people</Icon>,
-    route: "/sols",
-    component: <SolsPage />,
+    route: '/sols',
+    component: <Sols />,
   },
   {
-    type: "collapse",
-    name: "Budgets",
-    key: "budgets",
-    icon: <Icon fontSize="small">bar_chart</Icon>,
-    route: "/budgets",
-    component: <BudgetsPage />,
-  },
-  
-  // Divider
-  {
-    type: "divider",
-  },
-  
-  // Sections à venir (placeholders pour Phase 4+)
-  {
-    type: "title",
-    title: "À venir",
-  },
-  {
-    type: "collapse",
-    name: "Investissements",
-    key: "investments",
+    type: 'collapse',
+    name: 'Investissements',
+    key: 'investments',
     icon: <Icon fontSize="small">trending_up</Icon>,
-    route: "/investments",
-    component: <div>Page Investissements - En construction</div>,
+    route: '/investments',
+    component: <Investments />,
   },
   {
-    type: "collapse",
-    name: "Éducation Financière",
-    key: "education",
+    type: 'collapse',
+    name: 'Éducation Financière',
+    key: 'education',
     icon: <Icon fontSize="small">school</Icon>,
-    route: "/education",
-    component: <div>Page Éducation - En construction</div>,
+    route: '/education',
+    component: <Education />,
   },
-  
-  // Divider
+
+  // ==========================================
+  // SECTION 3 - COMPTE UTILISATEUR
+  // ==========================================
   {
-    type: "divider",
-  },
-  
-  // Pages système (gardées)
-  {
-    type: "title",
-    title: "Compte et Paramètres",
+    type: 'divider',
+    key: 'divider-2',
   },
   {
-    type: "collapse",
-    name: "Profil",
-    key: "profile",
+    type: 'title',
+    title: 'Mon Compte',
+    key: 'account-section',
+  },
+  {
+    type: 'collapse',
+    name: 'Profil',
+    key: 'profile',
     icon: <Icon fontSize="small">person</Icon>,
-    route: "/profile",
+    route: '/profile',
     component: <Profile />,
   },
-  {
-    type: "collapse",
-    name: "Notifications",
-    key: "notifications",
-    icon: <Icon fontSize="small">notifications</Icon>,
-    route: "/notifications",
-    component: <Notifications />,
-  },
+
+  // ==========================================
+  // ROUTES CACHÉES (pas dans menu)
+  // ==========================================
   
-  // Authentication (cachées en mode connecté)
+  // Authentication routes
   {
-    type: "collapse",
-    name: "Se connecter",
-    key: "sign-in",
-    icon: <Icon fontSize="small">login</Icon>,
-    route: "/authentication/sign-in",
+    type: 'route',
+    key: 'sign-in',
+    route: '/authentication/sign-in',
     component: <SignIn />,
-    // Cette route sera cachée quand l'utilisateur est connecté
-    hidden: true,
   },
   {
-    type: "collapse",
-    name: "Créer un compte",
-    key: "sign-up",
-    icon: <Icon fontSize="small">assignment</Icon>,
-    route: "/authentication/sign-up",
+    type: 'route',
+    key: 'sign-up',
+    route: '/authentication/sign-up',
     component: <SignUp />,
-    // Cette route sera cachée quand l'utilisateur est connecté
-    hidden: true,
   },
 ];
 
