@@ -25,43 +25,11 @@ import { useMaterialUIController } from "context";
 import store from './store';
 import queryClient from './config/queryClient';
 
-// Routes
-import AppRoutes from './routes';
+// ✅ CORRECTION : Import EXPLICITE du composant routes
+import AppRoutes from './routes/index.jsx';
 
-// Debugging
-console.log('🔍 AppRoutes importé:', AppRoutes);
-console.log('🔍 Type de AppRoutes:', typeof AppRoutes);
-console.log('🔍 AppRoutes est une fonction?', typeof AppRoutes === 'function');
-console.log('🔍 AppRoutes est un objet?', typeof AppRoutes === 'object' && AppRoutes !== null);
-
-// Composant de secours
-const FallbackComponent = () => (
-  <div style={{ padding: '20px', textAlign: 'center' }}>
-    <h1>⚠️ Erreur de chargement</h1>
-    <p>Le composant AppRoutes n'est pas valide.</p>
-    <p>Type: {typeof AppRoutes}</p>
-    <p>Valeur: {JSON.stringify(AppRoutes)}</p>
-  </div>
-);
-
-// Composant validé
-const ValidatedAppRoutes = () => {
-  if (!AppRoutes) {
-    console.error('❌ AppRoutes est undefined');
-    return <FallbackComponent />;
-  }
-  
-  if (typeof AppRoutes === 'function') {
-    return <AppRoutes />;
-  }
-  
-  if (React.isValidElement(AppRoutes)) {
-    return AppRoutes;
-  }
-  
-  console.error('❌ AppRoutes est de type invalide:', typeof AppRoutes, AppRoutes);
-  return <FallbackComponent />;
-};
+// ❌ NE PAS FAIRE : import AppRoutes from './routes'; 
+// Car JavaScript va chercher routes.js (l'array) au lieu de routes/index.jsx
 
 export default function App() {
   const [controller] = useMaterialUIController();
@@ -81,7 +49,9 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={darkMode ? themeDark : theme}>
           <CssBaseline />
-          <ValidatedAppRoutes />
+          
+          {/* ✅ AppRoutes est maintenant le bon composant */}
+          <AppRoutes />
           
           {/* React Query DevTools (dev uniquement) */}
           {process.env.NODE_ENV === 'development' && (

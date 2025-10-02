@@ -4,7 +4,6 @@
  * Route guard pour pages authentifiées
  * =========================================================
  */
-
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -22,8 +21,8 @@ import { useMaterialUIController, setMiniSidenav } from 'context';
 import brandWhite from 'assets/images/logo-ct.png';
 import brandDark from 'assets/images/logo-ct-dark.png';
 
-// Routes configuration
-import routes from 'routes';
+// ✅ CORRECTION : Import depuis sidenavRoutes.js
+import sidenavRoutes from 'sidenavRoutes';
 
 /**
  * Protected Route Component
@@ -31,10 +30,10 @@ import routes from 'routes';
  */
 function ProtectedRoute() {
   const location = useLocation();
-  
+
   // Redux state
   const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
-  
+
   // Material UI Controller
   const [controller, dispatch] = useMaterialUIController();
   const {
@@ -45,10 +44,9 @@ function ProtectedRoute() {
     darkMode,
   } = controller;
 
-  // Déplacer le hook useState AVANT toute condition
+  // Mouse handlers pour mini sidenav
   const [onMouseEnter, setOnMouseEnter] = React.useState(false);
 
-  // Mouse handlers pour mini sidenav
   const handleOnMouseEnter = () => {
     if (miniSidenav && !onMouseEnter) {
       setMiniSidenav(dispatch, false);
@@ -75,7 +73,7 @@ function ProtectedRoute() {
         color={sidenavColor}
         brand={(transparentSidenav && !darkMode) || whiteSidenav ? brandDark : brandWhite}
         brandName="FinApp Haiti"
-        routes={routes}
+        routes={sidenavRoutes}
         onMouseEnter={handleOnMouseEnter}
         onMouseLeave={handleOnMouseLeave}
       />
@@ -83,10 +81,10 @@ function ProtectedRoute() {
       {/* Dashboard Layout avec Navbar */}
       <DashboardLayout>
         <DashboardNavbar />
-        
+
         {/* Page content (Outlet pour nested routes) */}
         <Outlet />
-        
+
         {/* Footer */}
         <Footer />
       </DashboardLayout>

@@ -8,9 +8,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-// Material Dashboard 2 React example components
-import DashboardLayout from 'examples/LayoutContainers/DashboardLayout';
-
 // Route Guards
 import ProtectedRoute from './ProtectedRoute';
 import PublicRoute from './PublicRoute';
@@ -22,12 +19,6 @@ import Register from 'layouts/authentication/sign-up';
 // Pages - Dashboard
 import Dashboard from 'layouts/dashboard';
 import Profile from 'layouts/profile';
-
-// Pages - FinApp (à créer progressivement)
-// import AccountsList from 'pages/Accounts/AccountsList';
-// import TransactionsList from 'pages/Transactions/TransactionsList';
-// import BudgetsList from 'pages/Budgets/BudgetsList';
-// import SolsList from 'pages/Sols/SolsList';
 
 // 404 Page
 const NotFound = () => (
@@ -45,7 +36,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Routes publiques */}
+      {/* Routes publiques avec PublicRoute (gère uniquement la redirection) */}
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -58,7 +49,6 @@ function AppRoutes() {
         
         {/* Routes FinApp - À activer progressivement */}
         {/* <Route path="/accounts" element={<AccountsList />} /> */}
-        {/* <Route path="/accounts/:id" element={<AccountDetail />} /> */}
         {/* <Route path="/transactions" element={<TransactionsList />} /> */}
         {/* <Route path="/budgets" element={<BudgetsList />} /> */}
         {/* <Route path="/sols" element={<SolsList />} /> */}

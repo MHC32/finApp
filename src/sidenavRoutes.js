@@ -1,7 +1,7 @@
 /**
  * =========================================================
- * FinApp Haiti - Routes Configuration
- * Configuration pour le Sidenav Material Dashboard
+ * FinApp Haiti - Sidenav Routes Configuration
+ * Configuration pour le menu latéral Material Dashboard
  * =========================================================
  */
 
@@ -25,7 +25,7 @@ import Icon from "@mui/material/Icon";
  * - route: Chemin URL
  * - component: Composant React
  */
-const routes = [
+const sidenavRoutes = [
   {
     type: "collapse",
     name: "Tableau de bord",
@@ -34,38 +34,6 @@ const routes = [
     route: "/dashboard",
     component: <Dashboard />,
   },
-  // {
-  //   type: "collapse",
-  //   name: "Comptes",
-  //   key: "accounts",
-  //   icon: <Icon fontSize="small">account_balance</Icon>,
-  //   route: "/accounts",
-  //   component: <Accounts />, // À créer
-  // },
-  // {
-  //   type: "collapse",
-  //   name: "Transactions",
-  //   key: "transactions",
-  //   icon: <Icon fontSize="small">receipt</Icon>,
-  //   route: "/transactions",
-  //   component: <Transactions />, // À créer
-  // },
-  // {
-  //   type: "collapse",
-  //   name: "Budgets",
-  //   key: "budgets",
-  //   icon: <Icon fontSize="small">account_balance_wallet</Icon>,
-  //   route: "/budgets",
-  //   component: <Budgets />, // À créer
-  // },
-  // {
-  //   type: "collapse",
-  //   name: "Sols",
-  //   key: "sols",
-  //   icon: <Icon fontSize="small">savings</Icon>,
-  //   route: "/sols",
-  //   component: <Sols />, // À créer
-  // },
   {
     type: "collapse",
     name: "Profil",
@@ -80,7 +48,7 @@ const routes = [
     key: "settings",
     icon: <Icon fontSize="small">settings</Icon>,
     route: "/settings",
-    component: <Profile />, // Temporaire - à remplacer par Settings
+    component: <Profile />, // Temporaire
   },
   {
     type: "divider",
@@ -109,4 +77,4 @@ const routes = [
   },
 ];
 
-export default routes;
+export default sidenavRoutes;

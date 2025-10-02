@@ -8,13 +8,10 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-// Material Dashboard 2 React example components
-import PageLayout from 'examples/LayoutContainers/PageLayout';
-
 /**
  * Public Route Component
  * Redirige vers dashboard si déjà authentifié
- * Sinon affiche la page publique (login, register)
+ * N'ajoute PAS de layout car les pages auth ont déjà BasicLayout/CoverLayout
  */
 function PublicRoute() {
   const location = useLocation();
@@ -29,12 +26,9 @@ function PublicRoute() {
     return <Navigate to={from} replace />;
   }
 
-  // Sinon, afficher la page publique avec PageLayout
-  return (
-    <PageLayout>
-      <Outlet />
-    </PageLayout>
-  );
+  // ✅ CORRECTION : Pas de PageLayout ici car les pages auth l'ont déjà
+  // Juste retourner l'Outlet pour afficher la route enfant
+  return <Outlet />;
 }
 
 export default PublicRoute;
