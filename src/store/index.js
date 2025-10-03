@@ -22,18 +22,20 @@ import storage from 'redux-persist/lib/storage'; // localStorage
 import authReducer from './slices/authSlice';
 import uiReducer from './slices/uiSlice';
 import settingsReducer from './slices/settingsSlice';
+import accountsReducer from './slices/accountsSlice';
+import transactionsReducer from './slices/transactionsSlice';
 
 /**
  * Configuration Redux Persist
  * - Sauvegarde auth et settings dans localStorage
- * - UI state n'est PAS persisté (état temporaire)
+ * - UI, accounts, transactions ne sont PAS persistés (données fraîches)
  */
 const persistConfig = {
   key: 'finapp-haiti-root',
   version: 1,
   storage,
   whitelist: ['auth', 'settings'], // Seulement ces slices sont persistées
-  blacklist: ['ui'], // UI n'est pas persisté
+  blacklist: ['ui', 'accounts', 'transactions'], // Pas persisté
 };
 
 /**
@@ -44,6 +46,8 @@ const rootReducer = combineReducers({
   auth: authReducer,
   ui: uiReducer,
   settings: settingsReducer,
+  accounts: accountsReducer,
+  transactions: transactionsReducer,
 });
 
 /**

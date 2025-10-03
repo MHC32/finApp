@@ -1,7 +1,7 @@
 /**
  * =========================================================
- * FinApp Haiti - Sidenav Routes Configuration
- * Configuration pour le menu latéral Material Dashboard
+ * FinApp Haiti - Routes Configuration
+ * Configuration pour le Sidenav Material Dashboard
  * =========================================================
  */
 
@@ -11,21 +11,16 @@ import Profile from "layouts/profile";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
 
+// FinApp Pages
+import AccountsList from "pages/Accounts/AccountsList";
+
 // @mui icons
 import Icon from "@mui/material/Icon";
 
 /**
  * Routes configuration pour Material Dashboard Sidenav
- * 
- * Structure requise pour chaque route:
- * - type: "collapse" pour sidebar items
- * - name: Nom affiché
- * - key: Clé unique
- * - icon: Icône Material-UI
- * - route: Chemin URL
- * - component: Composant React
  */
-const sidenavRoutes = [
+const routes = [
   {
     type: "collapse",
     name: "Tableau de bord",
@@ -34,6 +29,38 @@ const sidenavRoutes = [
     route: "/dashboard",
     component: <Dashboard />,
   },
+  {
+    type: "collapse",
+    name: "Comptes",
+    key: "accounts",
+    icon: <Icon fontSize="small">account_balance</Icon>,
+    route: "/accounts",
+    component: <AccountsList />,
+  },
+  // {
+  //   type: "collapse",
+  //   name: "Transactions",
+  //   key: "transactions",
+  //   icon: <Icon fontSize="small">receipt</Icon>,
+  //   route: "/transactions",
+  //   component: <Transactions />, // À créer
+  // },
+  // {
+  //   type: "collapse",
+  //   name: "Budgets",
+  //   key: "budgets",
+  //   icon: <Icon fontSize="small">account_balance_wallet</Icon>,
+  //   route: "/budgets",
+  //   component: <Budgets />, // À créer
+  // },
+  // {
+  //   type: "collapse",
+  //   name: "Sols",
+  //   key: "sols",
+  //   icon: <Icon fontSize="small">savings</Icon>,
+  //   route: "/sols",
+  //   component: <Sols />, // À créer
+  // },
   {
     type: "collapse",
     name: "Profil",
@@ -77,4 +104,4 @@ const sidenavRoutes = [
   },
 ];
 
-export default sidenavRoutes;
+export default routes;

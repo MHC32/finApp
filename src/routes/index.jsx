@@ -15,6 +15,7 @@ import PublicRoute from './PublicRoute';
 // Pages - Auth
 import Login from 'layouts/authentication/sign-in';
 import Register from 'layouts/authentication/sign-up';
+import AccountsList from 'pages/Accounts/AccountsList';
 
 // Pages - Dashboard
 import Dashboard from 'layouts/dashboard';
@@ -48,7 +49,7 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         
         {/* Routes FinApp - À activer progressivement */}
-        {/* <Route path="/accounts" element={<AccountsList />} /> */}
+        <Route path="/accounts" element={<AccountsList />} />
         {/* <Route path="/transactions" element={<TransactionsList />} /> */}
         {/* <Route path="/budgets" element={<BudgetsList />} /> */}
         {/* <Route path="/sols" element={<SolsList />} /> */}
