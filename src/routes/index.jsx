@@ -15,11 +15,14 @@ import PublicRoute from './PublicRoute';
 // Pages - Auth
 import Login from 'layouts/authentication/sign-in';
 import Register from 'layouts/authentication/sign-up';
-import AccountsList from 'pages/Accounts/AccountsList';
 
 // Pages - Dashboard
 import Dashboard from 'layouts/dashboard';
 import Profile from 'layouts/profile';
+
+// Pages - Finances (NOUVELLE ARCHITECTURE)
+import AccountsPage from 'pages/Finances/Accounts/AccountsPage';
+import AccountDetailsPage from 'pages/Finances/Accounts/AccountDetailsPage';
 
 // 404 Page
 const NotFound = () => (
@@ -45,14 +48,27 @@ function AppRoutes() {
 
       {/* Routes protégées avec DashboardLayout */}
       <Route element={<ProtectedRoute />}>
+        {/* Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
+        
+        {/* Profile */}
         <Route path="/profile" element={<Profile />} />
         
-        {/* Routes FinApp - À activer progressivement */}
-        <Route path="/accounts" element={<AccountsList />} />
-        {/* <Route path="/transactions" element={<TransactionsList />} /> */}
-        {/* <Route path="/budgets" element={<BudgetsList />} /> */}
-        {/* <Route path="/sols" element={<SolsList />} /> */}
+        {/* Finances - Accounts */}
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/accounts/:accountId" element={<AccountDetailsPage />} />
+        
+        {/* Finances - Transactions (À créer) */}
+        {/* <Route path="/transactions" element={<TransactionsPage />} /> */}
+        {/* <Route path="/transactions/:transactionId" element={<TransactionDetailsPage />} /> */}
+        
+        {/* Finances - Budgets (À créer) */}
+        {/* <Route path="/budgets" element={<BudgetsPage />} /> */}
+        {/* <Route path="/budgets/:budgetId" element={<BudgetDetailsPage />} /> */}
+        
+        {/* Sols (À créer) */}
+        {/* <Route path="/sols" element={<SolsPage />} /> */}
+        {/* <Route path="/sols/:solId" element={<SolDetailsPage />} /> */}
       </Route>
 
       {/* Redirection racine */}

@@ -11,8 +11,8 @@ import Profile from "layouts/profile";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
 
-// FinApp Pages
-import AccountsList from "pages/Accounts/AccountsList";
+// FinApp Pages - NOUVELLE ARCHITECTURE
+import AccountsPage from "pages/Finances/Accounts/AccountsPage";
 
 // @mui icons
 import Icon from "@mui/material/Icon";
@@ -35,7 +35,7 @@ const routes = [
     key: "accounts",
     icon: <Icon fontSize="small">account_balance</Icon>,
     route: "/accounts",
-    component: <AccountsList />,
+    component: <AccountsPage />,
   },
   // {
   //   type: "collapse",
@@ -43,7 +43,7 @@ const routes = [
   //   key: "transactions",
   //   icon: <Icon fontSize="small">receipt</Icon>,
   //   route: "/transactions",
-  //   component: <Transactions />, // À créer
+  //   component: <TransactionsPage />, // À créer
   // },
   // {
   //   type: "collapse",
@@ -51,7 +51,7 @@ const routes = [
   //   key: "budgets",
   //   icon: <Icon fontSize="small">account_balance_wallet</Icon>,
   //   route: "/budgets",
-  //   component: <Budgets />, // À créer
+  //   component: <BudgetsPage />, // À créer
   // },
   // {
   //   type: "collapse",
@@ -59,7 +59,7 @@ const routes = [
   //   key: "sols",
   //   icon: <Icon fontSize="small">savings</Icon>,
   //   route: "/sols",
-  //   component: <Sols />, // À créer
+  //   component: <SolsPage />, // À créer
   // },
   {
     type: "collapse",
