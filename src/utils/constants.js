@@ -97,20 +97,6 @@ export const CURRENCIES = {
     locale: 'en-US',
     position: 'before',
   },
-  EUR: {
-    code: 'EUR',
-    symbol: '€',
-    name: 'Euro',
-    locale: 'fr-FR',
-    position: 'after',
-  },
-  CAD: {
-    code: 'CAD',
-    symbol: 'C$',
-    name: 'Dollar Canadien',
-    locale: 'fr-CA',
-    position: 'before',
-  },
 };
 
 export const DEFAULT_CURRENCY = 'HTG';

@@ -1,25 +1,13 @@
 /**
- * =========================================================
- * FinApp Haiti - Routes Configuration
- * Configuration pour le Sidenav Material Dashboard
- * =========================================================
+ * FinApp Haiti - Sidenav Routes Configuration
  */
-
-// Material Dashboard 2 React layouts
-import Dashboard from "layouts/dashboard";
-import Profile from "layouts/profile";
-import SignIn from "layouts/authentication/sign-in";
-import SignUp from "layouts/authentication/sign-up";
-
-// FinApp Pages - NOUVELLE ARCHITECTURE
-import AccountsPage from "pages/Finances/Accounts/AccountsPage";
-
-// @mui icons
 import Icon from "@mui/material/Icon";
 
-/**
- * Routes configuration pour Material Dashboard Sidenav
- */
+// Import pages (temporaire, on créera les vraies pages après)
+import Dashboard from "layouts/dashboard";
+import Profile from "layouts/profile";
+import Notifications from "layouts/notifications";
+
 const routes = [
   {
     type: "collapse",
@@ -30,52 +18,33 @@ const routes = [
     component: <Dashboard />,
   },
   {
+    type: "title",
+    title: "Finances",
+    key: "finances-title",
+  },
+  {
     type: "collapse",
     name: "Comptes",
     key: "accounts",
     icon: <Icon fontSize="small">account_balance</Icon>,
     route: "/accounts",
-    component: <AccountsPage />,
-  },
-  // {
-  //   type: "collapse",
-  //   name: "Transactions",
-  //   key: "transactions",
-  //   icon: <Icon fontSize="small">receipt</Icon>,
-  //   route: "/transactions",
-  //   component: <TransactionsPage />, // À créer
-  // },
-  // {
-  //   type: "collapse",
-  //   name: "Budgets",
-  //   key: "budgets",
-  //   icon: <Icon fontSize="small">account_balance_wallet</Icon>,
-  //   route: "/budgets",
-  //   component: <BudgetsPage />, // À créer
-  // },
-  // {
-  //   type: "collapse",
-  //   name: "Sols",
-  //   key: "sols",
-  //   icon: <Icon fontSize="small">savings</Icon>,
-  //   route: "/sols",
-  //   component: <SolsPage />, // À créer
-  // },
-  {
-    type: "collapse",
-    name: "Profil",
-    key: "profile",
-    icon: <Icon fontSize="small">person</Icon>,
-    route: "/profile",
-    component: <Profile />,
+    component: null, // À remplacer
   },
   {
     type: "collapse",
-    name: "Paramètres",
-    key: "settings",
-    icon: <Icon fontSize="small">settings</Icon>,
-    route: "/settings",
-    component: <Profile />, // Temporaire
+    name: "Transactions",
+    key: "transactions",
+    icon: <Icon fontSize="small">receipt</Icon>,
+    route: "/transactions",
+    component: null, // À créer
+  },
+  {
+    type: "collapse",
+    name: "Budgets",
+    key: "budgets",
+    icon: <Icon fontSize="small">account_balance_wallet</Icon>,
+    route: "/budgets",
+    component: null, // À créer
   },
   {
     type: "divider",
@@ -83,24 +52,69 @@ const routes = [
   },
   {
     type: "title",
-    title: "Authentification",
-    key: "auth-title",
+    title: "Épargne & Investissements",
+    key: "savings-title",
   },
   {
     type: "collapse",
-    name: "Connexion",
-    key: "sign-in",
-    icon: <Icon fontSize="small">login</Icon>,
-    route: "/login",
-    component: <SignIn />,
+    name: "Sols",
+    key: "sols",
+    icon: <Icon fontSize="small">savings</Icon>,
+    route: "/sols",
+    component: null, // À créer
   },
   {
     type: "collapse",
-    name: "Inscription",
-    key: "sign-up",
-    icon: <Icon fontSize="small">assignment</Icon>,
-    route: "/register",
-    component: <SignUp />,
+    name: "Investissements",
+    key: "investments",
+    icon: <Icon fontSize="small">trending_up</Icon>,
+    route: "/investments",
+    component: null, // À créer
+  },
+  {
+    type: "collapse",
+    name: "Dettes",
+    key: "debts",
+    icon: <Icon fontSize="small">credit_card</Icon>,
+    route: "/debts",
+    component: null, // À créer
+  },
+  {
+    type: "divider",
+    key: "divider-2",
+  },
+  {
+    type: "title",
+    title: "Outils",
+    key: "tools-title",
+  },
+  {
+    type: "collapse",
+    name: "Rapports",
+    key: "reports",
+    icon: <Icon fontSize="small">assessment</Icon>,
+    route: "/reports",
+    component: null, // À créer
+  },
+  {
+    type: "collapse",
+    name: "Notifications",
+    key: "notifications",
+    icon: <Icon fontSize="small">notifications</Icon>,
+    route: "/notifications",
+    component: <Notifications />,
+  },
+  {
+    type: "divider",
+    key: "divider-3",
+  },
+  {
+    type: "collapse",
+    name: "Profil",
+    key: "profile",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/profile",
+    component: <Profile />,
   },
 ];
 
