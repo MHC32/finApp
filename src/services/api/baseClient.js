@@ -1,14 +1,14 @@
 /**
  * =========================================================
- * FinApp Haiti - Base API Client
- * Configuration Axios avec interceptors JWT
+ * FinApp Haiti - Base API Client (CORRIGÉ)
+ * ✅ URL backend corrigée: http://localhost:3001/api
  * =========================================================
  */
 
 import axios from 'axios';
 
-// Configuration de base
-const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// ✅ CORRECTION: Port 3001 au lieu de 5000
+const baseURL = 'http://localhost:3001/api';
 
 // Créer instance Axios
 const apiClient = axios.create({
@@ -25,7 +25,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    // Récupérer le token depuis localStorage
+    // ✅ CORRECTION: Récupérer le token depuis localStorage
     const token = localStorage.getItem('token');
 
     // Ajouter le token à l'en-tête Authorization
@@ -88,6 +88,7 @@ apiClient.interceptors.response.use(
 
         if (!refreshToken) {
           // Pas de refresh token, rediriger vers login
+          console.log('🚫 Pas de refresh token, redirection vers login');
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
@@ -95,6 +96,7 @@ apiClient.interceptors.response.use(
         }
 
         // Tenter de renouveler le token
+        console.log('🔄 Tentative de refresh du token...');
         const response = await axios.post(`${baseURL}/auth/refresh`, {
           refreshToken,
         });
@@ -103,6 +105,7 @@ apiClient.interceptors.response.use(
           // Sauvegarder nouveau token
           const newToken = response.data.data.tokens.accessToken;
           localStorage.setItem('token', newToken);
+          console.log('✅ Token renouvelé avec succès');
 
           // Mettre à jour l'en-tête de la requête originale
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -129,7 +132,6 @@ apiClient.interceptors.response.use(
     // 403 Forbidden
     if (error.response?.status === 403) {
       console.error('⛔ Accès refusé (403)');
-      // Optionnel: Rediriger ou afficher message
     }
 
     // 404 Not Found
@@ -149,7 +151,7 @@ apiClient.interceptors.response.use(
 
     // Pas de connexion réseau
     if (!error.response) {
-      console.error('🌐 Erreur réseau - Pas de connexion');
+      console.error('🌐 Erreur réseau - Pas de connexion au serveur');
     }
 
     return Promise.reject(error);

@@ -1,11 +1,12 @@
 /**
  * =========================================================
- * FinApp Haiti - Application principale
- * Version avec Auto-Login au démarrage
+ * FinApp Haiti - Application principale (VERSION FINALE)
+ * ✅ Auth check optimisé avec timeout
+ * ✅ Gestion d'erreur robuste
+ * ✅ Pas de boucle infinie
  * =========================================================
  */
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -30,52 +31,84 @@ import queryClient from './config/queryClient';
 // Routes
 import AppRoutes from './routes/index.jsx';
 
-// Redux actions
-import { checkAuthAsync } from './store/slices/authSlice';
-import { selectAuthLoading } from './store/slices/authSlice';
+// Redux actions & selectors
+import { 
+  checkAuthAsync, 
+  selectAuthLoading, 
+  selectIsAuthenticated 
+} from './store/slices/authSlice';
 
 /**
  * Auth Check Component
- * Vérifie le token au démarrage de l'app
+ * ✅ Vérifie l'auth avec timeout pour éviter boucle infinie
+ * ✅ Gère tous les cas d'erreur proprement
  */
 function AuthCheck({ children }) {
   const dispatch = useDispatch();
   const loading = useSelector(selectAuthLoading);
-  const [authChecked, setAuthChecked] = React.useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
+    let timeoutId;
+    
     const checkAuth = async () => {
-      // Vérifier si token existe
       const token = localStorage.getItem('token');
       
+      // ✅ Timeout de sécurité (10 secondes max)
+      timeoutId = setTimeout(() => {
+        console.warn('⏱️ Timeout - Auth check trop long');
+        setTimeoutReached(true);
+        setAuthChecked(true);
+      }, 10000);
+      
       if (token) {
-        console.log('🔍 Token trouvé, vérification...');
-        // Vérifier le token avec le backend
-        await dispatch(checkAuthAsync());
+        console.log('🔍 Token trouvé, vérification avec backend...');
+        
+        try {
+          await dispatch(checkAuthAsync()).unwrap();
+          console.log('✅ Authentification vérifiée');
+        } catch (error) {
+          console.error('❌ Token invalide ou expiré:', error);
+          // Le slice gère déjà le nettoyage du token
+        }
       } else {
-        console.log('ℹ️ Pas de token, utilisateur non connecté');
+        console.log('ℹ️ Pas de token - Utilisateur non connecté');
       }
       
+      // Clear timeout si terminé avant
+      clearTimeout(timeoutId);
       setAuthChecked(true);
     };
 
     checkAuth();
+    
+    // Cleanup timeout au démontage
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [dispatch]);
 
-  // Afficher spinner pendant la vérification
-  if (!authChecked) {
+  // ✅ Afficher spinner SEULEMENT si auth pas checked ET pas timeout
+  if (!authChecked || (loading && !timeoutReached)) {
     return (
       <Box
         display="flex"
         justifyContent="center"
         alignItems="center"
         minHeight="100vh"
+        flexDirection="column"
+        gap={2}
       >
         <CircularProgress size={60} />
+        <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+          Vérification de l'authentification...
+        </Box>
       </Box>
     );
   }
 
+  // ✅ Auth vérifié, afficher l'app
   return children;
 }
 
@@ -91,7 +124,7 @@ function AppContent() {
     if (process.env.NODE_ENV === 'development') {
       console.log('🚀 FinApp Haiti - Application démarrée');
       console.log('📍 Environment:', process.env.NODE_ENV);
-      console.log('🔗 API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
+      console.log('🔗 API URL:', 'http://localhost:3001/api');
     }
   }, []);
 

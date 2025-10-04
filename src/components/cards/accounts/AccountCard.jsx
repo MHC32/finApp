@@ -1,8 +1,8 @@
 /**
  * =========================================================
- * FinApp Haiti - Account Card (REFACTORÉ)
+ * FinApp Haiti - Account Card (CORRIGÉ)
  * Carte d'affichage d'un compte
- * ✅ Support tous types de comptes + helpers
+ * ✅ Toutes les fonctions helpers disponibles
  * =========================================================
  */
 
@@ -21,7 +21,6 @@ import Chip from '@mui/material/Chip';
 // MD components
 import MDBox from 'components/MDBox';
 import MDTypography from 'components/MDTypography';
-import MDBadge from 'components/MDBadge';
 
 // Types & helpers
 import {
@@ -79,8 +78,8 @@ function AccountCard({ account, onEdit, onDelete }) {
             <Icon
               fontSize="large"
               sx={{
-                color: `${typeColor}.main`,
-                backgroundColor: `${typeColor}.focus`,
+                color: typeColor,
+                backgroundColor: `${typeColor}20`,
                 borderRadius: '8px',
                 p: 1,
                 mr: 1.5,

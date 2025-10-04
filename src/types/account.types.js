@@ -173,11 +173,23 @@ export const accountValidationRules = {
   }
 };
 
+// ===================================================================
+// HELPER FUNCTIONS
+// ===================================================================
+
 /**
  * Helper: Vérifier si un type de compte nécessite une banque
  */
 export const requiresBankName = (accountType) => {
   return [AccountType.CHECKING, AccountType.SAVINGS].includes(accountType);
+};
+
+/**
+ * Helper: Vérifier si un type de compte est basé sur une banque
+ * (Alias de requiresBankName pour compatibilité)
+ */
+export const isAccountTypeBankBased = (accountType) => {
+  return requiresBankName(accountType);
 };
 
 /**
@@ -199,6 +211,40 @@ export const getAccountTypeIcon = (accountType) => {
  */
 export const getAccountTypeColor = (accountType) => {
   return AccountTypeColors[accountType] || '#9E9E9E';
+};
+
+/**
+ * Helper: Obtenir le label d'une banque
+ */
+export const getBankLabel = (bankValue) => {
+  // Si c'est déjà le label complet, le retourner
+  if (Object.values(HaitiBank).includes(bankValue)) {
+    return bankValue;
+  }
+  // Sinon chercher la clé
+  return HaitiBank[bankValue] || bankValue;
+};
+
+/**
+ * Helper: Obtenir le symbole d'une devise
+ */
+export const getCurrencySymbol = (currency) => {
+  const symbols = {
+    [Currency.HTG]: 'G',
+    [Currency.USD]: '$'
+  };
+  return symbols[currency] || currency;
+};
+
+/**
+ * Helper: Obtenir le label d'une devise
+ */
+export const getCurrencyLabel = (currency) => {
+  const labels = {
+    [Currency.HTG]: 'Gourde haïtienne',
+    [Currency.USD]: 'Dollar américain'
+  };
+  return labels[currency] || currency;
 };
 
 /**
@@ -252,9 +298,13 @@ export default {
   defaultAccount,
   accountValidationRules,
   requiresBankName,
+  isAccountTypeBankBased,
   getAccountTypeLabel,
   getAccountTypeIcon,
   getAccountTypeColor,
+  getBankLabel,
+  getCurrencySymbol,
+  getCurrencyLabel,
   getAccountDisplayName,
   isOverdrawn,
   getEffectiveBalance

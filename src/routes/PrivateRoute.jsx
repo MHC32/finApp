@@ -1,7 +1,7 @@
 /**
  * =========================================================
- * FinApp Haiti - Protected Route
- * Route guard pour pages authentifiées
+ * FinApp Haiti - Protected Route (CORRIGÉE)
+ * ✅ Correction: Redirection immédiate si non authentifié
  * =========================================================
  */
 import React from 'react';
@@ -21,18 +21,22 @@ import { useMaterialUIController, setMiniSidenav } from 'context';
 import brandWhite from 'assets/images/logo-ct.png';
 import brandDark from 'assets/images/logo-ct-dark.png';
 
-// ✅ CORRECTION : Import depuis sidenavRoutes.js
+// Routes
 import sidenavRoutes from 'sidenavRoutes';
+
+// Redux selectors
+import { selectIsAuthenticated, selectAuthLoading } from 'store/slices/authSlice';
 
 /**
  * Protected Route Component
  * Vérifie l'authentification et affiche le layout dashboard
  */
-function ProtectedRoute() {
+function PrivateRoute() {
   const location = useLocation();
 
-  // Redux state
-  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
+  // ✅ CORRECTION: Utiliser les selectors Redux appropriés
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const authLoading = useSelector(selectAuthLoading);
 
   // Material UI Controller
   const [controller, dispatch] = useMaterialUIController();
@@ -61,11 +65,19 @@ function ProtectedRoute() {
     }
   };
 
-  // Si non authentifié, rediriger vers login
+  // ✅ CORRECTION: Ne pas rediriger pendant le chargement initial
+  // (App.js gère déjà le loading spinner)
+  if (authLoading) {
+    return null; // ou <LoadingSpinner />
+  }
+
+  // ✅ CORRECTION: Si non authentifié, rediriger IMMÉDIATEMENT vers login
   if (!isAuthenticated) {
+    console.log('🚫 Accès refusé - Redirection vers /login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // ✅ Si authentifié, afficher le layout dashboard
   return (
     <>
       {/* Sidenav */}
@@ -92,4 +104,4 @@ function ProtectedRoute() {
   );
 }
 
-export default ProtectedRoute;
+export default PrivateRoute;

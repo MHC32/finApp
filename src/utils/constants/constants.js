@@ -12,8 +12,8 @@
  * ==========================================
  */
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
-  API_VERSION: '/api/v1',
+  BASE_URL:  'http://localhost:3001',
+  API_VERSION: '/api',
   TIMEOUT: 30000, // 30 secondes
 };
 

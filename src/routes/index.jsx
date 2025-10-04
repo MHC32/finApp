@@ -19,7 +19,7 @@ import Profile from 'layouts/profile';
 import Notifications from 'layouts/notifications';
 
 // Pages - Finances (les vraies pages seront créées plus tard)
-// import AccountsPage from 'pages/Finances/Accounts/AccountsPage';
+import AccountsPage from 'pages/Finances/Accounts/AccountsPage';
 // import TransactionsPage from 'pages/Finances/Transactions/TransactionsPage';
 // etc.
 
@@ -48,7 +48,7 @@ function AppRoutes() {
         <Route path="/notifications" element={<Notifications />} />
         
         {/* Routes finances - À activer après création pages */}
-        {/* <Route path="/accounts" element={<AccountsPage />} /> */}
+        <Route path="/accounts" element={<AccountsPage />} />
         {/* <Route path="/transactions" element={<TransactionsPage />} /> */}
         {/* <Route path="/budgets" element={<BudgetsPage />} /> */}
       </Route>
