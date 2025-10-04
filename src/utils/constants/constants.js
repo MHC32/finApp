@@ -2,6 +2,7 @@
  * =========================================================
  * FinApp Haiti - Constants
  * Toutes les constantes de l'application
+ * ✅ VERSION COMPLÈTE avec BANKS
  * =========================================================
  */
 
@@ -11,7 +12,7 @@
  * ==========================================
  */
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
   API_VERSION: '/api/v1',
   TIMEOUT: 30000, // 30 secondes
 };
@@ -83,6 +84,13 @@ export const ROUTES = {
  * ==========================================
  */
 export const CURRENCIES = {
+  HTG: 'HTG',
+  USD: 'USD',
+  EUR: 'EUR',
+  CAD: 'CAD',
+};
+
+export const CURRENCY_INFO = {
   HTG: {
     code: 'HTG',
     symbol: 'G',
@@ -97,9 +105,125 @@ export const CURRENCIES = {
     locale: 'en-US',
     position: 'before',
   },
+  EUR: {
+    code: 'EUR',
+    symbol: '€',
+    name: 'Euro',
+    locale: 'fr-FR',
+    position: 'after',
+  },
+  CAD: {
+    code: 'CAD',
+    symbol: 'C$',
+    name: 'Dollar Canadien',
+    locale: 'fr-CA',
+    position: 'before',
+  },
 };
 
 export const DEFAULT_CURRENCY = 'HTG';
+
+/**
+ * ==========================================
+ * BANQUES HAÏTIENNES
+ * ==========================================
+ */
+export const BANKS = {
+  BRH: 'brh',
+  BNC: 'bnc',
+  BUH: 'buh',
+  SOGEBANK: 'sogebank',
+  UNIBANK: 'unibank',
+  CAPITAL_BANK: 'capital_bank',
+  CITIBANK: 'citibank',
+  SOFIHDES: 'sofihdes',
+  MONCASH: 'moncash',
+  NATCASH: 'natcash',
+  LONCASH: 'loncash',
+  CASH: 'cash',
+  OTHER: 'other',
+};
+
+export const BANK_INFO = {
+  brh: {
+    code: 'brh',
+    name: 'Banque de la République d\'Haïti',
+    shortName: 'BRH',
+    logo: '🏛️',
+  },
+  bnc: {
+    code: 'bnc',
+    name: 'Banque Nationale de Crédit',
+    shortName: 'BNC',
+    logo: '🏦',
+  },
+  buh: {
+    code: 'buh',
+    name: 'Banque de l\'Union Haïtienne',
+    shortName: 'BUH',
+    logo: '🏦',
+  },
+  sogebank: {
+    code: 'sogebank',
+    name: 'Sogebank',
+    shortName: 'Sogebank',
+    logo: '🏦',
+  },
+  unibank: {
+    code: 'unibank',
+    name: 'Unibank',
+    shortName: 'Unibank',
+    logo: '🏦',
+  },
+  capital_bank: {
+    code: 'capital_bank',
+    name: 'Capital Bank',
+    shortName: 'Capital Bank',
+    logo: '🏦',
+  },
+  citibank: {
+    code: 'citibank',
+    name: 'Citibank N.A.',
+    shortName: 'Citibank',
+    logo: '🏦',
+  },
+  sofihdes: {
+    code: 'sofihdes',
+    name: 'SOFIHDES',
+    shortName: 'SOFIHDES',
+    logo: '🏦',
+  },
+  moncash: {
+    code: 'moncash',
+    name: 'MonCash',
+    shortName: 'MonCash',
+    logo: '📱',
+  },
+  natcash: {
+    code: 'natcash',
+    name: 'NatCash',
+    shortName: 'NatCash',
+    logo: '📱',
+  },
+  loncash: {
+    code: 'loncash',
+    name: 'LonCash',
+    shortName: 'LonCash',
+    logo: '📱',
+  },
+  cash: {
+    code: 'cash',
+    name: 'Espèces',
+    shortName: 'Cash',
+    logo: '💵',
+  },
+  other: {
+    code: 'other',
+    name: 'Autre',
+    shortName: 'Autre',
+    logo: '🏪',
+  },
+};
 
 /**
  * ==========================================
@@ -132,23 +256,19 @@ export const DEFAULT_LANGUAGE = 'fr';
  * ==========================================
  */
 export const ACCOUNT_TYPES = {
-  BANK: 'bank',
-  CASH: 'cash',
-  CREDIT_CARD: 'credit_card',
+  CHECKING: 'checking',
   SAVINGS: 'savings',
+  CASH: 'cash',
+  MOBILE_MONEY: 'mobile_money',
   INVESTMENT: 'investment',
-  LOAN: 'loan',
-  OTHER: 'other',
 };
 
 export const ACCOUNT_TYPE_LABELS = {
-  [ACCOUNT_TYPES.BANK]: 'Compte Bancaire',
+  [ACCOUNT_TYPES.CHECKING]: 'Compte Courant',
+  [ACCOUNT_TYPES.SAVINGS]: 'Compte Épargne',
   [ACCOUNT_TYPES.CASH]: 'Espèces',
-  [ACCOUNT_TYPES.CREDIT_CARD]: 'Carte de Crédit',
-  [ACCOUNT_TYPES.SAVINGS]: 'Épargne',
+  [ACCOUNT_TYPES.MOBILE_MONEY]: 'Mobile Money',
   [ACCOUNT_TYPES.INVESTMENT]: 'Investissement',
-  [ACCOUNT_TYPES.LOAN]: 'Prêt',
-  [ACCOUNT_TYPES.OTHER]: 'Autre',
 };
 
 /**
@@ -390,7 +510,10 @@ export default {
   API_CONFIG,
   ROUTES,
   CURRENCIES,
+  CURRENCY_INFO,
   DEFAULT_CURRENCY,
+  BANKS,
+  BANK_INFO,
   LANGUAGES,
   DEFAULT_LANGUAGE,
   ACCOUNT_TYPES,

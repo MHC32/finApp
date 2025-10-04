@@ -7,6 +7,7 @@ import Icon from "@mui/material/Icon";
 import Dashboard from "layouts/dashboard";
 import Profile from "layouts/profile";
 import Notifications from "layouts/notifications";
+import AccountsPage from "pages/Finances/Accounts/AccountsPage";
 
 const routes = [
   {
@@ -28,7 +29,7 @@ const routes = [
     key: "accounts",
     icon: <Icon fontSize="small">account_balance</Icon>,
     route: "/accounts",
-    component: null, // À remplacer
+    component: <AccountsPage/>, // À remplacer
   },
   {
     type: "collapse",

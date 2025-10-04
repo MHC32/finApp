@@ -1,235 +1,274 @@
 /**
  * =========================================================
- * FinApp Haiti - Auth Slice
- * Gestion de l'authentification utilisateur
+ * FinApp Haiti - Auth Slice (REFACTORÉ)
+ * Gestion Redux de l'authentification
+ * ✅ Utilise auth.service.js (Backend Node.js)
  * =========================================================
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { authAPI } from '../../services/api/auth.api';
+import authService from '../../services/api/auth.service';
 
-/**
- * Initial State
- */
+// ===================================================================
+// INITIAL STATE
+// ===================================================================
+
 const initialState = {
+  // Utilisateur
   user: null,
+  
+  // Tokens
   token: null,
   refreshToken: null,
+  
+  // Session
+  session: null,
+  
+  // État authentification
   isAuthenticated: false,
+  
+  // UI State
   loading: false,
   error: null,
+  
+  // Vérification initiale
+  initialCheckDone: false,
 };
 
-// =============================================================================
-// ASYNC THUNKS (Actions Asynchrones)
-// =============================================================================
+// ===================================================================
+// ASYNC THUNKS
+// ===================================================================
 
 /**
- * Login Async
- * @param {Object} credentials - { email, password, rememberMe }
- */
-export const loginAsync = createAsyncThunk(
-  'auth/login',
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const response = await authAPI.login(credentials);
-      
-      // Response format: { success, data: { user, tokens, session } }
-      if (response.success && response.data) {
-        return {
-          user: response.data.user,
-          tokens: response.data.tokens
-        };
-      }
-      
-      return rejectWithValue('Format de réponse invalide');
-    } catch (error) {
-      return rejectWithValue(
-        error.message || 'Erreur de connexion'
-      );
-    }
-  }
-);
-
-/**
- * Register Async
- * @param {Object} userData - { firstName, lastName, email, password, phone, region }
+ * Register (Inscription)
+ * POST /api/auth/register
  */
 export const registerAsync = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await authAPI.register(userData);
+      const response = await authService.register(userData);
       
-      if (response.success && response.data) {
-        return {
-          user: response.data.user,
-          tokens: response.data.tokens
-        };
+      if (!response.success || !response.data) {
+        return rejectWithValue('Erreur lors de l\'inscription');
       }
       
-      return rejectWithValue('Format de réponse invalide');
+      return response.data; // { user, tokens, session }
     } catch (error) {
       return rejectWithValue(
-        error.message || 'Erreur d\'inscription'
+        error.response?.data?.message || error.message || 'Erreur inscription'
       );
     }
   }
 );
 
 /**
- * Logout Async
+ * Login (Connexion)
+ * POST /api/auth/login
+ */
+export const loginAsync = createAsyncThunk(
+  'auth/login',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await authService.login(credentials);
+      
+      if (!response.success || !response.data) {
+        return rejectWithValue('Identifiants invalides');
+      }
+      
+      return response.data; // { user, tokens, session }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur connexion'
+      );
+    }
+  }
+);
+
+/**
+ * Logout (Déconnexion)
+ * POST /api/auth/logout
  */
 export const logoutAsync = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await authAPI.logout();
+      await authService.logout();
       return true;
     } catch (error) {
-      // Même si l'API échoue, on déconnecte quand même localement
-      console.warn('Erreur API logout, déconnexion locale quand même');
-      return true;
+      // Même en cas d'erreur, on déconnecte localement
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur déconnexion'
+      );
     }
   }
 );
 
 /**
- * Check Auth (vérifier token au démarrage)
+ * Logout All (Déconnexion toutes sessions)
+ * POST /api/auth/logout-all
+ */
+export const logoutAllAsync = createAsyncThunk(
+  'auth/logoutAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      await authService.logoutAll();
+      return true;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur déconnexion globale'
+      );
+    }
+  }
+);
+
+/**
+ * Refresh Token
+ * POST /api/auth/refresh
+ */
+export const refreshTokenAsync = createAsyncThunk(
+  'auth/refreshToken',
+  async (refreshToken, { rejectWithValue }) => {
+    try {
+      const response = await authService.refreshToken(refreshToken);
+      
+      if (!response.success || !response.data) {
+        return rejectWithValue('Impossible de renouveler le token');
+      }
+      
+      return response.data; // { tokens, session }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur renouvellement token'
+      );
+    }
+  }
+);
+
+/**
+ * Get Current User
+ * GET /api/auth/me
+ */
+export const getCurrentUserAsync = createAsyncThunk(
+  'auth/getCurrentUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authService.getCurrentUser();
+      
+      if (!response.success || !response.data) {
+        return rejectWithValue('Impossible de récupérer les informations utilisateur');
+      }
+      
+      return response.data; // { user, session }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur récupération utilisateur'
+      );
+    }
+  }
+);
+
+/**
+ * Check Auth (Vérification initiale au chargement)
+ * GET /api/auth/verify-token
  */
 export const checkAuthAsync = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      // Vérifier si token existe
-      const token = localStorage.getItem('token');
-      if (!token) {
-        return rejectWithValue('Pas de token');
+      // Vérifier si token existe localement
+      if (!authService.isAuthenticated()) {
+        return rejectWithValue('Non authentifié');
       }
 
-      // Vérifier token avec API
-      const response = await authAPI.checkAuth();
+      // Vérifier avec le backend
+      const response = await authService.verifyToken();
       
-      if (response.success && response.data) {
-        return {
-          user: response.data.user,
-          token: token
-        };
+      if (!response.success || !response.data || !response.data.valid) {
+        // Token invalide, nettoyer
+        authService.clearTokens();
+        return rejectWithValue('Token invalide');
       }
       
-      return rejectWithValue('Token invalide');
+      return response.data; // { valid, user, session, tokenExpiringSoon }
     } catch (error) {
-      return rejectWithValue(error.message || 'Token invalide');
+      // En cas d'erreur, nettoyer les tokens
+      authService.clearTokens();
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Session expirée'
+      );
     }
   }
 );
 
 /**
- * Refresh Token Async
+ * Change Password
+ * POST /api/auth/change-password
  */
-export const refreshTokenAsync = createAsyncThunk(
-  'auth/refreshToken',
-  async (_, { getState, rejectWithValue }) => {
+export const changePasswordAsync = createAsyncThunk(
+  'auth/changePassword',
+  async (data, { rejectWithValue }) => {
     try {
-      const refreshToken = getState().auth.refreshToken || localStorage.getItem('refreshToken');
+      const response = await authService.changePassword(data);
       
-      if (!refreshToken) {
-        return rejectWithValue('Pas de refresh token');
-      }
-
-      const response = await authAPI.refreshToken(refreshToken);
-      
-      if (response.success && response.data) {
-        return {
-          tokens: response.data.tokens
-        };
+      if (!response.success) {
+        return rejectWithValue('Erreur lors du changement de mot de passe');
       }
       
-      return rejectWithValue('Refresh token échoué');
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message || 'Refresh token échoué');
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur changement mot de passe'
+      );
     }
   }
 );
 
-// =============================================================================
-// AUTH SLICE
-// =============================================================================
+/**
+ * Forgot Password
+ * POST /api/auth/forgot-password
+ */
+export const forgotPasswordAsync = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await authService.forgotPassword(email);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur demande réinitialisation'
+      );
+    }
+  }
+);
+
+/**
+ * Reset Password
+ * POST /api/auth/reset-password
+ */
+export const resetPasswordAsync = createAsyncThunk(
+  'auth/resetPassword',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await authService.resetPassword(data);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Erreur réinitialisation mot de passe'
+      );
+    }
+  }
+);
+
+// ===================================================================
+// SLICE
+// ===================================================================
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
+  
   reducers: {
-    /**
-     * Login Success (synchrone - pour compatibilité)
-     */
-    loginSuccess: (state, action) => {
-      const { user, token, refreshToken } = action.payload;
-      state.user = user;
-      state.token = token;
-      state.refreshToken = refreshToken;
-      state.isAuthenticated = true;
-      state.loading = false;
-      state.error = null;
-      
-      // Sauvegarder dans localStorage
-      localStorage.setItem('token', token);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-      }
-    },
-
-    /**
-     * Login Start (synchrone)
-     */
-    loginStart: (state) => {
-      state.loading = true;
-      state.error = null;
-    },
-
-    /**
-     * Login Failure (synchrone)
-     */
-    loginFailure: (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
-      state.isAuthenticated = false;
-    },
-
-    /**
-     * Logout (synchrone)
-     */
-    logout: (state) => {
-      state.user = null;
-      state.token = null;
-      state.refreshToken = null;
-      state.isAuthenticated = false;
-      state.loading = false;
-      state.error = null;
-      
-      // Nettoyer localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-    },
-
-    /**
-     * Update User
-     */
-    updateUser: (state, action) => {
-      state.user = {
-        ...state.user,
-        ...action.payload,
-      };
-    },
-
-    /**
-     * Update Token
-     */
-    updateToken: (state, action) => {
-      state.token = action.payload;
-      localStorage.setItem('token', action.payload);
-    },
-
     /**
      * Clear Error
      */
@@ -238,214 +277,288 @@ const authSlice = createSlice({
     },
 
     /**
-     * Set User (pour réhydratation)
+     * Set User (pour mise à jour locale)
      */
     setUser: (state, action) => {
       state.user = action.payload;
-      state.isAuthenticated = !!action.payload;
+    },
+
+    /**
+     * Clear Auth (déconnexion locale forcée)
+     */
+    clearAuth: (state) => {
+      state.user = null;
+      state.token = null;
+      state.refreshToken = null;
+      state.session = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      authService.clearTokens();
     },
   },
 
-  // =============================================================================
-  // EXTRA REDUCERS (pour gérer les async thunks)
-  // =============================================================================
+  // ===================================================================
+  // EXTRA REDUCERS (Async Thunks)
+  // ===================================================================
+  
   extraReducers: (builder) => {
-    // -------------------------------------------------------------------------
-    // LOGIN ASYNC
-    // -------------------------------------------------------------------------
-    builder
-      .addCase(loginAsync.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(loginAsync.fulfilled, (state, action) => {
-        const { user, tokens } = action.payload;
-        
-        state.user = user;
-        state.token = tokens.accessToken;
-        state.refreshToken = tokens.refreshToken;
-        state.isAuthenticated = true;
-        state.loading = false;
-        state.error = null;
-        
-        // Save to localStorage
-        localStorage.setItem('token', tokens.accessToken);
-        if (tokens.refreshToken) {
-          localStorage.setItem('refreshToken', tokens.refreshToken);
-        }
-
-        console.log('✅ Login réussi:', user.email);
-      })
-      .addCase(loginAsync.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Erreur de connexion';
-        state.isAuthenticated = false;
-        state.user = null;
-        state.token = null;
-        state.refreshToken = null;
-
-        console.error('❌ Login échoué:', action.payload);
-      });
-
-    // -------------------------------------------------------------------------
-    // REGISTER ASYNC
-    // -------------------------------------------------------------------------
+    
+    // -----------------------------------------------------------------
+    // REGISTER
+    // -----------------------------------------------------------------
     builder
       .addCase(registerAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(registerAsync.fulfilled, (state, action) => {
-        const { user, tokens } = action.payload;
-        
-        state.user = user;
-        state.token = tokens.accessToken;
-        state.refreshToken = tokens.refreshToken;
+        state.user = action.payload.user;
+        state.token = action.payload.tokens.accessToken;
+        state.refreshToken = action.payload.tokens.refreshToken;
+        state.session = action.payload.session;
         state.isAuthenticated = true;
         state.loading = false;
         state.error = null;
-        
-        localStorage.setItem('token', tokens.accessToken);
-        if (tokens.refreshToken) {
-          localStorage.setItem('refreshToken', tokens.refreshToken);
-        }
-
-        console.log('✅ Inscription réussie:', user.email);
       })
       .addCase(registerAsync.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Erreur d\'inscription';
+        state.error = action.payload;
         state.isAuthenticated = false;
-
-        console.error('❌ Inscription échouée:', action.payload);
       });
 
-    // -------------------------------------------------------------------------
-    // LOGOUT ASYNC
-    // -------------------------------------------------------------------------
+    // -----------------------------------------------------------------
+    // LOGIN
+    // -----------------------------------------------------------------
+    builder
+      .addCase(loginAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginAsync.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.token = action.payload.tokens.accessToken;
+        state.refreshToken = action.payload.tokens.refreshToken;
+        state.session = action.payload.session;
+        state.isAuthenticated = true;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(loginAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.isAuthenticated = false;
+      });
+
+    // -----------------------------------------------------------------
+    // LOGOUT
+    // -----------------------------------------------------------------
     builder
       .addCase(logoutAsync.pending, (state) => {
         state.loading = true;
       })
       .addCase(logoutAsync.fulfilled, (state) => {
+        // Reset complet
         state.user = null;
         state.token = null;
         state.refreshToken = null;
+        state.session = null;
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
-        
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-
-        console.log('✅ Déconnexion réussie');
       })
-      .addCase(logoutAsync.rejected, (state) => {
-        // Même si l'API échoue, on déconnecte localement
+      .addCase(logoutAsync.rejected, (state, action) => {
+        // Même en cas d'erreur, déconnecter localement
         state.user = null;
         state.token = null;
         state.refreshToken = null;
+        state.session = null;
         state.isAuthenticated = false;
         state.loading = false;
-        state.error = null;
-        
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-
-        console.log('⚠️ Déconnexion locale (API échouée)');
+        state.error = action.payload;
       });
 
-    // -------------------------------------------------------------------------
-    // CHECK AUTH ASYNC
-    // -------------------------------------------------------------------------
+    // -----------------------------------------------------------------
+    // LOGOUT ALL
+    // -----------------------------------------------------------------
+    builder
+      .addCase(logoutAllAsync.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutAllAsync.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.session = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(logoutAllAsync.rejected, (state, action) => {
+        state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.session = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // -----------------------------------------------------------------
+    // REFRESH TOKEN
+    // -----------------------------------------------------------------
+    builder
+      .addCase(refreshTokenAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(refreshTokenAsync.fulfilled, (state, action) => {
+        state.token = action.payload.tokens.accessToken;
+        if (action.payload.tokens.refreshToken) {
+          state.refreshToken = action.payload.tokens.refreshToken;
+        }
+        state.session = action.payload.session;
+        state.loading = false;
+      })
+      .addCase(refreshTokenAsync.rejected, (state, action) => {
+        // Token refresh échoué, déconnecter
+        state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.session = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // -----------------------------------------------------------------
+    // GET CURRENT USER
+    // -----------------------------------------------------------------
+    builder
+      .addCase(getCurrentUserAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCurrentUserAsync.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.session = action.payload.session;
+        state.isAuthenticated = true;
+        state.loading = false;
+      })
+      .addCase(getCurrentUserAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // -----------------------------------------------------------------
+    // CHECK AUTH (Vérification initiale)
+    // -----------------------------------------------------------------
     builder
       .addCase(checkAuthAsync.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(checkAuthAsync.fulfilled, (state, action) => {
-        const { user, token } = action.payload;
-        
-        state.user = user;
-        state.token = token;
+        state.user = action.payload.user;
+        state.session = action.payload.session;
         state.isAuthenticated = true;
         state.loading = false;
-        state.error = null;
-
-        console.log('✅ Auth vérifiée:', user.email);
+        state.initialCheckDone = true;
       })
-      .addCase(checkAuthAsync.rejected, (state, action) => {
+      .addCase(checkAuthAsync.rejected, (state) => {
         state.user = null;
         state.token = null;
         state.refreshToken = null;
+        state.session = null;
         state.isAuthenticated = false;
         state.loading = false;
-        state.error = null;
-        
-        // Nettoyer localStorage si token invalide
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-
-        console.log('❌ Token invalide - déconnexion');
+        state.error = null; // Pas d'erreur affichée pour check initial
+        state.initialCheckDone = true;
       });
 
-    // -------------------------------------------------------------------------
-    // REFRESH TOKEN ASYNC
-    // -------------------------------------------------------------------------
+    // -----------------------------------------------------------------
+    // CHANGE PASSWORD
+    // -----------------------------------------------------------------
     builder
-      .addCase(refreshTokenAsync.fulfilled, (state, action) => {
-        const { tokens } = action.payload;
-        
-        state.token = tokens.accessToken;
-        if (tokens.refreshToken) {
-          state.refreshToken = tokens.refreshToken;
-        }
-        
-        localStorage.setItem('token', tokens.accessToken);
-        if (tokens.refreshToken) {
-          localStorage.setItem('refreshToken', tokens.refreshToken);
-        }
-
-        console.log('✅ Token renouvelé');
+      .addCase(changePasswordAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
-      .addCase(refreshTokenAsync.rejected, (state) => {
-        // Si refresh échoue, déconnecter
-        state.user = null;
-        state.token = null;
-        state.refreshToken = null;
-        state.isAuthenticated = false;
-        
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+      .addCase(changePasswordAsync.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(changePasswordAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
 
-        console.log('❌ Refresh token échoué - déconnexion');
+    // -----------------------------------------------------------------
+    // FORGOT PASSWORD
+    // -----------------------------------------------------------------
+    builder
+      .addCase(forgotPasswordAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPasswordAsync.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(forgotPasswordAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // -----------------------------------------------------------------
+    // RESET PASSWORD
+    // -----------------------------------------------------------------
+    builder
+      .addCase(resetPasswordAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPasswordAsync.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resetPasswordAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-// =============================================================================
+// ===================================================================
 // EXPORT ACTIONS
-// =============================================================================
+// ===================================================================
+
 export const {
-  loginSuccess,
-  loginStart,
-  loginFailure,
-  logout,
-  updateUser,
-  updateToken,
   clearError,
   setUser,
+  clearAuth,
 } = authSlice.actions;
 
-// =============================================================================
+// ===================================================================
 // SELECTORS
-// =============================================================================
+// ===================================================================
+
 export const selectUser = (state) => state.auth.user;
-export const selectToken = (state) => state.auth.token;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state) => state.auth.loading;
 export const selectAuthError = (state) => state.auth.error;
+export const selectSession = (state) => state.auth.session;
+export const selectToken = (state) => state.auth.token;
+export const selectInitialCheckDone = (state) => state.auth.initialCheckDone;
 
-// =============================================================================
+// Selectors dérivés
+export const selectUserFullName = (state) => {
+  const user = state.auth.user;
+  return user ? `${user.firstName} ${user.lastName}` : '';
+};
+
+export const selectUserEmail = (state) => state.auth.user?.email;
+export const selectUserRole = (state) => state.auth.user?.role;
+export const selectUserRegion = (state) => state.auth.user?.region;
+
+// ===================================================================
 // EXPORT REDUCER
-// =============================================================================
+// ===================================================================
+
 export default authSlice.reducer;

@@ -1,172 +1,159 @@
 /**
  * =========================================================
  * FinApp Haiti - Base API Client
- * Configuration Axios avec intercepteurs
+ * Configuration Axios avec interceptors JWT
  * =========================================================
  */
 
 import axios from 'axios';
-import store from '../../store';
-import { logout } from '../../store/slices/authSlice';
 
-/**
- * Configuration API
- */
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+// Configuration de base
+const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-/**
- * Créer instance Axios
- */
+// Créer instance Axios
 const apiClient = axios.create({
-  baseURL: `${API_URL}/api`,
-  timeout: 10000,
+  baseURL,
+  timeout: 30000, // 30 secondes
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
-/**
- * Request Interceptor
- * Ajoute automatiquement le token JWT à toutes les requêtes
- */
+// ===================================================================
+// REQUEST INTERCEPTOR (Ajouter JWT token)
+// ===================================================================
+
 apiClient.interceptors.request.use(
   (config) => {
-    // Récupérer token depuis localStorage
+    // Récupérer le token depuis localStorage
     const token = localStorage.getItem('token');
-    
+
+    // Ajouter le token à l'en-tête Authorization
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     // Log en développement
     if (process.env.NODE_ENV === 'development') {
-      console.log('📤 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        hasToken: !!token
+      console.log(`📤 ${config.method.toUpperCase()} ${config.url}`, {
+        hasToken: !!token,
+        data: config.data,
       });
     }
 
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
+    console.error('❌ Erreur request interceptor:', error);
     return Promise.reject(error);
   }
 );
 
-/**
- * Response Interceptor
- * Gère automatiquement les erreurs et les réponses
- */
+// ===================================================================
+// RESPONSE INTERCEPTOR (Gérer erreurs & token refresh)
+// ===================================================================
+
 apiClient.interceptors.response.use(
   (response) => {
-    // Log en développement
+    // Log succès en développement
     if (process.env.NODE_ENV === 'development') {
-      console.log('📥 API Response:', {
+      console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, {
         status: response.status,
-        url: response.config.url,
-        data: response.data
+        data: response.data,
       });
     }
 
     // Retourner directement response.data pour simplifier
     return response.data;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     // Log erreur
-    console.error('❌ API Error:', {
+    console.error('❌ Erreur API:', {
+      url: error.config?.url,
       status: error.response?.status,
       message: error.response?.data?.message || error.message,
-      url: error.config?.url
     });
 
-    // Gestion erreurs spécifiques
-    if (error.response) {
-      const { status, data } = error.response;
+    // ===============================================================
+    // GESTION TOKEN EXPIRÉ (401 Unauthorized)
+    // ===============================================================
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
 
-      // 401 - Non authentifié → Logout
-      if (status === 401) {
-        console.log('🔒 Session expirée - Déconnexion');
-        store.dispatch(logout());
-        
-        // Redirection vers login
-        if (window.location.pathname !== '/login') {
+      try {
+        // Récupérer refresh token
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (!refreshToken) {
+          // Pas de refresh token, rediriger vers login
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
           window.location.href = '/login';
+          return Promise.reject(error);
         }
-      }
 
-      // 403 - Accès refusé
-      if (status === 403) {
-        console.log('⛔ Accès refusé');
-      }
+        // Tenter de renouveler le token
+        const response = await axios.post(`${baseURL}/auth/refresh`, {
+          refreshToken,
+        });
 
-      // 404 - Ressource non trouvée
-      if (status === 404) {
-        console.log('🔍 Ressource non trouvée');
-      }
+        if (response.data?.success && response.data?.data?.tokens?.accessToken) {
+          // Sauvegarder nouveau token
+          const newToken = response.data.data.tokens.accessToken;
+          localStorage.setItem('token', newToken);
 
-      // 500 - Erreur serveur
-      if (status === 500) {
-        console.log('💥 Erreur serveur');
-      }
+          // Mettre à jour l'en-tête de la requête originale
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-      // Retourner erreur formatée
-      return Promise.reject({
-        status,
-        message: data?.message || 'Une erreur est survenue',
-        error: data?.error,
-        data: data
-      });
+          // Réessayer la requête originale
+          return apiClient(originalRequest);
+        } else {
+          throw new Error('Token refresh échoué');
+        }
+      } catch (refreshError) {
+        // Refresh échoué, déconnecter l'utilisateur
+        console.error('❌ Token refresh échoué:', refreshError);
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
 
-    // Erreur réseau (pas de réponse du serveur)
-    if (error.request) {
-      console.error('📡 Erreur réseau - Serveur inaccessible');
-      return Promise.reject({
-        status: 0,
-        message: 'Impossible de contacter le serveur. Vérifiez votre connexion.',
-        error: 'network_error'
-      });
+    // ===============================================================
+    // AUTRES CODES D'ERREUR
+    // ===============================================================
+
+    // 403 Forbidden
+    if (error.response?.status === 403) {
+      console.error('⛔ Accès refusé (403)');
+      // Optionnel: Rediriger ou afficher message
     }
 
-    // Autre erreur
-    return Promise.reject({
-      status: 0,
-      message: error.message || 'Une erreur est survenue',
-      error: 'unknown_error'
-    });
+    // 404 Not Found
+    if (error.response?.status === 404) {
+      console.error('🔍 Ressource non trouvée (404)');
+    }
+
+    // 500 Server Error
+    if (error.response?.status >= 500) {
+      console.error('🔥 Erreur serveur (500+)');
+    }
+
+    // Timeout
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏱️ Timeout de la requête');
+    }
+
+    // Pas de connexion réseau
+    if (!error.response) {
+      console.error('🌐 Erreur réseau - Pas de connexion');
+    }
+
+    return Promise.reject(error);
   }
 );
-
-/**
- * Helper pour gérer les requêtes
- */
-export const apiRequest = {
-  /**
-   * GET request
-   */
-  get: (url, config = {}) => apiClient.get(url, config),
-
-  /**
-   * POST request
-   */
-  post: (url, data, config = {}) => apiClient.post(url, data, config),
-
-  /**
-   * PUT request
-   */
-  put: (url, data, config = {}) => apiClient.put(url, data, config),
-
-  /**
-   * DELETE request
-   */
-  delete: (url, config = {}) => apiClient.delete(url, config),
-
-  /**
-   * PATCH request
-   */
-  patch: (url, data, config = {}) => apiClient.patch(url, data, config)
-};
 
 export default apiClient;
