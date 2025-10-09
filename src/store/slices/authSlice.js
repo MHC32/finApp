@@ -1,9 +1,9 @@
 /**
  * =========================================================
- * FinApp Haiti - Auth Slice (SYNCHRONISÉ BACKEND)
- * ✅ Correspondance avec backend authController responses
- * ✅ Gestion correcte loading states
- * ✅ Token storage et user extraction
+ * FinApp Haiti - Auth Slice (VERSION PROPRE)
+ * ✅ Redux Persist gère la persistence
+ * ✅ Token dans le state Redux
+ * ✅ Aucun localStorage manuel
  * =========================================================
  */
 
@@ -11,101 +11,58 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authService from 'services/api/auth.service';
 
 // ===================================================================
-// INITIAL STATE
+// ÉTAT INITIAL
 // ===================================================================
 
 const initialState = {
-  // User data
   user: null,
+  token: null,              // ✅ AJOUTÉ
+  refreshToken: null,       // ✅ AJOUTÉ
   isAuthenticated: false,
-  
-  // UI states
   loading: false,
   error: null,
-  
-  // Session info
-  session: null,
-  
-  // Token info
-  tokenExpiringSoon: false,
 };
 
 // ===================================================================
-// ASYNC THUNKS
+// ACTIONS ASYNCHRONES
 // ===================================================================
 
 /**
- * Check Auth - Vérifier token au démarrage
- * Appelle GET /api/auth/me
- * 
- * Backend response:
- * {
- *   success: true,
- *   data: {
- *     user: { userId, email, firstName, lastName, role, region, isVerified },
- *     authenticated: boolean,
- *     session: { sessionId, tokenExpiringSoon }
- *   }
- * }
+ * Vérifier l'authentification au démarrage
  */
 export const checkAuthAsync = createAsyncThunk(
   'auth/checkAuth',
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      // ✅ Lire le token depuis Redux state (pas localStorage)
+      const { auth } = getState();
+      const token = auth.token;
       
       if (!token) {
-        return rejectWithValue('Pas de token');
+        return rejectWithValue('Utilisateur non connecté');
       }
 
-      // Appeler /auth/me
+      // Vérifier avec le backend si le token est valide
       const response = await authService.getCurrentUser();
       
-      // Vérifier réponse backend
-      if (!response.success || !response.data) {
-        return rejectWithValue('Réponse invalide du serveur');
+      if (response.success && response.data?.user) {
+        return {
+          user: response.data.user,
+          session: response.data.session,
+        };
+      } else {
+        return rejectWithValue('Token invalide');
       }
-
-      // ✅ IMPORTANT: Vérifier si user existe
-      if (!response.data.user) {
-        return rejectWithValue('Utilisateur non trouvé');
-      }
-
-      return {
-        user: response.data.user,
-        session: response.data.session,
-        authenticated: response.data.authenticated,
-      };
     } catch (error) {
-      console.error('❌ checkAuth échoué:', error);
-      
-      // Nettoyer token invalide
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      
       return rejectWithValue(
-        error.response?.data?.message || 
-        error.message || 
-        'Erreur vérification authentification'
+        error.response?.data?.message || 'Erreur de vérification'
       );
     }
   }
 );
 
 /**
- * Login - Connexion utilisateur
- * Appelle POST /api/auth/login
- * 
- * Backend response:
- * {
- *   success: true,
- *   message: "Bon retour {firstName}! 👋",
- *   data: {
- *     user: UserObject,
- *     tokens: { accessToken, tokenType, expiresIn },
- *     session: { sessionId, deviceId, deviceInfo }
- *   }
- * }
+ * Connexion utilisateur
  */
 export const loginAsync = createAsyncThunk(
   'auth/login',
@@ -113,26 +70,16 @@ export const loginAsync = createAsyncThunk(
     try {
       const response = await authService.login(credentials);
       
-      if (!response.success || !response.data) {
+      if (response.success && response.data?.user && response.data?.tokens) {
+        return {
+          user: response.data.user,
+          session: response.data.session,
+          tokens: response.data.tokens, // ✅ Retourner les tokens
+        };
+      } else {
         return rejectWithValue(response.message || 'Échec de la connexion');
       }
-
-      // ✅ Sauvegarder tokens dans localStorage
-      const { tokens, user, session } = response.data;
-      localStorage.setItem('token', tokens.accessToken);
-      
-      // Sauvegarder refreshToken si présent
-      if (tokens.refreshToken) {
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-      }
-
-      return {
-        user,
-        session,
-        tokens,
-      };
     } catch (error) {
-      console.error('❌ Login échoué:', error);
       return rejectWithValue(
         error.response?.data?.message || 
         error.message || 
@@ -143,8 +90,7 @@ export const loginAsync = createAsyncThunk(
 );
 
 /**
- * Register - Inscription utilisateur
- * Appelle POST /api/auth/register
+ * Inscription utilisateur
  */
 export const registerAsync = createAsyncThunk(
   'auth/register',
@@ -152,25 +98,16 @@ export const registerAsync = createAsyncThunk(
     try {
       const response = await authService.register(userData);
       
-      if (!response.success || !response.data) {
+      if (response.success && response.data?.user && response.data?.tokens) {
+        return {
+          user: response.data.user,
+          session: response.data.session,
+          tokens: response.data.tokens, // ✅ Retourner les tokens
+        };
+      } else {
         return rejectWithValue(response.message || 'Échec de l\'inscription');
       }
-
-      // ✅ Sauvegarder tokens
-      const { tokens, user, session } = response.data;
-      localStorage.setItem('token', tokens.accessToken);
-      
-      if (tokens.refreshToken) {
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-      }
-
-      return {
-        user,
-        session,
-        tokens,
-      };
     } catch (error) {
-      console.error('❌ Register échoué:', error);
       return rejectWithValue(
         error.response?.data?.message || 
         error.message || 
@@ -181,27 +118,17 @@ export const registerAsync = createAsyncThunk(
 );
 
 /**
- * Logout - Déconnexion
- * Appelle POST /api/auth/logout
+ * Déconnexion utilisateur
  */
 export const logoutAsync = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
       await authService.logout();
-      
-      // ✅ Nettoyer localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      
       return null;
     } catch (error) {
-      // Même en cas d'erreur, on déconnecte localement
-      console.error('❌ Logout échoué:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      
-      // Ne pas rejeter, toujours réussir localement
+      // Même si le backend échoue, on déconnecte localement
+      console.warn('Logout backend échoué, mais déconnexion locale effectuée');
       return null;
     }
   }
@@ -215,40 +142,33 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    /**
-     * Clear error
-     */
+    // Effacer les erreurs
     clearError: (state) => {
       state.error = null;
     },
     
-    /**
-     * Logout local (sans appel API)
-     */
+    // Déconnexion manuelle (sans appel backend)
     logout: (state) => {
       state.user = null;
+      state.token = null;
+      state.refreshToken = null;
       state.isAuthenticated = false;
-      state.session = null;
+      state.loading = false;
       state.error = null;
-      state.tokenExpiringSoon = false;
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
+      // ✅ Redux Persist nettoiera automatiquement localStorage
     },
-    
-    /**
-     * Update user info (profil édité)
-     */
-    updateUser: (state, action) => {
-      if (state.user) {
-        state.user = { ...state.user, ...action.payload };
+
+    // ✅ NOUVEAU : Mettre à jour le token (après refresh)
+    updateTokens: (state, action) => {
+      state.token = action.payload.accessToken;
+      if (action.payload.refreshToken) {
+        state.refreshToken = action.payload.refreshToken;
       }
     },
   },
   extraReducers: (builder) => {
     builder
-      // ============================================================
       // CHECK AUTH
-      // ============================================================
       .addCase(checkAuthAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -257,22 +177,19 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.session = action.payload.session;
-        state.tokenExpiringSoon = action.payload.session?.tokenExpiringSoon || false;
         state.error = null;
+        // Token reste inchangé (déjà dans le state)
       })
       .addCase(checkAuthAsync.rejected, (state, action) => {
-        // ✅ CRITIQUE: Mettre loading à false pour éviter boucle
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.session = null;
+        state.token = null;
+        state.refreshToken = null;
         state.error = action.payload;
       })
 
-      // ============================================================
       // LOGIN
-      // ============================================================
       .addCase(loginAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -281,20 +198,21 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.session = action.payload.session;
+        state.token = action.payload.tokens.accessToken;          // ✅ Sauvegarder token
+        state.refreshToken = action.payload.tokens.refreshToken;  // ✅ Sauvegarder refreshToken
         state.error = null;
+        // ✅ Redux Persist sauvegarde automatiquement dans localStorage
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.session = null;
+        state.token = null;
+        state.refreshToken = null;
         state.error = action.payload;
       })
 
-      // ============================================================
       // REGISTER
-      // ============================================================
       .addCase(registerAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -303,38 +221,27 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.session = action.payload.session;
+        state.token = action.payload.tokens.accessToken;
+        state.refreshToken = action.payload.tokens.refreshToken;
         state.error = null;
       })
       .addCase(registerAsync.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.session = null;
+        state.token = null;
+        state.refreshToken = null;
         state.error = action.payload;
       })
 
-      // ============================================================
       // LOGOUT
-      // ============================================================
-      .addCase(logoutAsync.pending, (state) => {
-        state.loading = true;
-      })
       .addCase(logoutAsync.fulfilled, (state) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.session = null;
+        state.token = null;
+        state.refreshToken = null;
         state.error = null;
-        state.tokenExpiringSoon = false;
-      })
-      .addCase(logoutAsync.rejected, (state) => {
-        // Même en cas d'erreur, déconnecter
-        state.loading = false;
-        state.isAuthenticated = false;
-        state.user = null;
-        state.session = null;
-        state.tokenExpiringSoon = false;
       });
   },
 });
@@ -344,25 +251,22 @@ const authSlice = createSlice({
 // ===================================================================
 
 export const selectUser = (state) => state.auth.user;
+export const selectToken = (state) => state.auth.token;                    // ✅ NOUVEAU
+export const selectRefreshToken = (state) => state.auth.refreshToken;      // ✅ NOUVEAU
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state) => state.auth.loading;
 export const selectAuthError = (state) => state.auth.error;
-export const selectSession = (state) => state.auth.session;
-export const selectTokenExpiringSoon = (state) => state.auth.tokenExpiringSoon;
 
-// Sélecteurs dérivés
 export const selectUserFullName = (state) => {
   const user = state.auth.user;
   return user ? `${user.firstName} ${user.lastName}` : null;
 };
 
 export const selectUserRole = (state) => state.auth.user?.role || null;
-export const selectUserRegion = (state) => state.auth.user?.region || null;
-export const selectIsVerified = (state) => state.auth.user?.isVerified || false;
 
 // ===================================================================
 // EXPORTS
 // ===================================================================
 
-export const { clearError, logout, updateUser } = authSlice.actions;
+export const { clearError, logout, updateTokens } = authSlice.actions;
 export default authSlice.reducer;

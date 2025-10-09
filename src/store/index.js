@@ -1,10 +1,9 @@
 /**
  * =========================================================
- * FinApp Haiti - Redux Store Configuration
- * Configuration Redux Toolkit avec Redux Persist
+ * FinApp Haiti - Redux Store Configuration (CORRIGÉ)
+ * ✅ auth est maintenant persisté
  * =========================================================
  */
-
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import {
   persistStore,
@@ -16,7 +15,7 @@ import {
   PURGE,
   REGISTER,
 } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // localStorage
+import storage from 'redux-persist/lib/storage';
 
 // Import des slices
 import authReducer from './slices/authSlice';
@@ -26,21 +25,19 @@ import accountsReducer from './slices/accountsSlice';
 import transactionsReducer from './slices/transactionsSlice';
 
 /**
- * Configuration Redux Persist
- * - Sauvegarde auth et settings dans localStorage
- * - UI, accounts, transactions ne sont PAS persistés (données fraîches)
+ * Configuration Redux Persist - VERSION CORRIGÉE
+ * ✅ auth EST persisté pour garder la session
  */
 const persistConfig = {
   key: 'finapp-haiti-root',
   version: 1,
   storage,
-  whitelist: ['auth', 'settings'], // Seulement ces slices sont persistées
-  blacklist: ['ui', 'accounts', 'transactions'], // Pas persisté
+  whitelist: ['auth', 'settings'], // ✅ AJOUT de 'auth'
+  blacklist: ['ui', 'accounts', 'transactions'], // Juste les données temporaires
 };
 
 /**
  * Root Reducer
- * Combine tous les reducers de l'application
  */
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -52,35 +49,28 @@ const rootReducer = combineReducers({
 
 /**
  * Persisted Reducer
- * Wrapper le root reducer avec persist
  */
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 /**
  * Configure Store
- * Configuration du store Redux avec middleware
  */
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignorer les actions Redux Persist
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),
-  devTools: process.env.NODE_ENV !== 'production', // DevTools seulement en dev
+  devTools: process.env.NODE_ENV !== 'production',
 });
 
 /**
  * Persistor
- * Permet de persister le store
  */
 export const persistor = persistStore(store);
 
-/**
- * Export des types pour TypeScript (optionnel)
- */
 export const RootState = store.getState;
 export const AppDispatch = store.dispatch;
 

@@ -1,160 +1,126 @@
 /**
  * =========================================================
- * FinApp Haiti - Base API Client (CORRIGÉ)
- * ✅ URL backend corrigée: http://localhost:3001/api
+ * FinApp Haiti - Base API Client (VERSION PROPRE)
+ * ✅ Lit le token depuis Redux
+ * ✅ Pas de localStorage manuel
  * =========================================================
  */
 
 import axios from 'axios';
+import store from '../../store/index'; // ✅ Import du store Redux
+import { selectToken, selectRefreshToken, updateTokens, logout } from '../../store/slices/authSlice';
 
-// ✅ CORRECTION: Port 3001 au lieu de 5000
 const baseURL = 'http://localhost:3001/api';
 
-// Créer instance Axios
 const apiClient = axios.create({
   baseURL,
-  timeout: 30000, // 30 secondes
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 // ===================================================================
-// REQUEST INTERCEPTOR (Ajouter JWT token)
+// REQUEST INTERCEPTOR - LIT DEPUIS REDUX
 // ===================================================================
 
 apiClient.interceptors.request.use(
   (config) => {
-    // ✅ CORRECTION: Récupérer le token depuis localStorage
-    const token = localStorage.getItem('token');
+    // ✅ Lire le token depuis Redux state
+    const state = store.getState();
+    const token = selectToken(state);
+    
+    console.log('📤 [REQUEST] Token depuis Redux:', token ? 'PRÉSENT' : 'ABSENT');
 
-    // Ajouter le token à l'en-tête Authorization
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    // Log en développement
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`📤 ${config.method.toUpperCase()} ${config.url}`, {
-        hasToken: !!token,
-        data: config.data,
-      });
-    }
-
+    
     return config;
   },
   (error) => {
-    console.error('❌ Erreur request interceptor:', error);
+    console.error('❌ [REQUEST-ERROR]', error);
     return Promise.reject(error);
   }
 );
 
 // ===================================================================
-// RESPONSE INTERCEPTOR (Gérer erreurs & token refresh)
+// RESPONSE INTERCEPTOR - GESTION REFRESH TOKEN
 // ===================================================================
 
 apiClient.interceptors.response.use(
   (response) => {
-    // Log succès en développement
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, {
-        status: response.status,
-        data: response.data,
-      });
-    }
-
-    // Retourner directement response.data pour simplifier
+    // Retourner response.data pour compatibilité
     return response.data;
   },
   async (error) => {
     const originalRequest = error.config;
 
-    // Log erreur
-    console.error('❌ Erreur API:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-    });
+    // Erreur réseau
+    if (!error.response) {
+      console.error('🌐 [NETWORK-ERROR]', error.message);
+      return Promise.reject({
+        type: 'NETWORK_ERROR',
+        message: error.message,
+      });
+    }
 
-    // ===============================================================
-    // GESTION TOKEN EXPIRÉ (401 Unauthorized)
-    // ===============================================================
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Gestion 401 - Token expiré
+    if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // ✅ Lire refreshToken depuis Redux
+      const state = store.getState();
+      const refreshToken = selectRefreshToken(state);
+
+      if (!refreshToken) {
+        console.warn('🔐 Pas de refresh token - déconnexion');
+        store.dispatch(logout());
+        return Promise.reject({
+          type: 'AUTH_ERROR',
+          message: 'Session expirée',
+          redirect: true,
+        });
+      }
+
       try {
-        // Récupérer refresh token
-        const refreshToken = localStorage.getItem('refreshToken');
-
-        if (!refreshToken) {
-          // Pas de refresh token, rediriger vers login
-          console.log('🚫 Pas de refresh token, redirection vers login');
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
-
-        // Tenter de renouveler le token
-        console.log('🔄 Tentative de refresh du token...');
-        const response = await axios.post(`${baseURL}/auth/refresh`, {
+        console.log('🔄 Tentative refresh token...');
+        
+        const refreshResponse = await axios.post(`${baseURL}/auth/refresh`, {
           refreshToken,
         });
 
-        if (response.data?.success && response.data?.data?.tokens?.accessToken) {
-          // Sauvegarder nouveau token
-          const newToken = response.data.data.tokens.accessToken;
-          localStorage.setItem('token', newToken);
-          console.log('✅ Token renouvelé avec succès');
-
-          // Mettre à jour l'en-tête de la requête originale
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        if (refreshResponse.data?.success && refreshResponse.data?.data?.tokens) {
+          const newTokens = refreshResponse.data.data.tokens;
+          
+          // ✅ Mettre à jour Redux (Redux Persist sauvegarde auto)
+          store.dispatch(updateTokens({
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+          }));
 
           // Réessayer la requête originale
+          originalRequest.headers.Authorization = `Bearer ${newTokens.accessToken}`;
           return apiClient(originalRequest);
         } else {
-          throw new Error('Token refresh échoué');
+          throw new Error('Invalid refresh response');
         }
       } catch (refreshError) {
-        // Refresh échoué, déconnecter l'utilisateur
-        console.error('❌ Token refresh échoué:', refreshError);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+        console.error('❌ Refresh token échoué', refreshError);
+        store.dispatch(logout());
+        return Promise.reject({
+          type: 'REFRESH_ERROR',
+          message: 'Session expirée',
+        });
       }
     }
 
-    // ===============================================================
-    // AUTRES CODES D'ERREUR
-    // ===============================================================
-
-    // 403 Forbidden
-    if (error.response?.status === 403) {
-      console.error('⛔ Accès refusé (403)');
-    }
-
-    // 404 Not Found
-    if (error.response?.status === 404) {
-      console.error('🔍 Ressource non trouvée (404)');
-    }
-
-    // 500 Server Error
-    if (error.response?.status >= 500) {
-      console.error('🔥 Erreur serveur (500+)');
-    }
-
-    // Timeout
-    if (error.code === 'ECONNABORTED') {
-      console.error('⏱️ Timeout de la requête');
-    }
-
-    // Pas de connexion réseau
-    if (!error.response) {
-      console.error('🌐 Erreur réseau - Pas de connexion au serveur');
-    }
-
-    return Promise.reject(error);
+    // Autres erreurs HTTP
+    return Promise.reject({
+      type: 'HTTP_ERROR',
+      status: error.response.status,
+      data: error.response.data,
+    });
   }
 );
 
