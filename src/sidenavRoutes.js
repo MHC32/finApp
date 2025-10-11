@@ -4,10 +4,10 @@
 import Icon from "@mui/material/Icon";
 
 // Import pages (temporaire, on créera les vraies pages après)
-import Dashboard from "layouts/dashboard";
-import Profile from "layouts/profile";
-import Notifications from "layouts/notifications";
-import AccountsPage from "pages/Finances/Accounts/AccountsPage";
+// import Dashboard from "layouts/dashboard";
+// import Profile from "layouts/profile";
+// import Notifications from "layouts/notifications";
+// import AccountsPage from "pages/Finances/Accounts/AccountsPage";
 
 const routes = [
   {
@@ -16,7 +16,7 @@ const routes = [
     key: "dashboard",
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
-    component: <Dashboard />,
+    component: null,
   },
   {
     type: "title",
@@ -29,7 +29,7 @@ const routes = [
     key: "accounts",
     icon: <Icon fontSize="small">account_balance</Icon>,
     route: "/accounts",
-    component: <AccountsPage/>, // À remplacer
+    component: null, // À remplacer
   },
   {
     type: "collapse",
@@ -103,7 +103,7 @@ const routes = [
     key: "notifications",
     icon: <Icon fontSize="small">notifications</Icon>,
     route: "/notifications",
-    component: <Notifications />,
+    component: null,
   },
   {
     type: "divider",
@@ -115,7 +115,7 @@ const routes = [
     key: "profile",
     icon: <Icon fontSize="small">person</Icon>,
     route: "/profile",
-    component: <Profile />,
+    component: null,
   },
 ];
 
