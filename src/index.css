@@ -1,55 +1,352 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Glassmorphism utilities */
-@layer utilities {
-  .glass-light {
-    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
-  }
-  
-  .glass-dark {
-    @apply bg-slate-800/70 backdrop-blur-lg border border-white/10 shadow-2xl;
-  }
-  
-  .glass-card {
-    @apply rounded-2xl p-6 transition-all duration-300;
-  }
+/* ========================================
+   GLASSMORPHISM STYLES 🌊
+   ======================================== */
+
+/* Glassmorphism Light Mode */
+.glass-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
-/* Variables CSS pour le thème */
-:root {
-  --color-primary: #1e40af;
-  --color-secondary: #dc2626;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+/* Glassmorphism Dark Mode */
+.glass-dark {
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
-.dark {
-  --color-primary: #3b82f6;
-  --color-secondary: #f43f5e;
+/* Glassmorphism Intense Light Mode (plus opaque) */
+.glass-intense-light {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
 }
 
-/* Smooth transitions */
-* {
-  @apply transition-colors duration-200;
+/* Glassmorphism Intense Dark Mode (plus opaque) */
+.glass-intense-dark {
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
-/* Scrollbar styling */
+/* Classe utilitaire pour padding + border-radius */
+.glass-card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+
+/* ========================================
+   SCROLLBAR PERSONNALISÉE
+   ======================================== */
+
+/* Scrollbar pour Webkit (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  background: rgba(13, 148, 136, 0.3); /* Teal 🌊 */
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-500;
+  background: rgba(13, 148, 136, 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(13, 148, 136, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 148, 136, 0.6);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+/* Fade In (pour overlay modal) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Slide Up (pour contenu modal) */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Pulse doux (pour loading/attention) */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================
+   ANIMATIONS TOAST - Slide In/Out
+   ======================================== */
+
+/* Slide In Right (toast depuis la droite) */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Slide Out Right (toast vers la droite) */
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.animate-slideOutRight {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+/* Slide In Left (toast depuis la gauche) */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+/* Slide Out Left (toast vers la gauche) */
+@keyframes slideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+.animate-slideOutLeft {
+  animation: slideOutLeft 0.3s ease-in;
+}
+
+/* Slide In Down (toast depuis le haut) */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideInDown {
+  animation: slideInDown 0.3s ease-out;
+}
+
+/* Slide Out Up (toast vers le haut) */
+@keyframes slideOutUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.animate-slideOutUp {
+  animation: slideOutUp 0.3s ease-in;
+}
+
+/* Slide In Up (toast depuis le bas) */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Slide Out Down (toast vers le bas) */
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+.animate-slideOutDown {
+  animation: slideOutDown 0.3s ease-in;
+}
+
+/* ========================================
+   VARIABLES CSS HAITI 🇭🇹
+   ======================================== */
+
+:root {
+  /* Couleurs Haiti */
+  --haiti-blue: #1e40af;
+  --haiti-blue-light: #3b82f6;
+  --haiti-blue-dark: #1e3a8a;
+  
+  --haiti-red: #dc2626;
+  --haiti-red-light: #ef4444;
+  --haiti-red-dark: #991b1b;
+  
+  --haiti-teal: #0d9488;
+  --haiti-teal-light: #14b8a6;
+  --haiti-teal-dark: #0f766e;
+  
+  /* Couleurs système */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+}
+
+/* ========================================
+   UTILITAIRES GLOBAUX
+   ======================================== */
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Sélection de texte */
+::selection {
+  background-color: rgba(13, 148, 136, 0.2); /* Teal 🌊 */
+  color: inherit;
+}
+
+.dark ::selection {
+  background-color: rgba(13, 148, 136, 0.3);
+}
+
+/* Focus visible amélioré */
+*:focus-visible {
+  outline: 2px solid var(--haiti-teal);
+  outline-offset: 2px;
+}
+
+/* Désactiver les outlines pour les clics souris */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Barre striped (rayures diagonales) */
+.bg-striped {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+}
+
+/* Animation des rayures */
+@keyframes progress {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 1rem 0;
+  }
+}
+
+.animate-progress {
+  animation: progress 1s linear infinite;
 }
