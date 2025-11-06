@@ -1,202 +1,161 @@
-// src/api/interceptors.js
-import axios from 'axios';
+// src/api/endpoints/auth.js
 import api from '../axios';
-import store from '../../store/index';
-import { logout, setTokens } from '../../store/slices/authSlice';
 
 // ===================================================================
-// GESTION QUEUE REQUÊTES (pour refresh token)
-// ===================================================================
-
-let isRefreshing = false;
-let failedQueue = [];
-
-/**
- * Traiter la queue de requêtes en attente
- * @param {Error} error - Erreur éventuelle
- * @param {string} token - Nouveau token si succès
- */
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  
-  failedQueue = [];
-};
-
-// ===================================================================
-// REQUEST INTERCEPTOR - Ajouter le token à chaque requête
-// ===================================================================
-
-api.interceptors.request.use(
-  (config) => {
-    // Récupérer le token depuis le store Redux
-    const state = store.getState();
-    const token = state.auth.token;
-    
-    // Si token existe, l'ajouter dans les headers
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// ===================================================================
-// RESPONSE INTERCEPTOR - Gestion erreurs + refresh automatique
-// ===================================================================
-
-api.interceptors.response.use(
-  // Succès : retourner la réponse telle quelle
-  (response) => {
-    return response;
-  },
-  
-  // Erreur : gérer 401 et refresh token
-  async (error) => {
-    const originalRequest = error.config;
-    
-    // Si erreur 401 (Unauthorized) et on n'a pas déjà retry
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      
-      // Si déjà en train de refresh, mettre en queue
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(token => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch(err => {
-            return Promise.reject(err);
-          });
-      }
-      
-      // Marquer qu'on va retry cette requête
-      originalRequest._retry = true;
-      isRefreshing = true;
-      
-      // Récupérer le refresh token
-      const state = store.getState();
-      const refreshToken = state.auth.refreshToken;
-      
-      // Si pas de refresh token, déconnecter
-      if (!refreshToken) {
-        store.dispatch(logout());
-        return Promise.reject(error);
-      }
-      
-      try {
-        // Tenter de refresh le token
-        const response = await axios.post(
-          `${api.defaults.baseURL}/auth/refresh`,
-          { refreshToken }
-        );
-        
-        const { accessToken, refreshToken: newRefreshToken } = response.data.data.tokens;
-        
-        // Mettre à jour les tokens dans Redux
-        store.dispatch(setTokens({ 
-          token: accessToken, 
-          refreshToken: newRefreshToken 
-        }));
-        
-        // Traiter la queue avec le nouveau token
-        processQueue(null, accessToken);
-        
-        // Retry la requête originale avec le nouveau token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-        
-      } catch (refreshError) {
-        // Refresh a échoué, traiter la queue avec erreur
-        processQueue(refreshError, null);
-        
-        // Déconnecter l'utilisateur
-        store.dispatch(logout());
-        
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-    
-    // Pour toutes les autres erreurs, rejeter normalement
-    return Promise.reject(error);
-  }
-);
-
-// ===================================================================
-// HELPERS POUR REQUÊTES (optionnel)
+// ENDPOINTS D'AUTHENTIFICATION
 // ===================================================================
 
 /**
- * Helper GET avec gestion d'erreur simplifiée
+ * Inscription d'un nouvel utilisateur
+ * @param {Object} data - Données d'inscription
+ * @param {string} data.firstName - Prénom
+ * @param {string} data.lastName - Nom
+ * @param {string} data.email - Email
+ * @param {string} data.password - Mot de passe
+ * @param {string} data.phone - Téléphone (optionnel)
+ * @returns {Promise}
  */
-export const get = async (url, config = {}) => {
-  try {
-    const response = await api.get(url, config);
-    return { success: true, data: response.data };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error.response?.data?.message || 'Erreur réseau' 
-    };
-  }
+export const register = (data) => {
+  return api.post('/auth/register', data);
 };
 
 /**
- * Helper POST avec gestion d'erreur simplifiée
+ * Connexion utilisateur
+ * @param {Object} credentials - Identifiants
+ * @param {string} credentials.email - Email ou téléphone
+ * @param {string} credentials.password - Mot de passe
+ * @returns {Promise}
  */
-export const post = async (url, data = {}, config = {}) => {
-  try {
-    const response = await api.post(url, data, config);
-    return { success: true, data: response.data };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error.response?.data?.message || 'Erreur réseau' 
-    };
-  }
+export const login = (credentials) => {
+  return api.post('/auth/login', credentials);
 };
 
 /**
- * Helper PUT avec gestion d'erreur simplifiée
+ * Déconnexion utilisateur
+ * @returns {Promise}
  */
-export const put = async (url, data = {}, config = {}) => {
-  try {
-    const response = await api.put(url, data, config);
-    return { success: true, data: response.data };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error.response?.data?.message || 'Erreur réseau' 
-    };
-  }
+export const logout = () => {
+  return api.post('/auth/logout');
 };
 
 /**
- * Helper DELETE avec gestion d'erreur simplifiée
+ * Refresh du token d'accès
+ * @param {string} refreshToken - Refresh token
+ * @returns {Promise}
  */
-export const del = async (url, config = {}) => {
-  try {
-    const response = await api.delete(url, config);
-    return { success: true, data: response.data };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error.response?.data?.message || 'Erreur réseau' 
-    };
-  }
+export const refresh = (refreshToken) => {
+  return api.post('/auth/refresh', { refreshToken });
 };
 
-export default api;
+/**
+ * Récupérer les informations de l'utilisateur connecté
+ * @returns {Promise}
+ */
+export const me = () => {
+  return api.get('/auth/me');
+};
+
+/**
+ * Changer le mot de passe (utilisateur connecté)
+ * @param {Object} data - Données
+ * @param {string} data.currentPassword - Mot de passe actuel
+ * @param {string} data.newPassword - Nouveau mot de passe
+ * @returns {Promise}
+ */
+export const changePassword = (data) => {
+  return api.post('/auth/change-password', data);
+};
+
+/**
+ * Demander un reset de mot de passe (mot de passe oublié)
+ * @param {string} email - Email de l'utilisateur
+ * @returns {Promise}
+ */
+export const forgotPassword = (email) => {
+  return api.post('/auth/forgot-password', { email });
+};
+
+/**
+ * Réinitialiser le mot de passe avec le token reçu par email
+ * @param {Object} data - Données
+ * @param {string} data.token - Token de reset
+ * @param {string} data.newPassword - Nouveau mot de passe
+ * @returns {Promise}
+ */
+export const resetPassword = (data) => {
+  return api.post('/auth/reset-password', data);
+};
+
+/**
+ * Vérifier la validité d'un token (email, reset, etc.)
+ * @param {string} token - Token à vérifier
+ * @returns {Promise}
+ */
+export const verifyToken = (token) => {
+  return api.get(`/auth/verify-token/${token}`);
+};
+
+/**
+ * Récupérer toutes les sessions actives de l'utilisateur
+ * @returns {Promise}
+ */
+export const getSessions = () => {
+  return api.get('/auth/sessions');
+};
+
+/**
+ * Supprimer une session spécifique
+ * @param {string} sessionId - ID de la session à supprimer
+ * @returns {Promise}
+ */
+export const deleteSession = (sessionId) => {
+  return api.delete(`/auth/sessions/${sessionId}`);
+};
+
+/**
+ * Déconnexion globale (toutes les sessions)
+ * @returns {Promise}
+ */
+export const logoutAll = () => {
+  return api.post('/auth/logout-all');
+};
+
+/**
+ * Vérifier l'email avec le token reçu
+ * @param {string} token - Token de vérification email
+ * @returns {Promise}
+ */
+export const verifyEmail = (token) => {
+  return api.get(`/auth/verify-email/${token}`);
+};
+
+/**
+ * Renvoyer l'email de vérification
+ * @returns {Promise}
+ */
+export const resendVerificationEmail = () => {
+  return api.post('/auth/resend-verification');
+};
+
+// ===================================================================
+// EXPORT PAR DÉFAUT (objet groupé)
+// ===================================================================
+
+const authApi = {
+  register,
+  login,
+  logout,
+  refresh,
+  me,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  verifyToken,
+  getSessions,
+  deleteSession,
+  logoutAll,
+  verifyEmail,
+  resendVerificationEmail
+};
+
+export default authApi

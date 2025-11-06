@@ -1,5 +1,6 @@
 import { useState, forwardRef } from 'react';
 import PropTypes from 'prop-types';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home,
   CreditCard,
@@ -37,9 +38,9 @@ import Badge from '../ui/Badge';
 const Sidebar = forwardRef(({
   isOpen = true,
   onClose = () => {},
-  currentPath = '/',
   className = ''
 }, ref) => {
+  const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState(['main']);
 
   // Configuration du menu
@@ -138,14 +139,11 @@ const Sidebar = forwardRef(({
 
   // Vérifier si un item est actif
   const isActive = (path) => {
-    return currentPath === path;
+    return location.pathname === path;
   };
 
-  // Gérer clic sur item
-  const handleItemClick = (path) => {
-    console.log('Navigate to:', path);
-    // En production : navigate(path)
-    // Fermer sidebar sur mobile
+  // Gérer la fermeture sur mobile
+  const handleMobileClose = () => {
     if (window.innerWidth < 1024) {
       onClose();
     }
@@ -216,11 +214,12 @@ const Sidebar = forwardRef(({
                         const active = isActive(item.path);
 
                         return (
-                          <button
+                          <Link
                             key={index}
-                            onClick={() => handleItemClick(item.path)}
+                            to={item.path}
+                            onClick={handleMobileClose}
                             className={`
-                              w-full flex items-center gap-3 px-3 py-2 rounded-lg
+                              flex items-center gap-3 px-3 py-2 rounded-lg
                               transition-all duration-200
                               ${
                                 active
@@ -241,7 +240,7 @@ const Sidebar = forwardRef(({
                                 {item.badge}
                               </Badge>
                             )}
-                          </button>
+                          </Link>
                         );
                       })}
                     </div>
@@ -273,7 +272,6 @@ Sidebar.displayName = 'Sidebar';
 Sidebar.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
-  currentPath: PropTypes.string,
   className: PropTypes.string
 };
 

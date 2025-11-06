@@ -10,6 +10,7 @@ import Input from '../ui/Input';
  * - Indicateur required/optional
  * - Messages d'erreur
  * - Helper text
+ * - Icônes gauche/droite
  * - Toutes les features d'Input
  * 
  * @example
@@ -20,6 +21,19 @@ import Input from '../ui/Input';
  *   value={email}
  *   onChange={(e) => setEmail(e.target.value)}
  *   error={errors.email}
+ *   leftIcon={Mail}
+ *   required
+ * />
+ * 
+ * @example
+ * <FormInput
+ *   label="Password"
+ *   name="password"
+ *   type={showPassword ? 'text' : 'password'}
+ *   value={password}
+ *   onChange={(e) => setPassword(e.target.value)}
+ *   rightIcon={showPassword ? EyeOff : Eye}
+ *   onRightIconClick={() => setShowPassword(!showPassword)}
  *   required
  * />
  */
@@ -31,6 +45,11 @@ const FormInput = forwardRef(({
   
   // Validation
   error = '',
+  
+  // Icônes
+  leftIcon,
+  rightIcon,
+  onRightIconClick,
   
   // Props Input
   helperText = '',
@@ -68,6 +87,13 @@ const FormInput = forwardRef(({
         error={hasError}
         helperText={displayHelperText}
         required={required}
+        
+        // Props pour les icônes
+        leftIcon={leftIcon}
+        rightIcon={rightIcon}
+        onRightIconClick={onRightIconClick}
+        
+        // Accessibilité
         aria-required={required}
         aria-invalid={hasError}
         aria-describedby={
@@ -91,6 +117,11 @@ FormInput.propTypes = {
   
   // Validation
   error: PropTypes.string,
+  
+  // Icônes
+  leftIcon: PropTypes.elementType,
+  rightIcon: PropTypes.elementType,
+  onRightIconClick: PropTypes.func,
   
   // Props Input (héritées)
   helperText: PropTypes.string,

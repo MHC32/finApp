@@ -34,6 +34,7 @@ const Input = forwardRef(({
   // Icônes
   leftIcon: LeftIcon,
   rightIcon: RightIcon,
+  onRightIconClick, // ← AJOUT IMPORTANT
   
   // État
   state,
@@ -180,6 +181,13 @@ const Input = forwardRef(({
     onChange?.(e);
   };
 
+  // Handler pour le clic sur l'icône droite
+  const handleRightIconClick = (e) => {
+    if (onRightIconClick) {
+      onRightIconClick(e);
+    }
+  };
+
   // Icône d'état (error/success)
   const StateIcon = visualState === 'error' 
     ? AlertCircle 
@@ -279,17 +287,26 @@ const Input = forwardRef(({
             </div>
           )}
 
-          {/* Icône personnalisée droite */}
+          {/* Icône personnalisée droite - CLICKABLE */}
           {RightIcon && !StateIcon && (
-            <div className={`
-              transition-colors duration-200
-              ${isFocused && visualState === 'default'
-                ? 'text-haiti-teal dark:text-haiti-teal-light'
-                : 'text-gray-400 dark:text-gray-500'
-              }
-            `}>
+            <button
+              type="button"
+              onClick={handleRightIconClick} // ← UTILISATION ICI
+              disabled={disabled}
+              className={`
+                transition-colors duration-200
+                ${isFocused && visualState === 'default'
+                  ? 'text-haiti-teal dark:text-haiti-teal-light'
+                  : 'text-gray-400 dark:text-gray-500'
+                }
+                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:text-haiti-teal dark:hover:text-haiti-teal-light'}
+                focus:outline-none focus:ring-2 focus:ring-haiti-teal/20 rounded
+              `}
+              tabIndex={-1}
+              aria-label="Action sur l'icône"
+            >
               <RightIcon size={iconSizes[size]} />
-            </div>
+            </button>
           )}
 
           {/* Toggle password visibility */}
@@ -297,11 +314,13 @@ const Input = forwardRef(({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={disabled}
               className="
                 text-gray-400 hover:text-haiti-teal
                 dark:text-gray-500 dark:hover:text-haiti-teal-light
-                focus:outline-none
+                focus:outline-none focus:ring-2 focus:ring-haiti-teal/20 rounded
                 transition-colors duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
               tabIndex={-1}
               aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
@@ -357,7 +376,7 @@ const Input = forwardRef(({
 
 Input.displayName = 'Input';
 
-// PropTypes
+// PropTypes - AJOUTEZ onRightIconClick
 Input.propTypes = {
   // Props de base
   /** Type d'input HTML5 */
@@ -403,6 +422,8 @@ Input.propTypes = {
   leftIcon: PropTypes.elementType,
   /** Icône à droite (composant lucide-react) */
   rightIcon: PropTypes.elementType,
+  /** Fonction appelée au clic sur l'icône droite */
+  onRightIconClick: PropTypes.func, // ← AJOUT IMPORTANT
   /** État visuel (si pas error/success) */
   state: PropTypes.oneOf(['default', 'error', 'success']),
   /** Input prend toute la largeur */

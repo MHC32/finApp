@@ -2,6 +2,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
+import accountsReducer from './slices/accountSlice';
 
 // ===================================================================
 // CONFIGURATION STORE REDUX
@@ -10,7 +11,8 @@ import themeReducer from './slices/themeSlice';
 const store = configureStore({
   reducer: {
     auth: authReducer,
-    theme: themeReducer
+    theme: themeReducer,
+    accounts: accountsReducer,
     // Autres slices à ajouter ici au fur et à mesure :
     // accounts: accountsReducer,
     // transactions: transactionsReducer,
