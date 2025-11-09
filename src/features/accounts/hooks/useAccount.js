@@ -1,7 +1,7 @@
 // src/features/accounts/hooks/useAccount.js
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '../../../hooks/useToast'; // ← IMPORT CORRIGÉ
 import {
   createAccount,
   fetchAccounts,
@@ -31,7 +31,7 @@ import {
  */
 export const useAccount = () => {
   const dispatch = useDispatch();
-  const { showToast } = useToast();
+  const { success, error: toastError, info } = useToast(); // ← CORRECTION ICI
   
   // État global depuis Redux
   const {
@@ -80,27 +80,17 @@ export const useAccount = () => {
     // Gérer les erreurs globales du slice
     if (error) {
       console.log('🔍 useAccount - Erreur globale détectée:', error);
-      showToast({
-        type: 'error',
-        title: 'Erreur',
-        message: error,
-        duration: 5000
-      });
+      toastError(error); // ← CORRECTION ICI
       dispatch(clearError());
     }
 
     // Gérer les messages de succès du slice
     if (successMessage) {
       console.log('🔍 useAccount - Succès global détecté:', successMessage);
-      showToast({
-        type: 'success',
-        title: 'Succès',
-        message: successMessage,
-        duration: 3000
-      });
+      success(successMessage); // ← CORRECTION ICI
       dispatch(clearSuccess());
     }
-  }, [error, successMessage, dispatch, showToast]);
+  }, [error, successMessage, dispatch, toastError, success]);
 
   // ===================================================================
   // FONCTIONS PRINCIPALES
@@ -115,6 +105,7 @@ export const useAccount = () => {
     try {
       const result = await dispatch(createAccount(accountData)).unwrap();
       console.log('🔍 useAccount - Compte créé avec succès:', result);
+      success('Compte créé avec succès ! 🏦'); // ← CORRECTION ICI
       return { success: true, data: result };
     } catch (error) {
       console.error('❌ useAccount - Erreur création compte:', error);
@@ -166,6 +157,7 @@ export const useAccount = () => {
     try {
       const result = await dispatch(updateAccount({ accountId, updateData })).unwrap();
       console.log('🔍 useAccount - Compte mis à jour:', result);
+      success('Compte mis à jour avec succès ! ✏️'); // ← CORRECTION ICI
       return { success: true, data: result };
     } catch (error) {
       console.error('❌ useAccount - Erreur mise à jour compte:', error);
@@ -183,6 +175,7 @@ export const useAccount = () => {
     try {
       await dispatch(deleteAccount({ accountId, permanent })).unwrap();
       console.log('🔍 useAccount - Compte supprimé avec succès');
+      success('Compte supprimé avec succès ! 🗑️'); // ← CORRECTION ICI
       return { success: true };
     } catch (error) {
       console.error('❌ useAccount - Erreur suppression compte:', error);
@@ -203,6 +196,7 @@ export const useAccount = () => {
         adjustmentData: { amount, description }
       })).unwrap();
       console.log('🔍 useAccount - Solde ajusté:', result);
+      success('Solde ajusté avec succès ! 💰'); // ← CORRECTION ICI
       return { success: true, data: result };
     } catch (error) {
       console.error('❌ useAccount - Erreur ajustement solde:', error);
@@ -220,6 +214,7 @@ export const useAccount = () => {
     try {
       const result = await dispatch(setDefaultAccount(accountId)).unwrap();
       console.log('🔍 useAccount - Compte par défaut défini:', result);
+      success('Compte par défaut défini avec succès ! ⭐'); // ← CORRECTION ICI
       return { success: true, data: result };
     } catch (error) {
       console.error('❌ useAccount - Erreur définition compte par défaut:', error);
@@ -241,6 +236,7 @@ export const useAccount = () => {
         accountTypes: result?.accountTypes,
         currencies: result?.currencies
       });
+      info('Données supportées chargées 📊'); // ← CORRECTION ICI
       return { success: true, data: result };
     } catch (error) {
       console.error('❌ useAccount - Erreur chargement données supportées:', error);

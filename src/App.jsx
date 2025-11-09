@@ -7,8 +7,7 @@ import ThemeInitializer from './components/ThemeInitializer';
 import ToastContainer from './components/ui/ToastContainer';
 import useToast from './hooks/useToast';
 
-// CORRECTION : Importer directement AppRouter
-import AppRouter from './routes/AppRouter'; // ← Changement ici
+import AppRouter from './routes/AppRouter'; 
 
 function App() {
   const dispatch = useDispatch();

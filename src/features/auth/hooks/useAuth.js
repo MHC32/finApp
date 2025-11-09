@@ -10,8 +10,7 @@ import {
   clearError,
   clearSuccess
 } from '../../../store/slices/authSlice';
-// SUPPRIMER les imports qui n'existent plus
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '../../../hooks/useToast'; // ← IMPORT CORRIGÉ
 import { ROUTES } from '../../../utils/constants';
 
 /**
@@ -21,7 +20,7 @@ import { ROUTES } from '../../../utils/constants';
 export const useAuth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { success, error: toastError } = useToast(); // ← CORRECTION ICI
   
   // État global depuis Redux
   const { 
@@ -44,26 +43,16 @@ export const useAuth = () => {
   useEffect(() => {
     // Gérer les erreurs globales du slice
     if (error) {
-      showToast({
-        type: 'error',
-        title: 'Erreur',
-        message: error,
-        duration: 5000
-      });
+      toastError(error); // ← CORRECTION ICI
       dispatch(clearError());
     }
 
     // Gérer les messages de succès du slice
     if (successMessage) {
-      showToast({
-        type: 'success',
-        title: 'Succès',
-        message: successMessage,
-        duration: 3000
-      });
+      success(successMessage); // ← CORRECTION ICI
       dispatch(clearSuccess());
     }
-  }, [error, successMessage, dispatch, showToast]);
+  }, [error, successMessage, dispatch, toastError, success]);
 
   // ===================================================================
   // FONCTIONS D'AUTHENTIFICATION
@@ -77,12 +66,7 @@ export const useAuth = () => {
     const result = await dispatch(loginUser(credentials));
     
     if (loginUser.fulfilled.match(result)) {
-      showToast({
-        type: 'success',
-        title: 'Connexion réussie',
-        message: `Bon retour ${result.payload.user.firstName} ! 👋`,
-        duration: 3000
-      });
+      success(`Bon retour ${result.payload.user.firstName} ! 👋`); // ← CORRECTION ICI
       return { success: true, data: result.payload };
     } else {
       setLocalError(result.payload || 'Erreur de connexion');
@@ -98,12 +82,7 @@ export const useAuth = () => {
     const result = await dispatch(registerUser(userData));
     
     if (registerUser.fulfilled.match(result)) {
-      showToast({
-        type: 'success',
-        title: 'Inscription réussie',
-        message: `Bienvenue dans FinApp Haiti ${result.payload.user.firstName} ! 🇭🇹`,
-        duration: 3000
-      });
+      success(`Bienvenue dans FinApp Haiti ${result.payload.user.firstName} ! 🇭🇹`); // ← CORRECTION ICI
       return { success: true, data: result.payload };
     } else {
       setLocalError(result.payload || 'Erreur d\'inscription');
@@ -146,15 +125,6 @@ export const useAuth = () => {
   };
 
   // ===================================================================
-  // SUPPRIMER LES FONCTIONS QUI N'EXISTENT PLUS
-  // ===================================================================
-
-  // SUPPRIMER ces fonctions car elles ne sont plus dans authSlice:
-  // - requestPasswordReset (forgotPassword)
-  // - resetPassword  
-  // - changePassword
-
-  // ===================================================================
   // EXPORT DU HOOK
   // ===================================================================
 
@@ -171,11 +141,6 @@ export const useAuth = () => {
     register,
     logout,
     getProfile,
-    
-    // SUPPRIMER les exports qui n'existent plus:
-    // forgotPassword: requestPasswordReset,
-    // resetPassword,
-    // changePassword,
     
     // Utilitaires
     clearError: () => setLocalError('')
