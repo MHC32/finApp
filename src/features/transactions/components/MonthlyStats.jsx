@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 import { TRANSACTION_TYPES } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/format';
-import { useTransaction } from '../hooks/useTransaction';
-import Card from '../../ui/Card';
-import LineChart from '../../charts/LineChart';
-import Button from '../../ui/Button';
-import Select from '../../ui/Select';
-import Badge from '../../ui/Badge';
-import Loading from '../../ui/Loading';
+import { useTransaction } from '../hooks/useTransactions';
+import Card from '../../../components/ui/Card';
+import LineChart from '../../../components/charts/LineChart';
+import Button from '../../../components/ui/Button';
+import Select from '../../../components/ui/Select';
+import Badge from '../../../components/ui/Badge';
+import Loading from '../../../components/ui/Loading';
 
 /**
  * Composant MonthlyStats - Statistiques mensuelles avec graphiques

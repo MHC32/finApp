@@ -3,6 +3,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
 import accountsReducer from './slices/accountSlice';
+import transactionsReducer from './slices/transactionsSlice'; // ← AJOUTER CETTE LIGNE
 
 // ===================================================================
 // CONFIGURATION STORE REDUX
@@ -13,10 +14,10 @@ const store = configureStore({
     auth: authReducer,
     theme: themeReducer,
     accounts: accountsReducer,
+    transactions: transactionsReducer, // ← AJOUTER CETTE LIGNE
     // Autres slices à ajouter ici au fur et à mesure :
-    // accounts: accountsReducer,
-    // transactions: transactionsReducer,
     // budgets: budgetsReducer,
+    // sols: solsReducer,
     // etc.
   },
   

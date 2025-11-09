@@ -10,12 +10,12 @@ import {
   Upload
 } from 'lucide-react';
 import { TRANSACTION_CATEGORIES, TRANSACTION_TYPES, HAITI_BANKS } from '../../../utils/constants';
-import Button from '../../ui/Button';
-import Input from '../../ui/Input';
-import Select from '../../ui/Select';
-import FormDatePicker from '../../forms/FormDatePicker';
-import Card from '../../ui/Card';
-import Badge from '../../ui/Badge';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
+import FormDatePicker from '../../../components/forms/FormDatePicker';
+import Card from '../../../components/ui/Card';
+import Badge from '../../../components/ui/Badge';
 
 /**
  * Composant TransactionFilters - Filtres et recherche pour les transactions

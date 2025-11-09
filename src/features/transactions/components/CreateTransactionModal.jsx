@@ -11,16 +11,16 @@ import {
   TRANSACTION_TYPES, 
   HAITI_BANKS 
 } from '../../../utils/constants';
-import { useTransaction } from '../hooks/useTransaction';
-import Modal from '../../ui/Modal';
-import Button from '../../ui/Button';
-import FormInput from '../../forms/FormInput';
-import FormCurrencyInput from '../../forms/FormCurrencyInput';
-import FormSelect from '../../forms/FormSelect';
-import FormDatePicker from '../../forms/FormDatePicker';
-import FormTextarea from '../../forms/FormTextarea';
-import Radio from '../../ui/Radio';
-import Alert from '../../ui/Alert';
+import { useTransaction } from '../hooks/useTransactions';
+import Modal from '../../../components/ui/Modal';
+import Button from '../../../components/ui/Button';
+import FormInput from '../../../components/forms/FormInput';
+import FormCurrencyInput from '../../../components/forms/FormCurrencyInput';
+import FormSelect from '../../../components/forms/FormSelect';
+import FormDatePicker from '../../../components/forms/FormDatePicker';
+import FormTextarea from '../../../components/forms/FormTextarea';
+import Radio from '../../../components/ui/Radio';
+import Alert from '../../../components/ui/Alert';
 
 /**
  * Modal de création de transaction

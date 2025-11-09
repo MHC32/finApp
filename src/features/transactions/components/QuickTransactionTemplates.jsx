@@ -10,11 +10,11 @@ import {
 } from 'lucide-react';
 import { QUICK_TRANSACTION_TEMPLATES, TRANSACTION_CATEGORIES } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/format';
-import { useTransaction } from '../hooks/useTransaction';
-import Card from '../../ui/Card';
-import Button from '../../ui/Button';
-import Badge from '../../ui/Badge';
-import Modal from '../../ui/Modal';
+import { useTransaction } from '../hooks/useTransactions';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Badge from '../../../components/ui/Badge';
+import Modal from '../../../components/ui/Modal';
 
 /**
  * Composant QuickTransactionTemplates - Templates de transactions rapides
@@ -165,7 +165,7 @@ const QuickTransactionTemplates = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {/* Templates prédéfinis */}
           {allTemplates.map((template, index) => {
-            const categoryInfo = TRANSACTION_CATEGORIES[template.category] || TRANSACTION_CATEGORIES.other;
+            const categoryInfo = TRANSACTION_CATEGORIES[template.category] || TRANSACTION_CATEGORIES.autre;
             const isRecent = index >= QUICK_TRANSACTION_TEMPLATES.length;
             
             return (

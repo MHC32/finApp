@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 import { TRANSACTION_CATEGORIES, TRANSACTION_TYPES } from '../../../utils/constants';
 import { formatCurrency, formatDate } from '../../../utils/format';
-import Avatar from '../../ui/Avatar';
-import Badge from '../../ui/Badge';
-import Button from '../../ui/Button';
-import Card from '../../ui/Card';
+import Avatar from '../../../components/ui/Avatar';
+import Badge from '../../../components/ui/Badge';
+import Button from '../../../components/ui/Button';
+import Card from '../../../components/ui/Card';
 
 /**
  * Composant TransactionCard - Carte d'affichage d'une transaction
@@ -41,7 +41,7 @@ const TransactionCard = ({
   const [showFullDescription, setShowFullDescription] = useState(false);
   
   const isDark = mode === 'dark';
-  const categoryInfo = TRANSACTION_CATEGORIES[transaction.category] || TRANSACTION_CATEGORIES.other;
+  const categoryInfo = TRANSACTION_CATEGORIES[transaction.category] || TRANSACTION_CATEGORIES.autre;
   
   // Icône selon le type
   const getTypeIcon = () => {

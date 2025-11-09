@@ -20,8 +20,12 @@ import DashboardPage from '../features/dashboard/pages/DashboardPage';
 import AccountsListPage from '../features/accounts/pages/AccountsListPage';
 import AccountDetailPage from '../features/accounts/pages/AccountDetailsPage';
 
+// Pages Transactions (NOUVELLES !)
+import TransactionsListPage from '../features/transactions/pages/TransactionsListPage';
+import TransactionDetailsPage from '../features/transactions/pages/TransactionDetailsPage';
+import TransactionAnalyticsPage from '../features/transactions/pages/TransactionAnalyticsPage';
+
 // Pages privées (À CRÉER - commentées pour l'instant)
-// import TransactionsListPage from '../features/transactions/pages/TransactionsListPage';
 // import BudgetsListPage from '../features/budgets/pages/BudgetsListPage';
 // import SolsListPage from '../features/sols/pages/SolsListPage';
 // import ProfilePage from '../features/profile/pages/ProfilePage';
@@ -108,9 +112,8 @@ export const routeConfig = [
   },
 
   // ===================================================================
-  // ROUTES PRIVÉES (À CRÉER - COMMENTÉES)
+  // ROUTES TRANSACTIONS (NOUVELLES !)
   // ===================================================================
-  /*
   {
     id: 'transactions',
     path: ROUTES.TRANSACTIONS,
@@ -121,6 +124,31 @@ export const routeConfig = [
       permission: 'transactions:view'
     }
   },
+  {
+    id: 'transaction-details',
+    path: ROUTES.TRANSACTIONS_DETAIL, // /transactions/:id
+    element: <TransactionDetailsPage />,
+    meta: {
+      type: 'private',
+      layout: 'main',
+      permission: 'transactions:view'
+    }
+  },
+  {
+    id: 'transaction-analytics',
+    path: '/transactions/analytics', // Ajouter dans constants si nécessaire
+    element: <TransactionAnalyticsPage />,
+    meta: {
+      type: 'private',
+      layout: 'main',
+      permission: 'transactions:view'
+    }
+  },
+
+  // ===================================================================
+  // ROUTES PRIVÉES (À CRÉER - COMMENTÉES)
+  // ===================================================================
+  /*
   {
     id: 'budgets',
     path: ROUTES.BUDGETS,
@@ -282,12 +310,6 @@ export const getActiveRoutes = () =>
  * Obtenir les routes à créer (pour planification)
  */
 export const getRoutesToCreate = () => [
-  {
-    id: 'transactions',
-    path: ROUTES.TRANSACTIONS,
-    name: 'Transactions',
-    feature: 'transactions'
-  },
   {
     id: 'budgets',
     path: ROUTES.BUDGETS,

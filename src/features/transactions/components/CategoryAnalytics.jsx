@@ -4,15 +4,15 @@ import PropTypes from 'prop-types';
 import { TrendingUp, Filter, Download } from 'lucide-react';
 import { TRANSACTION_CATEGORIES, TRANSACTION_TYPES } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/format';
-import { useTransaction } from '../hooks/useTransaction';
-import Card from '../../ui/Card';
-import DonutChart from '../../charts/DonutChart';
-import Button from '../../ui/Button';
-import Select from '../../ui/Select';
-import FormDatePicker from '../../forms/FormDatePicker';
-import ProgressBar from '../../ui/ProgressBar';
-import Badge from '../../ui/Badge';
-import Loading from '../../ui/Loading';
+import { useTransaction } from '../hooks/useTransactions';
+import Card from '../../../components/ui/Card';
+import DonutChart from '../../../components/charts/DonutChart';
+import Button from '../../../components/ui/Button';
+import Select from '../../../components/ui/Select';
+import FormDatePicker from '../../../components/forms/FormDatePicker';
+import ProgressBar from '../../../components/ui/ProgressBar';
+import Badge from '../../../components/ui/Badge';
+import Loading from '../../../components/ui/Loading';
 
 /**
  * Composant CategoryAnalytics - Analytics par catégorie avec graphiques
@@ -107,7 +107,7 @@ const CategoryAnalytics = ({
     }
 
     return categoryAnalytics.map(item => {
-      const categoryInfo = TRANSACTION_CATEGORIES[item._id] || TRANSACTION_CATEGORIES.other;
+      const categoryInfo = TRANSACTION_CATEGORIES[item._id] || TRANSACTION_CATEGORIES.autre;
       return {
         name: categoryInfo.name,
         value: item.totalAmount,

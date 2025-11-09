@@ -1,3 +1,4 @@
+// src/features/transactions/hooks/useTransactions.js
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
@@ -25,7 +26,7 @@ import { useToast } from '../../../hooks/useToast';
  */
 export const useTransaction = () => {
   const dispatch = useDispatch();
-  const { showToast, success, error: toastError } = useToast(); // ← CORRECTION ICI
+  const { success, error } = useToast(); // Fonction pour afficher les toasts
   
   // État global depuis Redux
   const { 
@@ -43,7 +44,7 @@ export const useTransaction = () => {
     deleting,
     analyticsLoading,
     searchLoading,
-    error,
+    error: sliceError,        // ← RENOMMÉ pour éviter conflit avec la fonction error
     successMessage
   } = useSelector(state => state.transactions);
   
@@ -55,17 +56,17 @@ export const useTransaction = () => {
 
   useEffect(() => {
     // Gérer les erreurs globales du slice
-    if (error) {
-      toastError(error); // ← CORRECTION ICI
+    if (sliceError) {                      // ← Utilise sliceError
+      error(sliceError);                   // ← Appelle la fonction error() avec sliceError
       dispatch(clearError());
     }
 
     // Gérer les messages de succès du slice
     if (successMessage) {
-      success(successMessage); // ← CORRECTION ICI
+      success(successMessage);
       dispatch(clearSuccess());
     }
-  }, [error, successMessage, dispatch, toastError, success]);
+  }, [sliceError, successMessage, dispatch, error, success]); // ← Dépendances correctes
 
   // ===================================================================
   // FONCTIONS DE GESTION DES TRANSACTIONS
@@ -79,7 +80,7 @@ export const useTransaction = () => {
     const result = await dispatch(createTransaction(transactionData));
     
     if (createTransaction.fulfilled.match(result)) {
-      success('Votre transaction a été enregistrée avec succès ! 💰'); // ← CORRECTION ICI
+      success('Votre transaction a été enregistrée avec succès ! 💰');
       return { success: true, data: result.payload };
     } else {
       setLocalError(result.payload || 'Erreur lors de la création');
@@ -125,7 +126,7 @@ export const useTransaction = () => {
     const result = await dispatch(updateTransaction({ transactionId, updateData }));
     
     if (updateTransaction.fulfilled.match(result)) {
-      success('Votre transaction a été modifiée avec succès ! ✏️'); // ← CORRECTION ICI
+      success('Votre transaction a été modifiée avec succès ! ✏️');
       return { success: true, data: result.payload };
     } else {
       setLocalError(result.payload || 'Erreur lors de la mise à jour');
@@ -141,7 +142,7 @@ export const useTransaction = () => {
     const result = await dispatch(deleteTransaction({ transactionId, options }));
     
     if (deleteTransaction.fulfilled.match(result)) {
-      success('Votre transaction a été supprimée avec succès ! 🗑️'); // ← CORRECTION ICI
+      success('Votre transaction a été supprimée avec succès ! 🗑️');
       return { success: true, data: result.payload };
     } else {
       setLocalError(result.payload || 'Erreur lors de la suppression');
@@ -157,7 +158,7 @@ export const useTransaction = () => {
     const result = await dispatch(duplicateTransaction({ transactionId, duplicateData }));
     
     if (duplicateTransaction.fulfilled.match(result)) {
-      success('Votre transaction a été dupliquée avec succès ! 📋'); // ← CORRECTION ICI
+      success('Votre transaction a été dupliquée avec succès ! 📋');
       return { success: true, data: result.payload };
     } else {
       setLocalError(result.payload || 'Erreur lors de la duplication');

@@ -16,11 +16,11 @@ import {
 } from 'lucide-react';
 import { TRANSACTION_CATEGORIES, TRANSACTION_TYPES } from '../../../utils/constants';
 import { formatCurrency, formatDate } from '../../../utils/format';
-import Card from '../../ui/Card';
-import Button from '../../ui/Button';
-import Badge from '../../ui/Badge';
-import Avatar from '../../ui/Avatar';
-import Modal from '../../ui/Modal';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Badge from '../../../components/ui/Badge';
+import Avatar from '../../../components/ui/Avatar';
+import Modal from '../../../components/ui/Modal';
 
 /**
  * Composant TransactionDetails - Détails complets d'une transaction
@@ -48,7 +48,7 @@ const TransactionDetails = ({
   const [showReceipt, setShowReceipt] = useState(false);
   
   const isDark = mode === 'dark';
-  const categoryInfo = TRANSACTION_CATEGORIES[transaction.category] || TRANSACTION_CATEGORIES.other;
+  const categoryInfo = TRANSACTION_CATEGORIES[transaction.category] || TRANSACTION_CATEGORIES.autre;
 
   // Icône selon le type
   const getTypeIcon = () => {

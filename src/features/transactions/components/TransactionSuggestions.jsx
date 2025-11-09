@@ -132,7 +132,7 @@ const TransactionSuggestions = ({
       {/* Liste des suggestions */}
       <div className="space-y-3">
         {suggestions.map((suggestion, index) => {
-          const categoryInfo = TRANSACTION_CATEGORIES[suggestion.category] || TRANSACTION_CATEGORIES.other;
+          const categoryInfo = TRANSACTION_CATEGORIES[suggestion.category] || TRANSACTION_CATEGORIES.autre;
           
           return (
             <Card
