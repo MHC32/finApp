@@ -2,9 +2,10 @@
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { initTheme } from './store/slices/themeSlice';
-import { fetchUser } from './store/slices/authSlice';
+import { fetchUser, restoreAuth } from './store/slices/authSlice';
 import ThemeInitializer from './components/ThemeInitializer';
 import ToastContainer from './components/ui/ToastContainer';
+import TokenExpiryModal from './components/TokenExpiryModal';
 import useToast from './hooks/useToast';
 
 import AppRouter from './routes/AppRouter'; 
@@ -14,11 +15,24 @@ function App() {
   const { toasts, removeToast } = useToast();
 
   useEffect(() => {
+    // Initialiser le thème
     dispatch(initTheme());
     
-    const token = localStorage.getItem('token');
+    // Restaurer l'authentification depuis le localStorage
+    dispatch(restoreAuth());
+    
+    // Vérifier si un token existe et récupérer l'utilisateur
+    const token = localStorage.getItem('auth');
     if (token) {
-      dispatch(fetchUser());
+      try {
+        const authData = JSON.parse(token);
+        if (authData.token && authData.user) {
+          dispatch(fetchUser());
+        }
+      } catch (error) {
+        console.error('Erreur lors de la restauration de l\'auth:', error);
+        localStorage.removeItem('auth');
+      }
     }
   }, [dispatch]);
 
@@ -30,6 +44,7 @@ function App() {
         toasts={toasts} 
         onRemove={removeToast} 
       />
+      <TokenExpiryModal />
     </>
   );
 }
