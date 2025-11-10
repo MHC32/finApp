@@ -1,4 +1,3 @@
-// src/features/transactions/pages/TransactionsListPage.jsx
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +18,6 @@ import TransactionFilters from '../components/TransactionFilters';
 import TransactionCard from '../components/TransactionCard';
 import CreateTransactionModal from '../components/CreateTransactionModal';
 import EditTransactionModal from '../components/EditTransactionModal';
-import TransactionDetails from '../components/TransactionDetails';
 import QuickTransactionTemplates from '../components/QuickTransactionTemplates';
 import { formatCurrency } from '../../../utils/format';
 
@@ -50,7 +48,6 @@ const TransactionsListPage = () => {
   // États locaux pour les modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   // Charger les données au montage
@@ -99,11 +96,6 @@ const TransactionsListPage = () => {
     if (result.success) {
       loadData();
     }
-  };
-
-  const handleDetailsClick = (transaction) => {
-    setSelectedTransaction(transaction);
-    setIsDetailsModalOpen(true);
   };
 
   const handleTemplateSelect = (transactionData) => {
@@ -316,7 +308,7 @@ const TransactionsListPage = () => {
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
                         onDuplicate={handleDuplicateClick}
-                        onClick={() => handleDetailsClick(transaction)}
+                        // La navigation se fait maintenant via le click sur la carte entière
                       />
                     ))}
                   </div>
@@ -347,31 +339,17 @@ const TransactionsListPage = () => {
       />
 
       {selectedTransaction && (
-        <>
-          <EditTransactionModal
-            transaction={selectedTransaction}
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedTransaction(null);
-            }}
-            onSuccess={handleEditSuccess}
-            onDelete={handleDeleteClick}
-            accounts={accounts}
-          />
-
-          <TransactionDetails
-            transaction={selectedTransaction}
-            isOpen={isDetailsModalOpen}
-            onClose={() => {
-              setIsDetailsModalOpen(false);
-              setSelectedTransaction(null);
-            }}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteClick}
-            onDuplicate={handleDuplicateClick}
-          />
-        </>
+        <EditTransactionModal
+          transaction={selectedTransaction}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedTransaction(null);
+          }}
+          onSuccess={handleEditSuccess}
+          onDelete={handleDeleteClick}
+          accounts={accounts}
+        />
       )}
     </div>
   );

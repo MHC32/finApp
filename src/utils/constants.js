@@ -595,6 +595,7 @@ export const ROUTES = {
   TRANSACTIONS: '/transactions',
   TRANSACTIONS_NEW: '/transactions/new',
   TRANSACTIONS_DETAIL: '/transactions/:id',
+  TRANSACTIONS_ANALYTICS: '/transactions/analytics',
   
   // Budgets
   BUDGETS: '/budgets',

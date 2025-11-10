@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
 import { 
@@ -23,15 +23,7 @@ import Radio from '../../../components/ui/Radio';
 import Alert from '../../../components/ui/Alert';
 
 /**
- * Modal de création de transaction
- * 
- * @example
- * <CreateTransactionModal
- *   isOpen={isCreateModalOpen}
- *   onClose={() => setIsCreateModalOpen(false)}
- *   onSuccess={handleTransactionCreated}
- *   defaultValues={defaultValues}
- * />
+ * Modal de création de transaction - COMPLÈTEMENT CORRIGÉ
  */
 const CreateTransactionModal = ({
   isOpen,
@@ -45,7 +37,7 @@ const CreateTransactionModal = ({
   const { mode } = useSelector((state) => state.theme);
   
   const [formData, setFormData] = useState({
-    type: TRANSACTION_TYPES.EXPENSE,
+    type: TRANSACTION_TYPES.expense.code, // CORRECTION: utiliser .code
     amount: '',
     currency: 'HTG',
     description: '',
@@ -61,46 +53,87 @@ const CreateTransactionModal = ({
   const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
 
+  // Debug: surveiller les changements de type
+  useEffect(() => {
+    console.log('=== DEBUG FORM DATA ===');
+    console.log('🎯 formData.type:', formData.type);
+    console.log('📋 Type de formData.type:', typeof formData.type);
+    console.log('🔍 Valeur complète formData:', formData);
+  }, [formData, formData.type]);
+
   // Réinitialiser le formulaire quand le modal s'ouvre
   useEffect(() => {
     if (isOpen) {
-      setFormData(prev => ({
-        ...prev,
-        ...defaultValues,
-        date: defaultValues.date || new Date().toISOString().split('T')[0]
-      }));
+      setFormData({
+        type: defaultValues.type || TRANSACTION_TYPES.expense.code, // CORRECTION: utiliser .code
+        amount: defaultValues.amount?.toString() || '',
+        currency: defaultValues.currency || 'HTG',
+        description: defaultValues.description || '',
+        category: defaultValues.category || '',
+        subcategory: defaultValues.subcategory || '',
+        account: defaultValues.account || '',
+        toAccount: defaultValues.toAccount || '',
+        date: defaultValues.date || new Date().toISOString().split('T')[0],
+        notes: defaultValues.notes || '',
+        tags: defaultValues.tags || []
+      });
       setErrors({});
       setCurrentStep(1);
     }
-  }, [isOpen, defaultValues]);
+  }, [isOpen]);
 
-  // Options pour les selects
-  const categoryOptions = Object.entries(TRANSACTION_CATEGORIES)
-    .filter(([key, category]) => category.type === 'both' || category.type === formData.type)
-    .map(([key, category]) => ({
-      value: key,
-      label: category.name,
-      color: category.color
+  // CORRECTION : Options pour les catégories selon le type
+  const categoryOptions = useMemo(() => {
+    console.log('🔍 Calcul des catégories pour type:', formData.type);
+    
+    const filteredCategories = Object.entries(TRANSACTION_CATEGORIES)
+      .filter(([key, category]) => {
+        // CORRECTION : Logique de compatibilité améliorée
+        const isCompatible = 
+          category.type === 'both' || 
+          category.type === formData.type ||
+          (formData.type === 'expense' && category.type === 'expense') ||
+          (formData.type === 'income' && category.type === 'income');
+        
+        console.log(`📁 ${category.name}: type=${category.type}, compatible=${isCompatible}`);
+        return isCompatible;
+      })
+      .map(([key, category]) => ({
+        value: key,
+        label: category.name,
+        color: category.color
+      }));
+    
+    console.log('✅ Catégories filtrées:', filteredCategories.map(c => c.label));
+    return filteredCategories;
+  }, [formData.type]);
+
+  // Options pour les comptes
+  const accountOptions = useMemo(() => {
+    return accounts.map(account => ({
+      value: account._id,
+      label: `${account.name} (${HAITI_BANKS[account.bank]?.name || account.bank}) - ${account.currentBalance} ${account.currency}`,
+      balance: account.currentBalance
     }));
+  }, [accounts]);
 
-  const accountOptions = accounts.map(account => ({
-    value: account._id,
-    label: `${account.name} (${HAITI_BANKS[account.bank]?.name || account.bank}) - ${account.currentBalance} ${account.currency}`,
-    balance: account.currentBalance
-  }));
+  // Options pour les comptes destinataires
+  const toAccountOptions = useMemo(() => {
+    return accountOptions.filter(acc => acc.value !== formData.account);
+  }, [accountOptions, formData.account]);
 
-  const toAccountOptions = accountOptions.filter(acc => acc.value !== formData.account);
-
-  // Sous-catégories selon la catégorie sélectionnée
-  const subcategoryOptions = formData.category 
-    ? (TRANSACTION_CATEGORIES[formData.category]?.subcategories || []).map(sub => ({
-        value: sub,
-        label: sub
-      }))
-    : [];
+  // Sous-catégories
+  const subcategoryOptions = useMemo(() => {
+    return formData.category && TRANSACTION_CATEGORIES[formData.category]?.subcategories
+      ? TRANSACTION_CATEGORIES[formData.category].subcategories.map(sub => ({
+          value: sub,
+          label: sub
+        }))
+      : [];
+  }, [formData.category]);
 
   // Validation
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors = {};
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -119,20 +152,27 @@ const CreateTransactionModal = ({
       newErrors.account = 'Le compte est requis';
     }
 
-    if (formData.type === TRANSACTION_TYPES.TRANSFER && !formData.toAccount) {
+    // CORRECTION: Vérifier que le type est présent
+    if (!formData.type) {
+      newErrors.type = 'Le type de transaction est requis';
+    }
+
+    if (formData.type === 'transfer' && !formData.toAccount) {
       newErrors.toAccount = 'Le compte destinataire est requis pour un transfert';
     }
 
-    if (formData.type === TRANSACTION_TYPES.TRANSFER && formData.account === formData.toAccount) {
+    if (formData.type === 'transfer' && formData.account === formData.toAccount) {
       newErrors.toAccount = 'Impossible de transférer vers le même compte';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData]);
 
-  // Gérer les changements
-  const handleChange = (field, value) => {
+  // Gérer les changements - CORRIGÉ AVEC CONSOLE.LOG
+  const handleChange = useCallback((field, value) => {
+    console.log(`🔄 handleChange appelé - field: ${field}, value:`, value);
+    
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
@@ -140,8 +180,20 @@ const CreateTransactionModal = ({
       if (field === 'category') {
         newData.subcategory = '';
       }
-      if (field === 'type' && value !== TRANSACTION_TYPES.TRANSFER) {
-        newData.toAccount = '';
+      
+      // CORRECTION : Gestion du changement de type
+      if (field === 'type') {
+        console.log('🎯 Type changé à:', value);
+        if (value !== 'transfer') {
+          newData.toAccount = '';
+        }
+        // Réinitialiser la catégorie si incompatible
+        if (newData.category && 
+            TRANSACTION_CATEGORIES[newData.category]?.type !== 'both' && 
+            TRANSACTION_CATEGORIES[newData.category]?.type !== value) {
+          newData.category = '';
+          newData.subcategory = '';
+        }
       }
       
       return newData;
@@ -151,44 +203,60 @@ const CreateTransactionModal = ({
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
+  }, [errors]);
 
-  // Soumettre le formulaire
+  // Soumettre le formulaire - CORRIGÉ
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    console.log('=== TENTATIVE DE SOUMISSION ===');
+    console.log('📋 Données avant validation:', formData);
+    
+    if (!validateForm()) {
+      console.log('❌ Validation échouée, erreurs:', errors);
+      return;
+    }
 
     try {
+      // CORRECTION: Inclure explicitement tous les champs
       const transactionData = {
-        ...formData,
+        type: formData.type,
         amount: parseFloat(formData.amount),
-        tags: Array.isArray(formData.tags) ? formData.tags : formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        currency: formData.currency,
+        description: formData.description.trim(),
+        category: formData.category,
+        account: formData.account,
+        date: formData.date,
+        // Champs optionnels
+        ...(formData.subcategory && { subcategory: formData.subcategory }),
+        ...(formData.notes && { notes: formData.notes.trim() }),
+        ...(formData.tags && { 
+          tags: Array.isArray(formData.tags) 
+            ? formData.tags 
+            : formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        }),
+        // Pour les transferts seulement
+        ...(formData.type === 'transfer' && formData.toAccount && { toAccount: formData.toAccount })
       };
 
+      console.log('📤 DONNÉES ENVOYÉES AU SERVEUR:', JSON.stringify(transactionData, null, 2));
+      
       const result = await createTransaction(transactionData);
       
       if (result.success) {
+        console.log('✅ Transaction créée avec succès!');
         onSuccess?.(result.data);
         onClose();
+      } else {
+        console.log('❌ Erreur du serveur:', result);
       }
     } catch (error) {
-      console.error('Erreur création transaction:', error);
+      console.error('💥 Erreur création transaction:', error);
     }
   };
 
-  // Étapes suivantes/précédentes
-  const nextStep = () => {
-    if (currentStep === 1 && validateStep1()) {
-      setCurrentStep(2);
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep(1);
-  };
-
-  const validateStep1 = () => {
+  // Validation étape 1
+  const validateStep1 = useCallback(() => {
     const stepErrors = {};
     
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -200,10 +268,29 @@ const CreateTransactionModal = ({
     if (!formData.account) {
       stepErrors.account = 'Le compte est requis';
     }
+    // CORRECTION: Vérifier le type aussi
+    if (!formData.type) {
+      stepErrors.type = 'Le type de transaction est requis';
+    }
 
     setErrors(stepErrors);
     return Object.keys(stepErrors).length === 0;
-  };
+  }, [formData]);
+
+  // Navigation entre étapes
+  const nextStep = useCallback(() => {
+    console.log('➡️ Tentative de passage à l\'étape 2');
+    if (currentStep === 1 && validateStep1()) {
+      console.log('✅ Validation étape 1 réussie, passage à étape 2');
+      setCurrentStep(2);
+    } else {
+      console.log('❌ Validation étape 1 échouée');
+    }
+  }, [currentStep, validateStep1]);
+
+  const prevStep = useCallback(() => {
+    setCurrentStep(1);
+  }, []);
 
   return (
     <Modal
@@ -240,29 +327,55 @@ const CreateTransactionModal = ({
         {/* Étape 1: Informations de base */}
         {currentStep === 1 && (
           <div className="space-y-4 animate-fadeIn">
-            {/* Type de transaction */}
+            {/* Type de transaction - COMPLÈTEMENT CORRIGÉ */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Type de transaction
               </label>
               <Radio.Group
                 value={formData.type}
-                onChange={(value) => handleChange('type', value)}
+                onChange={(value) => {
+                  console.log('=== CLIC SUR RADIO ===');
+                  console.log('🎯 Valeur reçue:', value);
+                  console.log('📋 Type de valeur:', typeof value);
+                  
+                  // CORRECTION: S'assurer que c'est bien une string
+                  const finalValue = typeof value === 'object' ? value.code : value;
+                  
+                  console.log('✅ Valeur finale envoyée:', finalValue);
+                  handleChange('type', finalValue);
+                }}
                 orientation="horizontal"
+                name="transactionType"
+                color="teal"
               >
                 <Radio 
-                  value={TRANSACTION_TYPES.EXPENSE} 
-                  label="Dépense" 
+                  value={TRANSACTION_TYPES.expense.code} 
+                  label={TRANSACTION_TYPES.expense.name} 
+                  description="Argent qui sort"
                 />
                 <Radio 
-                  value={TRANSACTION_TYPES.INCOME} 
-                  label="Revenu" 
+                  value={TRANSACTION_TYPES.income.code} 
+                  label={TRANSACTION_TYPES.income.name} 
+                  description="Argent qui entre"
                 />
                 <Radio 
-                  value={TRANSACTION_TYPES.TRANSFER} 
-                  label="Transfert" 
+                  value={TRANSACTION_TYPES.transfer.code} 
+                  label={TRANSACTION_TYPES.transfer.name} 
+                  description="Entre comptes"
                 />
               </Radio.Group>
+              
+              {/* Debug affiché à l'écran */}
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+                <strong>Debug Type:</strong> <code>{formData.type}</code> | 
+                <strong> Status:</strong> {formData.type ? '✅ Sélectionné' : '❌ Manquant'}
+              </div>
+              
+              {/* Affichage des erreurs de type */}
+              {errors.type && (
+                <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.type}</p>
+              )}
             </div>
 
             {/* Montant et devise */}
@@ -311,7 +424,7 @@ const CreateTransactionModal = ({
             />
 
             {/* Compte destinataire (transfert seulement) */}
-            {formData.type === TRANSACTION_TYPES.TRANSFER && (
+            {formData.type === 'transfer' && (
               <FormSelect
                 label="Compte destinataire"
                 name="toAccount"
@@ -329,7 +442,7 @@ const CreateTransactionModal = ({
         {/* Étape 2: Catégorisation et détails */}
         {currentStep === 2 && (
           <div className="space-y-4 animate-fadeIn">
-            {/* Catégorie et sous-catégorie */}
+            {/* Catégorie et sous-catégorie - CORRIGÉ */}
             <div className="grid grid-cols-2 gap-4">
               <FormSelect
                 label="Catégorie"
@@ -349,7 +462,7 @@ const CreateTransactionModal = ({
                 value={formData.subcategory}
                 onChange={(value) => handleChange('subcategory', value)}
                 placeholder="Sous-catégorie (optionnel)"
-                disabled={!formData.category}
+                disabled={!formData.category || subcategoryOptions.length === 0}
               />
             </div>
 
@@ -376,7 +489,7 @@ const CreateTransactionModal = ({
             />
 
             {/* Avertissement solde insuffisant */}
-            {formData.type === TRANSACTION_TYPES.EXPENSE && formData.account && (
+            {formData.type === 'expense' && formData.account && (
               <Alert
                 type="warning"
                 variant="subtle"

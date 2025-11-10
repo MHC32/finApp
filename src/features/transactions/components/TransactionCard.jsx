@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { 
   Edit3, 
@@ -20,14 +21,7 @@ import Card from '../../../components/ui/Card';
 
 /**
  * Composant TransactionCard - Carte d'affichage d'une transaction
- * 
- * @example
- * <TransactionCard
- *   transaction={transaction}
- *   onEdit={handleEdit}
- *   onDelete={handleDelete}
- *   onDuplicate={handleDuplicate}
- * />
+ * Maintenant cliquable pour aller vers la page de détails
  */
 const TransactionCard = ({ 
   transaction, 
@@ -37,6 +31,7 @@ const TransactionCard = ({
   showActions = true,
   className = '' 
 }) => {
+  const navigate = useNavigate();
   const { mode } = useSelector((state) => state.theme);
   const [showFullDescription, setShowFullDescription] = useState(false);
   
@@ -46,11 +41,11 @@ const TransactionCard = ({
   // Icône selon le type
   const getTypeIcon = () => {
     switch (transaction.type) {
-      case TRANSACTION_TYPES.INCOME:
+      case TRANSACTION_TYPES.income.code:
         return <ArrowUpRight className="w-4 h-4 text-green-600 dark:text-green-400" />;
-      case TRANSACTION_TYPES.EXPENSE:
+      case TRANSACTION_TYPES.expense.code:
         return <ArrowDownLeft className="w-4 h-4 text-red-600 dark:text-red-400" />;
-      case TRANSACTION_TYPES.TRANSFER:
+      case TRANSACTION_TYPES.transfer.code:
         return <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
       default:
         return null;
@@ -60,11 +55,11 @@ const TransactionCard = ({
   // Couleur du montant selon le type
   const getAmountColor = () => {
     switch (transaction.type) {
-      case TRANSACTION_TYPES.INCOME:
+      case TRANSACTION_TYPES.income.code:
         return 'text-green-600 dark:text-green-400';
-      case TRANSACTION_TYPES.EXPENSE:
+      case TRANSACTION_TYPES.expense.code:
         return 'text-red-600 dark:text-red-400';
-      case TRANSACTION_TYPES.TRANSFER:
+      case TRANSACTION_TYPES.transfer.code:
         return 'text-blue-600 dark:text-blue-400';
       default:
         return 'text-gray-600 dark:text-gray-400';
@@ -74,18 +69,24 @@ const TransactionCard = ({
   // Signe du montant
   const getAmountSign = () => {
     switch (transaction.type) {
-      case TRANSACTION_TYPES.INCOME:
+      case TRANSACTION_TYPES.income.code:
         return '+';
-      case TRANSACTION_TYPES.EXPENSE:
+      case TRANSACTION_TYPES.expense.code:
         return '-';
-      case TRANSACTION_TYPES.TRANSFER:
+      case TRANSACTION_TYPES.transfer.code:
         return '→';
       default:
         return '';
     }
   };
 
-  const toggleDescription = () => {
+  // Navigation vers la page de détails
+  const handleCardClick = () => {
+    navigate(`/transactions/${transaction._id}`);
+  };
+
+  const toggleDescription = (e) => {
+    e.stopPropagation();
     setShowFullDescription(!showFullDescription);
   };
 
@@ -100,7 +101,9 @@ const TransactionCard = ({
     <Card 
       variant="glass" 
       hoverable 
-      className={`transition-all duration-200 ${className}`}
+      clickable
+      onClick={handleCardClick}
+      className={`transition-all duration-200 hover:shadow-md ${className}`}
     >
       <div className="flex items-start justify-between">
         {/* Left Section - Icon & Main Info */}
@@ -128,11 +131,11 @@ const TransactionCard = ({
                 <Badge 
                   size="sm" 
                   color={
-                    transaction.type === TRANSACTION_TYPES.INCOME ? 'green' :
-                    transaction.type === TRANSACTION_TYPES.EXPENSE ? 'red' : 'blue'
+                    transaction.type === TRANSACTION_TYPES.income.code ? 'green' :
+                    transaction.type === TRANSACTION_TYPES.expense.code ? 'red' : 'blue'
                   }
                 >
-                  {transaction.type}
+                  {TRANSACTION_TYPES[transaction.type]?.name || transaction.type}
                 </Badge>
                 
                 {transaction.isRecurring && (
@@ -230,7 +233,10 @@ const TransactionCard = ({
               variant="ghost"
               size="sm"
               icon={Edit3}
-              onClick={() => onEdit(transaction)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(transaction);
+              }}
               className="hover:bg-teal-50 dark:hover:bg-teal-900/20"
             />
             
@@ -238,7 +244,10 @@ const TransactionCard = ({
               variant="ghost"
               size="sm"
               icon={Copy}
-              onClick={() => onDuplicate(transaction)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate(transaction);
+              }}
               className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
             />
             
@@ -246,7 +255,10 @@ const TransactionCard = ({
               variant="ghost"
               size="sm"
               icon={Trash2}
-              onClick={() => onDelete(transaction)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(transaction);
+              }}
               className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
             />
           </div>
@@ -260,7 +272,7 @@ TransactionCard.propTypes = {
   transaction: PropTypes.shape({
     _id: PropTypes.string.isRequired,
     amount: PropTypes.number.isRequired,
-    type: PropTypes.oneOf(Object.values(TRANSACTION_TYPES)).isRequired,
+    type: PropTypes.oneOf(['income', 'expense', 'transfer']).isRequired,
     description: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     subcategory: PropTypes.string,
