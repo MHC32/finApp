@@ -32,6 +32,7 @@ const createRouteElements = () => {
       element = (
         <PrivateRoute>
           <AdminRoute>
+          
             {element}
           </AdminRoute>
         </PrivateRoute>

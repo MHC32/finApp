@@ -20,13 +20,19 @@ import DashboardPage from '../features/dashboard/pages/DashboardPage';
 import AccountsListPage from '../features/accounts/pages/AccountsListPage';
 import AccountDetailPage from '../features/accounts/pages/AccountDetailsPage';
 
-// Pages Transactions (NOUVELLES !)
+// Pages Transactions (EXISTANTES)
 import TransactionsListPage from '../features/transactions/pages/TransactionsListPage';
 import TransactionDetailsPage from '../features/transactions/pages/TransactionDetailsPage';
 import TransactionAnalyticsPage from '../features/transactions/pages/TransactionAnalyticsPage';
 
+// Pages Budgets (EXISTANTES)
+import BudgetsListPage from '../features/budgets/pages/BudgetsListPage';
+import BudgetDetailsPage from '../features/budgets/pages/BudgetDetailsPage';
+import CreateBudgetPage from '../features/budgets/pages/CreateBudgetPage';
+import BudgetAnalyticsPage from '../features/budgets/pages/BudgetAnalyticsPage';
+import BudgetTemplatesPage from '../features/budgets/pages/BudgetTemplatesPage'; // NOUVELLE PAGE
+
 // Pages privées (À CRÉER - commentées pour l'instant)
-// import BudgetsListPage from '../features/budgets/pages/BudgetsListPage';
 // import SolsListPage from '../features/sols/pages/SolsListPage';
 // import ProfilePage from '../features/profile/pages/ProfilePage';
 // import SettingsPage from '../features/profile/pages/SettingsPage';
@@ -112,7 +118,7 @@ export const routeConfig = [
   },
 
   // ===================================================================
-  // ROUTES TRANSACTIONS (NOUVELLES !)
+  // ROUTES TRANSACTIONS (EXISTANTES)
   // ===================================================================
   {
     id: 'transactions',
@@ -126,7 +132,7 @@ export const routeConfig = [
   },
   {
     id: 'transaction-details',
-    path: ROUTES.TRANSACTIONS_DETAIL, // /transactions/:id
+    path: ROUTES.TRANSACTIONS_DETAIL,
     element: <TransactionDetailsPage />,
     meta: {
       type: 'private',
@@ -136,7 +142,7 @@ export const routeConfig = [
   },
   {
     id: 'transaction-analytics',
-    path: '/transactions/analytics', // Ajouter dans constants si nécessaire
+    path: ROUTES.TRANSACTIONS_ANALYTICS,
     element: <TransactionAnalyticsPage />,
     meta: {
       type: 'private',
@@ -146,9 +152,8 @@ export const routeConfig = [
   },
 
   // ===================================================================
-  // ROUTES PRIVÉES (À CRÉER - COMMENTÉES)
+  // ROUTES BUDGETS (EXISTANTES - COMPLÉTÉES)
   // ===================================================================
-  /*
   {
     id: 'budgets',
     path: ROUTES.BUDGETS,
@@ -159,6 +164,51 @@ export const routeConfig = [
       permission: 'budgets:view'
     }
   },
+  {
+    id: 'budgets-create',
+    path: ROUTES.BUDGETS_CREATE,
+    element: <CreateBudgetPage />,
+    meta: {
+      type: 'private',
+      layout: 'main',
+      permission: 'budgets:create'
+    }
+  },
+  {
+    id: 'budgets-detail',
+    path: ROUTES.BUDGETS_DETAIL,
+    element: <BudgetDetailsPage />,
+    meta: {
+      type: 'private',
+      layout: 'main',
+      permission: 'budgets:view'
+    }
+  },
+  {
+    id: 'budgets-analytics',
+    path: ROUTES.BUDGETS_ANALYTICS,
+    element: <BudgetAnalyticsPage />,
+    meta: {
+      type: 'private',
+      layout: 'main',
+      permission: 'budgets:analytics'
+    }
+  },
+  {
+    id: 'budgets-templates',
+    path: ROUTES.BUDGETS_TEMPLATES,
+    element: <BudgetTemplatesPage />,
+    meta: {
+      type: 'private',
+      layout: 'main',
+      permission: 'budgets:create'
+    }
+  },
+
+  // ===================================================================
+  // ROUTES PRIVÉES (À CRÉER - COMMENTÉES)
+  // ===================================================================
+  /*
   {
     id: 'sols',
     path: ROUTES.SOLS,
@@ -311,9 +361,33 @@ export const getActiveRoutes = () =>
  */
 export const getRoutesToCreate = () => [
   {
-    id: 'budgets',
-    path: ROUTES.BUDGETS,
-    name: 'Budgets',
+    id: 'budgets-edit',
+    path: ROUTES.BUDGETS_EDIT,
+    name: 'Édition Budget',
+    feature: 'budgets'
+  },
+  {
+    id: 'budgets-duplicate',
+    path: ROUTES.BUDGETS_DUPLICATE,
+    name: 'Duplication Budget',
+    feature: 'budgets'
+  },
+  {
+    id: 'budgets-categories',
+    path: ROUTES.BUDGETS_CATEGORIES,
+    name: 'Catégories Budget',
+    feature: 'budgets'
+  },
+  {
+    id: 'budgets-reports',
+    path: ROUTES.BUDGETS_REPORTS,
+    name: 'Rapports Budget',
+    feature: 'budgets'
+  },
+  {
+    id: 'budgets-settings',
+    path: ROUTES.BUDGETS_SETTINGS,
+    name: 'Paramètres Budget',
     feature: 'budgets'
   },
   {
@@ -335,6 +409,12 @@ export const getRoutesToCreate = () => [
     feature: 'profile'
   },
   {
+    id: 'ai-budget-advice',
+    path: ROUTES.AI_BUDGET_ADVICE,
+    name: 'Conseils Budget IA',
+    feature: 'ai'
+  },
+  {
     id: 'admin-dashboard',
     path: ROUTES.ADMIN,
     name: 'Administration',
@@ -351,7 +431,11 @@ export const getRoutesToCreate = () => [
     path: ROUTES.ADMIN_ANALYTICS,
     name: 'Analytics',
     feature: 'admin'
+  },
+  {
+    id: 'admin-budgets',
+    path: ROUTES.ADMIN_BUDGETS,
+    name: 'Budgets Admin',
+    feature: 'admin'
   }
 ];
-
-export default routeConfig;

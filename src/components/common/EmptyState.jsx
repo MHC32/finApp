@@ -1,3 +1,4 @@
+// src/components/common/EmptyState.jsx
 import { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { 
@@ -6,32 +7,14 @@ import {
   FileX, 
   Database,
   Filter,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 import Button from '../ui/Button';
 
 /**
  * Composant EmptyState - Affichage états vides
- * 
- * Features:
- * - Plusieurs variantes (empty, search, error, filtered)
- * - Icônes personnalisables
- * - Titre + description
- * - Actions optionnelles (boutons)
- * - Illustrations optionnelles
- * - Support Light/Dark
- * 
- * @example
- * <EmptyState
- *   variant="empty"
- *   title="Aucune transaction"
- *   description="Commencez par ajouter votre première transaction"
- *   action={
- *     <Button onClick={handleAddTransaction}>
- *       Ajouter une transaction
- *     </Button>
- *   }
- * />
  */
 const EmptyState = forwardRef(({
   // Contenu
@@ -58,10 +41,12 @@ const EmptyState = forwardRef(({
     error: AlertCircle,
     filtered: Filter,
     nodata: Database,
-    notfound: FileX
+    notfound: FileX,
+    success: CheckCircle2,
+    info: Info
   };
 
-  const Icon = CustomIcon || defaultIcons[variant];
+  const Icon = CustomIcon || defaultIcons[variant] || Inbox;
 
   // Classes de taille
   const sizeClasses = {
@@ -113,11 +98,21 @@ const EmptyState = forwardRef(({
     notfound: {
       iconBg: 'bg-gray-100 dark:bg-gray-800',
       icon: 'text-gray-400 dark:text-gray-500'
+    },
+    success: {
+      iconBg: 'bg-green-100 dark:bg-green-900/20',
+      icon: 'text-green-600 dark:text-green-400'
+    },
+    info: {
+      iconBg: 'bg-blue-100 dark:bg-blue-900/20',
+      icon: 'text-blue-600 dark:text-blue-400'
     }
   };
 
+  // Utiliser des valeurs par défaut si la variante n'existe pas
+  const safeVariant = variantColors[variant] ? variant : 'empty';
   const sizes = sizeClasses[size];
-  const colors = variantColors[variant];
+  const colors = variantColors[safeVariant];
 
   return (
     <div
@@ -168,7 +163,10 @@ EmptyState.propTypes = {
   description: PropTypes.string,
   
   // Type
-  variant: PropTypes.oneOf(['empty', 'search', 'error', 'filtered', 'nodata', 'notfound']),
+  variant: PropTypes.oneOf([
+    'empty', 'search', 'error', 'filtered', 
+    'nodata', 'notfound', 'success', 'info'
+  ]),
   icon: PropTypes.elementType,
   showIcon: PropTypes.bool,
   

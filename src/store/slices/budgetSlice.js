@@ -1,6 +1,6 @@
 // src/store/slices/budgetSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import budgetApi from '../../api/endpoints/budgetApi';
+import budgetApi from '../../api/endpoints/budget';
 
 // ===================================================================
 // THUNKS ASYNCHRONES

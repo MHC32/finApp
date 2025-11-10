@@ -597,10 +597,18 @@ export const ROUTES = {
   TRANSACTIONS_DETAIL: '/transactions/:id',
   TRANSACTIONS_ANALYTICS: '/transactions/analytics',
   
-  // Budgets
+  // Budgets - Routes complètes
   BUDGETS: '/budgets',
   BUDGETS_NEW: '/budgets/new',
+  BUDGETS_CREATE: '/budgets/create',
   BUDGETS_DETAIL: '/budgets/:id',
+  BUDGETS_EDIT: '/budgets/:id/edit',
+  BUDGETS_DUPLICATE: '/budgets/:id/duplicate',
+  BUDGETS_ANALYTICS: '/budgets/analytics',
+  BUDGETS_TEMPLATES: '/budgets/templates',
+  BUDGETS_CATEGORIES: '/budgets/categories',
+  BUDGETS_REPORTS: '/budgets/reports',
+  BUDGETS_SETTINGS: '/budgets/settings',
   
   // Sols
   SOLS: '/sols',
@@ -622,6 +630,7 @@ export const ROUTES = {
   
   // IA
   AI_ASSISTANT: '/ai',
+  AI_BUDGET_ADVICE: '/ai/budget-advice',
   
   // Profil
   PROFILE: '/profile',
@@ -630,7 +639,8 @@ export const ROUTES = {
   // Admin
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/users',
-  ADMIN_ANALYTICS: '/admin/analytics'
+  ADMIN_ANALYTICS: '/admin/analytics',
+  ADMIN_BUDGETS: '/admin/budgets'
 };
 
 // ===================================================================
